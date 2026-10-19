@@ -26,6 +26,9 @@ typedef struct Entity
 	int attack;
 	int xp;
 	int alive;
+	int hunger;
+	int max_hunger;
+	int hunger_rate;
 	char input;
 	char symbol;
 	char *name;
@@ -43,6 +46,7 @@ typedef struct Level
 	int lvl;
 	int maxlvl;
 	int mons;
+	int turn;
 } Level;
 
 #endif // TO END THE DEFINITION FUNCTION TO ONE TIME USE ONLY!

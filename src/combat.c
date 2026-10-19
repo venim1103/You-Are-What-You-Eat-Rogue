@@ -125,6 +125,14 @@ int Eat(Level *leveli, Level level, Entity *player, Entity *monster)
 		player->health = ((monster->maxhp)*4)+6;
 		player->attack = monster->attack;
 
+		// RESTORE HUNGER:
+		player->hunger += 400;
+		if(player->hunger > player->max_hunger)
+		{
+			player->hunger = player->max_hunger;
+		}
+		mvprintw(0,0,"You feel satiated!");
+
 		refresh(); getchar(); mvprintw(0,0,"\n");	
 	
 	} else

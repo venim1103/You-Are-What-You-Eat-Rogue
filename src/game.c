@@ -32,6 +32,7 @@ Level *Game(Level *level)
 
 	level->mons = 0;
 	level->player_symbol = '@';
+	level->turn = 0;
 
 	// Make 1st level:
 	level[0] = MakeLvl(level[0], 0, level); //level[0].lvl = 0;
@@ -83,6 +84,28 @@ Level *Game(Level *level)
 		
 	// HANDLE INPUT:
 		yx = HandleInput(level,level[level->lvl], yx);
+
+		// TURN & HUNGER PROGRESSION:
+		level->turn++;
+		if(level[level->lvl].player->hunger_rate <= 0)
+		{
+			level[level->lvl].player->hunger_rate = 1;
+		}
+		level[level->lvl].player->hunger -= level[level->lvl].player->hunger_rate;
+		if(level[level->lvl].player->hunger <= 0)
+		{
+			level[level->lvl].player->hunger = 0;
+			level[level->lvl].player->health -= 1;
+			mvprintw(0,0,"\n");
+			mvprintw(0,0,"You are starving to death!");
+			refresh();
+			if(level[level->lvl].player->health <= 0)
+			{
+				level[level->lvl].player->alive = DEAD;
+				level->killer = "Starvation";
+			}
+		}
+
 		PlayerInfoBar(level);
 
 
@@ -162,6 +185,9 @@ Level *Upstairs(Level *level, int r)
 	level[r].player->health=level[r+1].player->health;
 	level[r].player->attack=level[r+1].player->attack;
 	level[r].player->xp=level[r+1].player->xp;
+	level[r].player->hunger=level[r+1].player->hunger;
+	level[r].player->max_hunger=level[r+1].player->max_hunger;
+	level[r].player->hunger_rate=level[r+1].player->hunger_rate;
 	level[r].player->name=level[r+1].player->name;
 	level[r].player->Position.type=level[r+1].player->Position.type;
 	//
@@ -193,6 +219,9 @@ Level *Downstairs(Level *level, int r)
 		level[r].player->Position.type=level[r-1].player->Position.type;
 		level[r].player->attack=level[r-1].player->attack;
 		level[r].player->xp=level[r-1].player->xp;
+		level[r].player->hunger=level[r-1].player->hunger;
+		level[r].player->max_hunger=level[r-1].player->max_hunger;
+		level[r].player->hunger_rate=level[r-1].player->hunger_rate;
 		level[r].player->name=level[r-1].player->name;
 		//
 
@@ -216,6 +245,9 @@ Level *Downstairs(Level *level, int r)
 		level[r].player->health=level[r-1].player->health;
 		level[r].player->attack=level[r-1].player->attack;
 		level[r].player->xp=level[r-1].player->xp;
+		level[r].player->hunger=level[r-1].player->hunger;
+		level[r].player->max_hunger=level[r-1].player->max_hunger;
+		level[r].player->hunger_rate=level[r-1].player->hunger_rate;
 		level[r].player->name=level[r-1].player->name;
 		//
 

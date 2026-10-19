@@ -29,11 +29,31 @@ int WelcomeTxt()
 
 int PlayerInfoBar(Level *level)
 {
+	char *hunger_status = "Normal";
+	int h = level[level->lvl].player->hunger;
+	if(h >= 750)
+	{
+		hunger_status = "Satiated";
+	} else if(h >= 350)
+	{
+		hunger_status = "Normal";
+	} else if(h >= 150)
+	{
+		hunger_status = "Hungry";
+	} else if(h > 0)
+	{
+		hunger_status = "Weak";
+	} else
+	{
+		hunger_status = "Starving";
+	}
+
 	mvprintw(MAX_Y, 0,"    Player: "); printw(level[level->lvl].player->name);
 	printw("    Hp: %d", level[level->lvl].player->health);
 	printw("    Att: %d", level[level->lvl].player->attack);
 	printw("    Level: %d", level->lvl);
-	printw("                XP: %d", level[level->lvl].player->xp);
+	printw("    Hunger: %s", hunger_status);
+	printw("    XP: %d", level[level->lvl].player->xp);
 	printw("      ");
 
 	return 1;

@@ -26,6 +26,9 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->maxhp = player->health;
 	player->attack = 1;
 	player->xp = 0;
+	player->hunger = 800;
+	player->max_hunger = 1000;
+	player->hunger_rate = 1;
 	player->name = "Human";
 	player->alive = YES;
 
