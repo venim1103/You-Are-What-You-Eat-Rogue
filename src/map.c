@@ -31,7 +31,7 @@ Entity MapInit(Entity room)
 	room.mode = (r+1); // SET ONE MORE FOR MORE MEMORY! 
 
 	room.Area = malloc(sizeof(Position)*room.mode); 
-	room.Object = malloc(sizeof(Position)*d*room.mode); 
+	room.Object = malloc(sizeof(Position*)*room.mode); 
 
 // CREATE ROOMS:
 	// Initialize all the values to non-zero and non-random

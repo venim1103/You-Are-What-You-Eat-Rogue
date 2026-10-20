@@ -8,7 +8,7 @@ int main(void)
 	Level *level=NULL;
 
 // Seed the random
-	clock_t ct; ct = clock(); double clk = ct; srand(clk);
+	srand((unsigned int)time(NULL));
 // Init
 	ScreenInit();
 

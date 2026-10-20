@@ -15,17 +15,17 @@
 
 // Define global types:
 //		0	1	2	3	4	5	6
-	enum { UP, DOWN, LEFT, RIGHT, UPLEFT, UPRIGHT, DOWNLEFT, DOWNRIGHT} Directions; 
-	enum { UNKNOWN, GROUND, LOOT, DOOR, DSTAIRS, USTAIRS, ENEMY} TileType; 
-	enum { DEAD, SPIDER, SNAKE, GOBLIN, TROLL} MonType; 
-	enum { FOLLOW, RANDOM_S, RANDOM_X} MovMode; 
-	enum { OTHER, PLAYER, MONSTER} Actuator; 
-	enum { NO, YES} Ask; 
+	enum { UP, DOWN, LEFT, RIGHT, UPLEFT, UPRIGHT, DOWNLEFT, DOWNRIGHT }; 
+	enum { UNKNOWN, GROUND, LOOT, DOOR, DSTAIRS, USTAIRS, ENEMY }; 
+	enum { DEAD, SPIDER, SNAKE, GOBLIN, TROLL }; 
+	enum { FOLLOW, RANDOM_S, RANDOM_X }; 
+	enum { OTHER, PLAYER, MONSTER }; 
+	enum { NO, YES }; 
 
 ///// GLOBAL VARIABLES: ///////////////////////////////
 // MAX_X,MAX_Y are the GAME MAP outer coordinates 
 // while X_SCR,Y_SCR are max values (MAX_X/Y+10) for screen (to avoid bugs)
-int MAX_X; int MAX_Y; int X_SCR; int Y_SCR; int LVLS; int ROOMS;
+extern int MAX_X; extern int MAX_Y; extern int X_SCR; extern int Y_SCR; extern int LVLS; extern int ROOMS;
 
 ///////////////////////////////////////////////////////
 

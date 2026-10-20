@@ -1,15 +1,15 @@
 #include "global.h"
 
-Entity **AddMonsters(Level level, Entity rooms, int lvl, Level *leveli)
+Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 {
 	int makeamount = 0;
-	makeamount = ((ROOMS/2)+leveli->lvl);
+	makeamount = ((ROOMS/2)+lvl);
 
 	Entity **monsters;
 	monsters = malloc(sizeof(Entity*)*(makeamount+1)); // Half of the rooms might have mons.
 	int *yx; yx=malloc(sizeof(int)*3); 
 
-	leveli->mons = 0;
+	level->mons = 0;
 
 	int k = 0;
 
@@ -24,7 +24,7 @@ Entity **AddMonsters(Level level, Entity rooms, int lvl, Level *leveli)
 		}
 	}	
 
-	leveli->mons = k;
+	level->mons = k;
 
 	free(yx);
 	

@@ -20,7 +20,7 @@ Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name);
 Entity *SelMonster(int lvl);
 Entity *GetMonsterAt(int MonY, int MonX, Level level);
 Entity *MonsterMove(Level level, Entity *monster, char c1, char c2, int nexty, int nextx, int mode);
-Entity **AddMonsters(Level level, Entity room, int lvl, Level *leveli);
+Entity **AddMonsters(Level *level, Entity room, int lvl);
 
 Position CheckArea(Position pos, char c); 
 Position CreateRoomSize(Position pos); 

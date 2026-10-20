@@ -1,5 +1,7 @@
 #include "global.h"
 
+int MAX_X; int MAX_Y; int X_SCR; int Y_SCR; int LVLS; int ROOMS;
+
 int ScreenInit()
 {
 	MAX_X = 160; MAX_Y = 45;
@@ -20,7 +22,7 @@ int ScreenInit()
 Level *Game(Level *level)
 {
 	char cp = ' ';
-	int c, mon0 = 0;
+	int c;
 	
 	level = malloc(sizeof(Level)*(LVLS+1));
 
@@ -37,10 +39,6 @@ Level *Game(Level *level)
 	// Make 1st level:
 	level[0] = MakeLvl(level[0], 0, level); //level[0].lvl = 0;
 
-////////////////////////// BUG FIX ////////////////////////////////
-	mon0 = level[0].mons;
-///////////////////////////////////////////////////////////////////
-
 	level->lvl = 0;
 	level->maxlvl = 0;
 
@@ -53,10 +51,6 @@ Level *Game(Level *level)
 	if(level[level->lvl].player->alive!=DEAD)
 	{
 		PlayerInfoBar(level);
-
-////////////////////////// BUG FIX ////////////////////////////////
-		level[0].mons = mon0;
-///////////////////////////////////////////////////////////////////
 
 		level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);
 	
