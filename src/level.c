@@ -19,6 +19,13 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 			level_in.player = PlayerSetup(leveli, level_in.player, level_in.rooms);
 
 			level_in.mons = 0;
+			level_in.max_corpses = 64;
+			level_in.num_corpses = 0;
+			level_in.corpses = malloc(sizeof(Corpse) * level_in.max_corpses);
+			for(int i = 0; i < level_in.max_corpses; i++)
+			{
+				level_in.corpses[i].active = NO;
+			}
 
 //		if(lvl>0)
 //		{

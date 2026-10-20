@@ -20,6 +20,10 @@ int Free(Level level, int lvl, int lvls)
 		free(level.monsters[i]);
 	}
 	free(level.monsters);
+	if(level.corpses != NULL)
+	{
+		free(level.corpses);
+	}
 	free(level.player);
 
 	// Free the allocated door space!

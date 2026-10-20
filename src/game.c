@@ -183,12 +183,14 @@ Level *Upstairs(Level *level, int r)
 
 	// SAVE OLD VALUES TO NEXT LEVEL!
 	level[r].player->health=level[r+1].player->health;
+	level[r].player->maxhp=level[r+1].player->maxhp;
 	level[r].player->attack=level[r+1].player->attack;
 	level[r].player->xp=level[r+1].player->xp;
 	level[r].player->hunger=level[r+1].player->hunger;
 	level[r].player->max_hunger=level[r+1].player->max_hunger;
 	level[r].player->hunger_rate=level[r+1].player->hunger_rate;
 	level[r].player->name=level[r+1].player->name;
+	level[r].player->symbol=level[r+1].player->symbol;
 	level[r].player->Position.type=level[r+1].player->Position.type;
 	//
 
@@ -216,6 +218,7 @@ Level *Downstairs(Level *level, int r)
 		
 		// SAVE OLD VALUES TO NEXT LEVEL!
 		level[r].player->health=level[r-1].player->health;
+		level[r].player->maxhp=level[r-1].player->maxhp;
 		level[r].player->Position.type=level[r-1].player->Position.type;
 		level[r].player->attack=level[r-1].player->attack;
 		level[r].player->xp=level[r-1].player->xp;
@@ -223,6 +226,7 @@ Level *Downstairs(Level *level, int r)
 		level[r].player->max_hunger=level[r-1].player->max_hunger;
 		level[r].player->hunger_rate=level[r-1].player->hunger_rate;
 		level[r].player->name=level[r-1].player->name;
+		level[r].player->symbol=level[r-1].player->symbol;
 		//
 
 		level->lvl = r;
@@ -243,12 +247,14 @@ Level *Downstairs(Level *level, int r)
 	
 		// SAVE OLD VALUES TO NEXT LEVEL!	
 		level[r].player->health=level[r-1].player->health;
+		level[r].player->maxhp=level[r-1].player->maxhp;
 		level[r].player->attack=level[r-1].player->attack;
 		level[r].player->xp=level[r-1].player->xp;
 		level[r].player->hunger=level[r-1].player->hunger;
 		level[r].player->max_hunger=level[r-1].player->max_hunger;
 		level[r].player->hunger_rate=level[r-1].player->hunger_rate;
 		level[r].player->name=level[r-1].player->name;
+		level[r].player->symbol=level[r-1].player->symbol;
 		//
 
 		level->lvl = r;

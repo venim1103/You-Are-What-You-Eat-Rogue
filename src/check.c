@@ -51,6 +51,11 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 				StepOn(leveli,PLAYER,y,x,level.player->Position.c,c,level,monster);
 				AskStairs(DSTAIRS,level.player);
 			break;
+			case '%':
+				StepOn(leveli,PLAYER,y,x,level.player->Position.c,c,level,monster);
+				level.player->Position.type=LOOT;
+				AskEatCorpse(leveli, level, level.player, y, x);
+			break;
 			case 's':
 			case 'g':
 			case 'x':
@@ -78,6 +83,7 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 		{
 			case '.':
 			case '#':
+			case '%':
 				StepOn(leveli,MONSTER,y,x,monster->Position.c,c,level,monster);
 				monster->Position.type=GROUND;
 			break;
@@ -182,7 +188,9 @@ Entity *GetMonsterAt(int MonY, int MonX, Level level)
 {
 	for(int i=0; i<level.mons; i++)
 	{
-		if(MonY==level.monsters[i]->Position.yPos && MonX==level.monsters[i]->Position.xPos)
+		if(level.monsters[i]->alive == YES &&
+		   MonY==level.monsters[i]->Position.yPos && 
+		   MonX==level.monsters[i]->Position.xPos)
 		{
 			return level.monsters[i];
 		} 

@@ -34,11 +34,23 @@ typedef struct Entity
 	char *name;
 } Entity;
 
+typedef struct Corpse
+{
+	Position Position;
+	char symbol;
+	char *name;
+	int maxhp;
+	int attack;
+	int nutrition;
+	int active;
+} Corpse;
+
 typedef struct Level
 {
 	Entity rooms;
 	Entity *player;
 	struct Entity **monsters;
+	struct Corpse *corpses;
 	char player_symbol;
 	char *killer;
 	char **map;
@@ -47,6 +59,8 @@ typedef struct Level
 	int maxlvl;
 	int mons;
 	int turn;
+	int num_corpses;
+	int max_corpses;
 } Level;
 
 #endif // TO END THE DEFINITION FUNCTION TO ONE TIME USE ONLY!

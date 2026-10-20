@@ -96,6 +96,10 @@ int *HandleInput(Level *leveli, Level level, int *yx)
 //	char *chk = chks;
 	for(int i=0; i<level.mons; i++)
 	{
+		if(level.monsters[i]->alive != YES)
+		{
+			continue;
+		}
 		// Save the original position values:
 		y = level.monsters[i]->Position.yPos; x = level.monsters[i]->Position.xPos;
 		// Do movement for each:
