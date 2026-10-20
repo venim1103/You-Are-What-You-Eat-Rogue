@@ -54,16 +54,16 @@ int *HandleInput(Level *leveli, Level level, int *yx)
 		case 'c': 
 			if(level.player->can_open_doors == NO)
 			{
-				mvprintw(0,0,"\n");
+				ClearMsg();
 				mvprintw(0,0,"You cannot operate doors as a %s! (You lack hands)", level.player->name);
 				refresh(); getch();
-				mvprintw(0,0,"\n");
+				ClearMsg();
 				refresh();
 			}
 			else
 			{
-				TurnNearby(y,x,':',"+");
-				mvprintw(0,0,"\n");
+				TurnNearby(y,x,':',"+", level);
+				ClearMsg();
 				mvprintw(0,0,"You are closing nearby doors!");
 				refresh();
 			}
@@ -72,6 +72,7 @@ int *HandleInput(Level *leveli, Level level, int *yx)
 		case 'u':
 			for(int i=0; i<level.rooms.mode; i++)
 			{	
+			ClearMsg();
 			mvprintw(0,0,"Room    width:    and height:   .");
 			sprintf(num,"%d",i);
 			mvprintw(0,5,num);
@@ -80,17 +81,17 @@ int *HandleInput(Level *leveli, Level level, int *yx)
 			sprintf(num,"%d",level.rooms.Area[i].height);
 			mvprintw(0,30,num);
 
-			getchar();
+			getch();
 
-			refresh(); mvprintw(0,0,"\n");
+			refresh(); ClearMsg();
  			}
 		break;
 		
 		case '?':
-			getchar();
+			getch();
 			PrintMap(MAX_Y,MAX_X,level.map);
 			refresh();
-			getchar();	
+			getch();	
 		break;
 		
 		default:

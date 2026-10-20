@@ -11,18 +11,23 @@ int IntroScreen()
 	printw("\n\n\n\n\n                                                                       PRESS A KEY TO CONTINUE\n");
 
 	getch();
-	getchar();
 
 	return 1;
+}
+
+void ClearMsg(void)
+{
+	move(0, 0);
+	clrtoeol();
 }
 
 int WelcomeTxt()
 {
 	// WELCOME TEXT + INSTRUCTIONS:
-	mvprintw(0,0,"\n"); // Clear the line	
+	ClearMsg();
 	mvprintw(0,0, "Welcome! Press 'Q' to exit and move with wasd+qezx.  You gain XP from killing monsters and going deeper!");
-	refresh(); getchar();
-	mvprintw(0,0,"\n"); // Clear the line	
+	refresh(); getch();
+	ClearMsg();
 
 	return 1;
 }
@@ -48,6 +53,8 @@ int PlayerInfoBar(Level *level)
 		hunger_status = "Starving";
 	}
 
+	move(MAX_Y, 0);
+	clrtoeol();
 	mvprintw(MAX_Y, 0,"    Player: "); printw(level[level->lvl].player->name);
 	printw("    Hp: %d/%d", level[level->lvl].player->health, level[level->lvl].player->maxhp);
 	printw("    Att: %d", level[level->lvl].player->attack);
@@ -73,11 +80,11 @@ int ExitScreen(Level *level)
 	printw(" KILLED BY A "); printw(level->killer); 
 	printw(" AND DIED WITH "); printw(buf); printw(" XP!");
 	printw("\n\n\n\n\n                                                                                   GAME OVER!");
-	refresh(); getchar();
+	refresh(); getch();
 	
 	clear();
 	mvprintw(27,76,"THANK YOU FOR PLAYING!");
-	refresh(); getchar();
+	refresh(); getch();
 
 	return 1;
 }
@@ -124,10 +131,11 @@ int AskStairs(int stairs, Entity *player)
 	switch(stairs)
 	{
 	case DSTAIRS:
-		mvprintw(0,0,"\n"); // Clear the line	
+		ClearMsg();
 		mvprintw(0,0,"You see downstairs here, would you like to enter? y/n");	
-		refresh(); mvprintw(0,0,"\n");
-		player->input = getchar();
+		refresh();
+		player->input = getch();
+		ClearMsg();
 
 		if(player->input=='y' || player->input=='Y')
 		{
@@ -136,10 +144,11 @@ int AskStairs(int stairs, Entity *player)
 	break;
 	
 	case USTAIRS:
-		mvprintw(0,0,"\n"); // Clear the line	
+		ClearMsg();
 		mvprintw(0,0,"You see upstairs here, would you like to enter? y/n");	
-		refresh(); mvprintw(0,0,"\n");
-		player->input = getchar();
+		refresh();
+		player->input = getch();
+		ClearMsg();
 		if(player->input=='y' || player->input=='Y')
 		{
 			player->Position.type=USTAIRS;		
@@ -147,9 +156,10 @@ int AskStairs(int stairs, Entity *player)
 	break;
 
 	default:
-		mvprintw(0,0,"\n"); // Clear the line	
+		ClearMsg();
 		mvprintw(0,0,"ERROR!!!!");	
-		refresh(); mvprintw(0,0,"\n");
+		refresh();
+		ClearMsg();
 	break;
 	}
 
@@ -160,26 +170,27 @@ int OpenDoor(Entity *player, int y, int x)
 {
 	if(player->can_open_doors == NO)
 	{
-		mvprintw(0,0,"\n");
+		ClearMsg();
 		mvprintw(0,0,"You cannot open doors as a %s! (You lack hands)", player->name);
 		refresh(); getch();
-		mvprintw(0,0,"\n");
+		ClearMsg();
 		refresh();
 		move(player->Position.yPos, player->Position.xPos);
 		return 0;
 	}
 
-	mvprintw(0,0,"\n"); // Clear the line	
+	ClearMsg();
 	mvprintw(0,0, "Do you want to open the door? y/n");
-	refresh(); mvprintw(0,0,"\n");
-	player->input = getchar();
+	refresh();
+	player->input = getch();
+	ClearMsg();
 	if(player->input=='y' || player->input=='Y')
 	{
-	
+		ClearMsg();
 		mvprintw(0,0, "You opened the door! (close a door with 'c')");
-		refresh(); getchar(); mvprintw(0,0,"\n");
+		refresh(); getch();
+		ClearMsg();
 		PrintChar(y,x,':');
-//		mvprintw(y,x,":");
 	} 
 	else
 	{

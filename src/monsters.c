@@ -33,28 +33,36 @@ Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 
 Entity *SelMonster(int lvl)
 {
-	int mon = 0;
+	int mon = SPIDER;
 
-		if(lvl<=3)
-		{	
-			mon = (rand()%SNAKE)+1; //Can be SNAKE OR GOBLIN
-		} else if(lvl<=5)
-		{ if(lvl<22)
-			{	
-			mon = (rand()%GOBLIN)+1; //Can be SNAKE, GOBLIN, SPIDER  
-			}
-		} else if(lvl>=10)
-		{ if(lvl<22)
-			{
-			mon = (rand()%TROLL)+1; //Can be SNAKE,GOBLIN,SPIDER,TROLL 
-			}
-		} else if(lvl>=22)
+	if(lvl <= 3)
+	{
+		mon = (rand() % SNAKE) + 1; // SPIDER (1) or SNAKE (2)
+	}
+	else if(lvl <= 7)
+	{
+		mon = (rand() % GOBLIN) + 1; // SPIDER (1), SNAKE (2), or GOBLIN (3)
+	}
+	else if(lvl <= 15)
+	{
+		mon = (rand() % TROLL) + 1; // SPIDER, SNAKE, GOBLIN, or TROLL (4)
+	}
+	else
+	{
+		int roll = rand() % 100;
+		if(roll < 60)
 		{
-			mon = TROLL; // Only TROLLS
-		} else
-		{
-			mon = SNAKE;
+			mon = TROLL;
 		}
+		else if(roll < 85)
+		{
+			mon = GOBLIN;
+		}
+		else
+		{
+			mon = (rand() % SNAKE) + 1;
+		}
+	}
 
 	switch(mon)
 	{
@@ -75,7 +83,7 @@ Entity *SelMonster(int lvl)
 		break;
 
 		default:
-//			return CreateMon('x',3,2,SNAKE, RANDOM_S);
+			return CreateMon('g',5,3,GOBLIN, FOLLOW, "Goblin");
 		break;	
 	}	
 	return CreateMon('T',15,5,TROLL, FOLLOW, "Troll");

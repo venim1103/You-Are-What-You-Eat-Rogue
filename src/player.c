@@ -102,6 +102,7 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 
 	// Set original position for the player
 	player->Position.xPos = x; player->Position.yPos = y;
+	player->Position.ch = '>';
 	player->health = 20;
 	player->maxhp = player->health;
 	player->attack = 1;

@@ -46,7 +46,7 @@ Level *Game(Level *level)
 	WelcomeTxt();
 
 //+++++++++++++++++++++++++++++++++++++MAIN LOOOP/++++++++++++++++++++++++++++++++++++++//
-	while(((c = getchar()) != 'Q')) 
+	while(((c = getch()) != 'Q')) 
 	{
 	if(level[level->lvl].player->alive!=DEAD)
 	{
@@ -59,6 +59,7 @@ Level *Game(Level *level)
 			level = Downstairs(level,level->lvl); 
 //			r = level->lvl;
 			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
+			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);	
 			level[level->lvl].player->Position.type = UNKNOWN;
 			PlayerInfoBar(level);
@@ -68,6 +69,7 @@ Level *Game(Level *level)
 			level = Upstairs(level,level->lvl);
 //			r = level->lvl; 
 			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
+			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);
 			level[level->lvl].player->Position.type = UNKNOWN;
 			PlayerInfoBar(level);
@@ -90,7 +92,7 @@ Level *Game(Level *level)
 		{
 			level[level->lvl].player->hunger = 0;
 			level[level->lvl].player->health -= 1;
-			mvprintw(0,0,"\n");
+			ClearMsg();
 			mvprintw(0,0,"You are starving to death!");
 			refresh();
 			if(level[level->lvl].player->health <= 0)
@@ -105,7 +107,7 @@ Level *Game(Level *level)
 		{
 			level[level->lvl].player->poison_turns--;
 			level[level->lvl].player->health -= 1;
-			mvprintw(0,0,"\n");
+			ClearMsg();
 			mvprintw(0,0,"Poison wracks your body! (-1 HP, %d turns left)", level[level->lvl].player->poison_turns);
 			refresh();
 			if(level[level->lvl].player->health <= 0)

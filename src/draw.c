@@ -70,17 +70,23 @@ Position *DrawRoom(Position pos, int d)
 	return doors;	
 }
 
-int TurnNearby(int y, int x, int c, char *d)
+int TurnNearby(int y, int x, int c, char *d, Level level)
 {
-	if(mvinch(y-1,x)==c)/*->*/mvprintw(y-1,x,d); // above
-	if(mvinch(y+1,x)==c)/*->*/mvprintw(y+1,x,d); // below
-	if(mvinch(y,x-1)==c)/*->*/mvprintw(y,x-1,d); // left
-	if(mvinch(y,x+1)==c)/*->*/mvprintw(y,x+1,d); // right
-	
-	if(mvinch(y-1,x+1)==c)/*->*/mvprintw(y-1,x+1,d); //upright
-	if(mvinch(y-1,x-1)==c)/*->*/mvprintw(y-1,x-1,d); //upleft
-	if(mvinch(y+1,x+1)==c)/*->*/mvprintw(y+1,x+1,d); //downright
-	if(mvinch(y+1,x-1)==c)/*->*/mvprintw(y+1,x-1,d); //downleft
+	int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
+	int dx[8] = {0, 0, -1, 1, 1, -1, 1, -1};
+	for(int i = 0; i < 8; i++)
+	{
+		int ny = y + dy[i];
+		int nx = x + dx[i];
+		if((mvinch(ny, nx) & A_CHARTEXT) == c)
+		{
+			mvprintw(ny, nx, "%s", d);
+			if(level.map_backup != NULL)
+			{
+				level.map_backup[ny][nx] = d[0];
+			}
+		}
+	}
 	return 1;
 }
 
