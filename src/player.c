@@ -12,6 +12,10 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->poison_attack = 0;
 			entity->cleave_chance = 0;
 			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 0;
+			entity->life_drain = 0;
 			entity->trait_desc = "Skitter (40% 2nd hit), Fast Metabolism (2 hunger/t), No Hands";
 			break;
 		case 's': // Snake
@@ -22,6 +26,10 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->poison_attack = 1;
 			entity->cleave_chance = 0;
 			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 0;
+			entity->life_drain = 0;
 			entity->trait_desc = "Venomous Strike, Poison Immune, No Hands";
 			break;
 		case 'g': // Goblin
@@ -32,6 +40,10 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->poison_attack = 0;
 			entity->cleave_chance = 0;
 			entity->scavenger_bonus = 50;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 0;
+			entity->life_drain = 0;
 			entity->trait_desc = "Scavenger (+50% corpse nutrition)";
 			break;
 		case 'T': // Troll
@@ -42,7 +54,53 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->poison_attack = 0;
 			entity->cleave_chance = 35;
 			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 0;
+			entity->life_drain = 0;
 			entity->trait_desc = "Regen (1HP/2t), Crushing Cleave, Gluttony (3 hunger/t)";
+			break;
+		case 'G': // Ghost
+			entity->hunger_rate = 2;
+			entity->regen_rate = 0;
+			entity->can_open_doors = NO;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 1;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 25;
+			entity->life_drain = 0;
+			entity->trait_desc = "Incorporeal (Phases through walls/doors), 25% Evasion, No Hands";
+			break;
+		case 'B': // Slime / Acid Blob
+			entity->hunger_rate = 1;
+			entity->regen_rate = 0;
+			entity->can_open_doors = NO;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 1;
+			entity->evasion_chance = 0;
+			entity->life_drain = 0;
+			entity->trait_desc = "Caustic Body (Reflects acid dmg on hit/attacker), Poison Immune, No Hands";
+			break;
+		case 'V': // Vampire Bat
+			entity->hunger_rate = 2;
+			entity->regen_rate = 0;
+			entity->can_open_doors = NO;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 50;
+			entity->life_drain = 1;
+			entity->trait_desc = "Flight (50% Evasion), Life Drain (+1 HP on hit), Fast Burn (2 hunger/t), No Hands";
 			break;
 		case '@': // Human
 		default:
@@ -53,6 +111,10 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->poison_attack = 0;
 			entity->cleave_chance = 0;
 			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 0;
+			entity->life_drain = 0;
 			entity->trait_desc = "Balanced Human Form";
 			break;
 	}
@@ -74,6 +136,10 @@ void CopyPlayer(Entity *dest, Entity *src)
 	dest->poison_attack = src->poison_attack;
 	dest->cleave_chance = src->cleave_chance;
 	dest->scavenger_bonus = src->scavenger_bonus;
+	dest->can_phase_walls = src->can_phase_walls;
+	dest->acid_corrosion = src->acid_corrosion;
+	dest->evasion_chance = src->evasion_chance;
+	dest->life_drain = src->life_drain;
 	dest->trait_desc = src->trait_desc;
 	dest->name = src->name;
 	dest->symbol = src->symbol;

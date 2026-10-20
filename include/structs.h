@@ -36,6 +36,10 @@ typedef struct Entity
 	int poison_attack;
 	int cleave_chance;
 	int scavenger_bonus;
+	int can_phase_walls;
+	int acid_corrosion;
+	int evasion_chance;
+	int life_drain;
 	char *trait_desc;
 	char input;
 	char symbol;

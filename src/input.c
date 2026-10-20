@@ -138,10 +138,21 @@ int HandleInput(Level *leveli, Level level, int *yx)
 					action_taken = 1;
 					break;
 				default:
-					ClearMsg();
-					mvprintw(0, 0, "You bump into a wall.");
-					refresh();
-					action_taken = 0;
+					if(level.player->can_phase_walls && (target_y > 0 && target_y < MAX_Y && target_x > 0 && target_x < MAX_X))
+					{
+						StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
+						ClearMsg();
+						mvprintw(0, 0, "You phase ethereal through the wall!");
+						refresh();
+						action_taken = 1;
+					}
+					else
+					{
+						ClearMsg();
+						mvprintw(0, 0, "You bump into a wall.");
+						refresh();
+						action_taken = 0;
+					}
 					break;
 			}
 		}

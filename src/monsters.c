@@ -35,58 +35,78 @@ Entity *SelMonster(int lvl)
 {
 	int mon = SPIDER;
 
-	if(lvl <= 3)
+	if(lvl <= 2)
 	{
-		mon = (rand() % SNAKE) + 1; // SPIDER (1) or SNAKE (2)
+		// Floors 0-2: Spider, Snake, Bat
+		int r = rand() % 3;
+		if(r == 0) mon = SPIDER;
+		else if(r == 1) mon = SNAKE;
+		else mon = BAT;
 	}
-	else if(lvl <= 7)
+	else if(lvl <= 6)
 	{
-		mon = (rand() % GOBLIN) + 1; // SPIDER (1), SNAKE (2), or GOBLIN (3)
+		// Floors 3-6: Bat, Snake, Goblin, Slime
+		int r = rand() % 4;
+		if(r == 0) mon = BAT;
+		else if(r == 1) mon = SNAKE;
+		else if(r == 2) mon = GOBLIN;
+		else mon = SLIME;
 	}
-	else if(lvl <= 15)
+	else if(lvl <= 12)
 	{
-		mon = (rand() % TROLL) + 1; // SPIDER, SNAKE, GOBLIN, or TROLL (4)
+		// Floors 7-12: Goblin, Slime, Ghost, Troll
+		int r = rand() % 4;
+		if(r == 0) mon = GOBLIN;
+		else if(r == 1) mon = SLIME;
+		else if(r == 2) mon = GHOST;
+		else mon = TROLL;
 	}
 	else
 	{
+		// Floors 13+: High danger (Troll, Ghost, Slime, occasional Bat/Goblin)
 		int roll = rand() % 100;
-		if(roll < 60)
-		{
-			mon = TROLL;
-		}
-		else if(roll < 85)
-		{
-			mon = GOBLIN;
-		}
-		else
-		{
-			mon = (rand() % SNAKE) + 1;
-		}
+		if(roll < 40) mon = TROLL;
+		else if(roll < 65) mon = GHOST;
+		else if(roll < 85) mon = SLIME;
+		else if(roll < 95) mon = GOBLIN;
+		else mon = BAT;
 	}
 
 	switch(mon)
 	{
 		case SPIDER:
-			return CreateMon('x',2,1,SPIDER, RANDOM_X, "Spider");
+			return CreateMon('x', 2, 1, SPIDER, RANDOM_X, "Spider");
 		break;	
 		
 		case SNAKE:
-			return CreateMon('s',3,2,SNAKE, RANDOM_S, "Snake");
+			return CreateMon('s', 3, 2, SNAKE, RANDOM_S, "Snake");
 		break;	
 
+		case BAT:
+			return CreateMon('V', 2, 2, BAT, RANDOM_X, "Vampire Bat");
+		break;
+
 		case GOBLIN:
-			return CreateMon('g',5,3,GOBLIN, FOLLOW, "Goblin");
+			return CreateMon('g', 5, 3, GOBLIN, FOLLOW, "Goblin");
 		break;	
+
+		case SLIME:
+			return CreateMon('B', 8, 2, SLIME, RANDOM_S, "Acid Slime");
+		break;
+
+		case GHOST:
+			return CreateMon('G', 4, 3, GHOST, FOLLOW, "Ghost");
+		break;
 		
 		case TROLL:
-			return CreateMon('T',15,5,TROLL, FOLLOW, "Troll");
+			return CreateMon('T', 15, 5, TROLL, FOLLOW, "Troll");
 		break;
 
 		default:
-			return CreateMon('g',5,3,GOBLIN, FOLLOW, "Goblin");
+			return CreateMon('g', 5, 3, GOBLIN, FOLLOW, "Goblin");
 		break;	
 	}	
-	return CreateMon('T',15,5,TROLL, FOLLOW, "Troll");
+	return CreateMon('T', 15, 5, TROLL, FOLLOW, "Troll");
 }
 
 Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name)
