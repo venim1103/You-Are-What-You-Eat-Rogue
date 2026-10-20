@@ -71,134 +71,84 @@ int Route(Position *p1, Position *p2, int i, int j, char chk1, char chk2, char i
 	return 1;
 }
 int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char *chk)
-{ // types = THE AMOUNT OF DIFFERENT TILES THE MONSTER CAN 'SEE'!!!!!
-	int types = 8;
+{
+	int best_dist = abs(y1 - y2) + abs(x1 - x2);
+	int best_y = y1;
+	int best_x = x1;
 
-	for(int i=0; i<types; i++)
+	// Check 4 cardinal directions:
+	int dy[4] = {-1, 1, 0, 0};
+	int dx[4] = {0, 0, -1, 1};
+
+	for(int i = 0; i < 4; i++)
 	{
-		if(abs((x1-1)-x2)<abs(x1-x2)&&(mvinch(y1,(x1-1))==chk[i]))
-			{ // Distance between step smaller AND there is chk1
-				x1 = x1-1;
-		} else if(abs((x1+1)-x2)<abs(x1-x2)&&(mvinch(y1,(x1+1))==chk[i]))
+		int ny = y1 + dy[i];
+		int nx = x1 + dx[i];
+		int d = abs(ny - y2) + abs(nx - x2);
+
+		if(d < best_dist)
+		{
+			// Check if target is player or walkable terrain:
+			if(ny == y2 && nx == x2)
 			{
-				x1 = x1+1;
-		} else if(abs((y1-1)-y2)<abs(y1-y2)&&(mvinch((y1-1),x1)==chk[i]))
+				best_dist = d;
+				best_y = ny;
+				best_x = nx;
+			}
+			else
 			{
-				y1 = y1-1;
-		} else if(abs((y1+1)-y2)<abs(y1-y2)&&(mvinch((y1+1),x1)==chk[i]))
-			{
-       	                 y1 = y1+1;
+				chtype ch = mvinch(ny, nx) & A_CHARTEXT;
+				if(ch == '.' || ch == '#' || ch == ':' || ch == '%')
+				{
+					best_dist = d;
+					best_y = ny;
+					best_x = nx;
+				}
+			}
 		}
 	}
 
-	yx[0]=y1; yx[1]=x1;
-
+	yx[0] = best_y;
+	yx[1] = best_x;
 	return yx;
 }
 
 int *PathFindRandom(int *yx, int y, int x, char *chk, int mode)
-{ // types = THE AMOUNT OF DIFFERENT TILES THE MONSTER CAN 'SEE'!!!!!  
+{
 	int random = 0;
-	int types = 8; 
 	if(mode==RANDOM_S)
 	{	
 		random = (rand()%4);
-		
 	} else
 	{
-		random = (rand()%9);
+		random = (rand()%8);
 	}
 
+	int dy = 0, dx = 0;
 	switch(random)
 	{
-			case UP:
-			for(int i=0; i<types; i++)
-			{
-			
-				if(mvinch(y-1,x)==chk[i])
-				{	
-					y--;
-				}
-			}
-			break;
-			case DOWN:
-			for(int i=0; i<types; i++)
-			{
-				if(mvinch(y+1,x)==chk[i])
-				{	
-					y++;
-				}
-			}
-			break;
-			case LEFT:
-			for(int i=0; i<types; i++)
-			{
-				if(mvinch(y,x-1)==chk[i])
-				{	
-					x--;
-				}
-			}
-			break;
-			case RIGHT:
-			for(int i=0; i<types; i++)
-			{
-				if(mvinch(y,x+1)==chk[i])
-				{	
-					x++;
-				}
-			}
-			break;
-			
-			if(mode==RANDOM_X)
-			{
-			case UPLEFT:
-			for(int i=0; i<types; i++)
-			{
-				if(mvinch(y-1,x-1)==chk[i])
-				{	
-					y--;
-					x--;
-				}
-			}
-			break;
-			case UPRIGHT:
-			for(int i=0; i<types; i++)
-			{
-				if(mvinch(y-1,x+1)==chk[i])
-				{	
-					y--;
-					x++;
-				}
-			}
-			break;
-			case DOWNLEFT:
-			for(int i=0; i<types; i++)
-			{
-				if(mvinch(y+1,x-1)==chk[i])
-				{	
-					y++;
-					x--;
-				}
-			}
-			break;
-			case DOWNRIGHT:
-			for(int i=0; i<types; i++)
-			{
-				if(mvinch(y+1,x+1)==chk[i])
-				{	
-					y++;
-					x++;
-				}
-			}
-			break;
-			
-			default:
-			break;
-			}
+		case UP:        dy = -1; dx = 0;  break;
+		case DOWN:      dy =  1; dx = 0;  break;
+		case LEFT:      dy =  0; dx = -1; break;
+		case RIGHT:     dy =  0; dx =  1; break;
+		case UPLEFT:    dy = -1; dx = -1; break;
+		case UPRIGHT:   dy = -1; dx =  1; break;
+		case DOWNLEFT:  dy =  1; dx = -1; break;
+		case DOWNRIGHT: dy =  1; dx =  1; break;
+		default: break;
 	}
 
-	yx[0] = y; yx[1] = x;
+	int ny = y + dy;
+	int nx = x + dx;
+	chtype ch = mvinch(ny, nx) & A_CHARTEXT;
+	if(ch == '.' || ch == '#' || ch == ':' || ch == '%')
+	{
+		y = ny;
+		x = nx;
+	}
 
+	yx[0] = y;
+	yx[1] = x;
 	return yx;
 }
 
