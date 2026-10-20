@@ -77,9 +77,38 @@ Level *Game(Level *level)
 
 		
 		level[level->lvl].player->input = c; 
+
+		if(c=='L')
+		{
+			ClearMsg(); mvprintw(0,0,"LVL = %d, MAXLVL = %d.", level->lvl, level->maxlvl); 		
+			refresh(); getch();
+			ClearMsg();
+			continue;
+		}
+		if(c=='M')
+		{
+			ClearMsg(); mvprintw(0,0,"MONS = %d.", level[level->lvl].mons); 		
+			refresh(); getch();
+			ClearMsg();
+			continue;
+		}
+		if(c=='C')
+		{
+			char chr[16];
+			sprintf(chr,"%c",level->player_symbol);
+			ClearMsg(); mvprintw(0,0,"CHARACTER: %s", chr); 		
+			refresh(); getch();
+			ClearMsg();
+			continue;
+		}
 		
 	// HANDLE INPUT:
-		yx = HandleInput(level,level[level->lvl], yx);
+		int action_taken = HandleInput(level,level[level->lvl], yx);
+		if(!action_taken)
+		{
+			PlayerInfoBar(level);
+			continue;
+		}
 
 		// TURN & HUNGER PROGRESSION:
 		level->turn++;
@@ -146,40 +175,6 @@ Level *Game(Level *level)
 		}
 
 		PlayerInfoBar(level);
-
-
-	//////////// FOR MOVEMENT BUG ////////////////
-		cp = level[level->lvl].map[level[level->lvl].player->Position.yPos][level[level->lvl].player->Position.xPos];
-		if(cp!=level->player_symbol) // IF NOT STAY STILL SO THAT PREV CHAR is @:
-		{ // Update the last character  
-			level[level->lvl].player->Position.ch = cp;
-		}
-	/////////////////////////////////////////////
-
-		if(c=='L')
-		{
-		char num[16];
-		mvprintw(0,0,"\n"); mvprintw(0,0,"LVL =   , MAXLVL =   ."); 		
-		sprintf(num,"%d",level->lvl); mvprintw(0,6,num);
-		sprintf(num,"%d",level->maxlvl); mvprintw(0,19,num);
-		refresh(); getchar();
-		}
-		if(c=='M')
-		{
-		char num[16];
-		mvprintw(0,0,"\n"); mvprintw(0,0,"LVL =   , LVLI =   ."); 		
-		sprintf(num,"%d",level[level->lvl].mons); mvprintw(0,6,num);
-		sprintf(num,"%d",level->mons); mvprintw(0,17,num);
-		refresh(); getchar();
-		}
-		if(c=='C')
-		{
-		char chr[16];
-		sprintf(chr,"%c",level->player_symbol);
-		mvprintw(0,0,"\n"); mvprintw(0,0,"CHARACTER:"); 		
-		printw(chr);
-		refresh(); getchar();
-		}
 	} else
 	{
 		break;

@@ -1,54 +1,66 @@
 #include "global.h"
 
-int *HandleInput(Level *leveli, Level level, int *yx)
+int HandleInput(Level *leveli, Level level, int *yx)
 {
-	// Save the original position values:
-	int y = level.player->Position.yPos;
-	int x = level.player->Position.xPos;
-	
-	char num[16];
+	int orig_y = level.player->Position.yPos;
+	int orig_x = level.player->Position.xPos;
+	int target_y = orig_y;
+	int target_x = orig_x;
+	int is_move = 0;
+	int action_taken = 0;
 
 	switch(level.player->input)
-	{	// Move up, update the position variable accordingly:
-		case 'w':
-			y = level.player->Position.yPos-1;
-			x = level.player->Position.xPos;
-		break;
-		// Move down
-		case 's':
-			y = level.player->Position.yPos+1;
-			x = level.player->Position.xPos;
-		break;
-		// Move back
-		case 'a':
-			y = level.player->Position.yPos;
-			x = level.player->Position.xPos-1;
-		break;
-		// Move forward
-		case 'd':
-			y = level.player->Position.yPos;
-			x = level.player->Position.xPos+1;
-		break;
-		// Move upleft
-		case 'q':
-			y = level.player->Position.yPos-1;
-			x = level.player->Position.xPos-1;
-		break;
-		// Move upright
+	{
+		// Cardinal & diagonal movement (WASD, vi keys, and numpad):
+		case 'w': case 'k': case '8':
+			target_y = orig_y - 1; target_x = orig_x; is_move = 1; break;
+		case 's': case 'j': case '2':
+			target_y = orig_y + 1; target_x = orig_x; is_move = 1; break;
+		case 'a': case 'h': case '4':
+			target_y = orig_y; target_x = orig_x - 1; is_move = 1; break;
+		case 'd': case 'l': case '6':
+			target_y = orig_y; target_x = orig_x + 1; is_move = 1; break;
+		case 'q': case 'y': case '7':
+			target_y = orig_y - 1; target_x = orig_x - 1; is_move = 1; break;
+		case 'z': case 'b': case '1':
+			target_y = orig_y + 1; target_x = orig_x - 1; is_move = 1; break;
+		case 'x': case 'n': case '3':
+			target_y = orig_y + 1; target_x = orig_x + 1; is_move = 1; break;
+		case 'u': case '9':
+			target_y = orig_y - 1; target_x = orig_x + 1; is_move = 1; break;
+
+		// 'e': if standing on corpse, eat it; otherwise move upright (standard WASD+QEZX)
 		case 'e':
-			y = level.player->Position.yPos-1;
-			x = level.player->Position.xPos+1;
-		break;
-		// Move downleft
-		case 'z':
-			y = level.player->Position.yPos+1;
-			x = level.player->Position.xPos-1;
-		break;
-		// Move downright
-		case 'x':
-			y = level.player->Position.yPos+1;
-			x = level.player->Position.xPos+1;
-		break;
+			if(GetCorpseAt(level, orig_y, orig_x) != NULL)
+			{
+				action_taken = AskEatCorpse(leveli, level, level.player, orig_y, orig_x);
+			}
+			else
+			{
+				target_y = orig_y - 1; target_x = orig_x + 1; is_move = 1;
+			}
+			break;
+
+		// 'E': explicit eat command
+		case 'E':
+			if(GetCorpseAt(level, orig_y, orig_x) != NULL)
+			{
+				action_taken = AskEatCorpse(leveli, level, level.player, orig_y, orig_x);
+			}
+			else
+			{
+				ClearMsg();
+				mvprintw(0,0,"There is no corpse here to eat.");
+				refresh();
+			}
+			break;
+
+		// Rest / Wait a turn:
+		case '.':
+		case ' ':
+		case '5':
+			action_taken = 1;
+			break;
 
 		// Close door:
 		case 'c': 
@@ -62,84 +74,110 @@ int *HandleInput(Level *leveli, Level level, int *yx)
 			}
 			else
 			{
-				TurnNearby(y,x,':',"+", level);
+				TurnNearby(orig_y, orig_x, ':', "+", level);
 				ClearMsg();
 				mvprintw(0,0,"You are closing nearby doors!");
 				refresh();
+				action_taken = 1;
 			}
-		break;
-	
-		case 'u':
-			for(int i=0; i<level.rooms.mode; i++)
-			{	
-			ClearMsg();
-			mvprintw(0,0,"Room    width:    and height:   .");
-			sprintf(num,"%d",i);
-			mvprintw(0,5,num);
-			sprintf(num,"%d",level.rooms.Area[i].width);
-			mvprintw(0,15,num);
-			sprintf(num,"%d",level.rooms.Area[i].height);
-			mvprintw(0,30,num);
+			break;
 
-			getch();
-
-			refresh(); ClearMsg();
- 			}
-		break;
-		
 		case '?':
 			getch();
 			PrintMap(MAX_Y,MAX_X,level.map);
 			refresh();
 			getch();	
-		break;
-		
+			break;
+
 		default:
-		break;
+			break;
 	}
-    
-/////////////// CHARACTER MOVEMENT! ///////////////////////
-// After updating the position variable,first get the next character:	
-	Entity *empty = NULL;
-	CheckNextChar(leveli, leveli->player_symbol,PLAYER,y,x,level,empty); 
-	
-/////////////// MONSTER MOVEMENT! ///////////////////////
-	char chk[10] = {'.','#',':','@','s', 'g','x','T'};
-//	char *chk = chks;
-	for(int i=0; i<level.mons; i++)
+
+	if(is_move)
 	{
-		if(level.monsters[i]->alive != YES)
+		// 1. Check if an active monster is at target tile:
+		Entity *target = GetMonsterAt(target_y, target_x, level);
+		if(target != NULL && target->alive == YES)
 		{
-			continue;
+			Combat(leveli, level, level.player, target, PLAYER);
+			action_taken = 1;
 		}
-		// Save the original position values:
-		y = level.monsters[i]->Position.yPos; x = level.monsters[i]->Position.xPos;
-		// Do movement for each:
-
-		if(level.monsters[i]->type==FOLLOW)
+		else
 		{
-			yx = PathFindFollow(yx,y,x,level.player->Position.yPos,level.player->Position.xPos, chk);
-		} else if(level.monsters[i]->mode==RANDOM_S)
-		{
-			yx = PathFindRandom(yx,y,x,chk,RANDOM_S);
-		} else if(level.monsters[i]->mode==RANDOM_X)
-		{
-			yx = PathFindRandom(yx,y,x,chk,RANDOM_X);
-		} else
-		{
-			yx = PathFindRandom(yx,y,x,chk,RANDOM_X);
+			chtype ch = mvinch(target_y, target_x) & A_CHARTEXT;
+			switch(ch)
+			{
+				case '.':
+				case '#':
+					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
+					level.player->Position.type = GROUND;
+					action_taken = 1;
+					break;
+				case ':':
+					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
+					level.player->Position.type = DOOR;
+					action_taken = 1;
+					break;
+				case '+':
+					action_taken = OpenDoor(level.player, target_y, target_x);
+					break;
+				case '>':
+					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
+					AskStairs(USTAIRS, level.player);
+					action_taken = 1;
+					break;
+				case '<':
+					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
+					AskStairs(DSTAIRS, level.player);
+					action_taken = 1;
+					break;
+				case '%':
+					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
+					level.player->Position.type = LOOT;
+					AskEatCorpse(leveli, level, level.player, target_y, target_x);
+					action_taken = 1;
+					break;
+				default:
+					ClearMsg();
+					mvprintw(0, 0, "You bump into a wall.");
+					refresh();
+					action_taken = 0;
+					break;
+			}
 		}
-		
-		y = yx[0]; x = yx[1];
-		
-		level.monsters[i] = CheckNextChar(leveli,level.monsters[i]->symbol,MONSTER,y,x,level,level.monsters[i]);
 	}
-//////////////////////////////////////////////////////////
 
-	move(level.player->Position.yPos,level.player->Position.xPos);
+	// If a turn was taken, monsters take their turn:
+	if(action_taken)
+	{
+		char chk[10] = {'.','#',':','@','s', 'g','x','T'};
+		for(int i=0; i<level.mons; i++)
+		{
+			if(level.monsters[i]->alive != YES)
+			{
+				continue;
+			}
+			int my = level.monsters[i]->Position.yPos;
+			int mx = level.monsters[i]->Position.xPos;
+
+			if(level.monsters[i]->type==FOLLOW)
+			{
+				yx = PathFindFollow(yx, my, mx, level.player->Position.yPos, level.player->Position.xPos, chk);
+			} else if(level.monsters[i]->mode==RANDOM_S)
+			{
+				yx = PathFindRandom(yx, my, mx, chk, RANDOM_S);
+			} else {
+				yx = PathFindRandom(yx, my, mx, chk, RANDOM_X);
+			}
+			
+			my = yx[0]; mx = yx[1];
+			level.monsters[i] = CheckNextChar(leveli, level.monsters[i]->symbol, MONSTER, my, mx, level, level.monsters[i]);
+		}
+	}
+
+	move(level.player->Position.yPos, level.player->Position.xPos);
 	refresh();
-    
-	return yx;
+	return action_taken;
 }
 
 

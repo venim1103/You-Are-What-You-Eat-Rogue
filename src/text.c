@@ -25,7 +25,7 @@ int WelcomeTxt()
 {
 	// WELCOME TEXT + INSTRUCTIONS:
 	ClearMsg();
-	mvprintw(0,0, "Welcome! Press 'Q' to exit and move with wasd+qezx.  You gain XP from killing monsters and going deeper!");
+	mvprintw(0,0, "Move: wasd/qezx/numpad | Wait: '.' | Eat: 'e'/'E' | Close: 'c' | Quit: 'Q'");
 	refresh(); getch();
 	ClearMsg();
 

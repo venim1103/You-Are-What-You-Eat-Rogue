@@ -136,6 +136,7 @@ int StepOn(Level *leveli, int type, int nexty, int nextx, char c, char symbol, L
 	
 			default: // Print the previous character and only after that update
 				level.player = PlayerMove(level.player,buf,symbol,nexty,nextx);
+				level.player->Position.ch = c;
 			break;
 		}
 	} else if(type==MONSTER)

@@ -56,7 +56,7 @@ int StepOn(Level *leveli, int type, int nexty, int nextx, char c, char symbol, L
 int *PathFindRandom(int *yx, int y, int x, char *chk, int mode);
 int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char *chk);
 int *MonSetup(Entity *monster, Entity room, int *yx);
-int *HandleInput(Level *leveli, Level level, int *yx);
+int HandleInput(Level *leveli, Level level, int *yx);
 int *RandomCoords(int *yx, int rm, Position room);
 
 char **SaveMap(char **XY, int y, int x);
