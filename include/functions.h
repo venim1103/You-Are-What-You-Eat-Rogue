@@ -14,6 +14,8 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 
 Entity *PlayerSetup(Level *leveli, Entity *player, Entity room); 
 Entity *PlayerMove(Entity *player, char *buf, char c, int nexty, int nextx);
+void ApplyFormTraits(Entity *entity, char symbol);
+void CopyPlayer(Entity *dest, Entity *src);
 Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name);
 Entity *SelMonster(int lvl);
 Entity *GetMonsterAt(int MonY, int MonX, Level level);

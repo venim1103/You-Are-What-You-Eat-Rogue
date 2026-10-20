@@ -46,9 +46,11 @@ Corpse *GetCorpseAt(Level level, int y, int x)
 
 int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 {
-	mvprintw(0,0,"\n");
-	mvprintw(0,0,"You devour the %s corpse! (+%d hunger) You polymorph into a %s!", 
-		corpse->name, corpse->nutrition, corpse->name);
+	int nut = corpse->nutrition;
+	if(player->scavenger_bonus > 0)
+	{
+		nut = nut + (nut * player->scavenger_bonus / 100);
+	}
 
 	player->name = corpse->name;
 	player->symbol = corpse->symbol;
@@ -57,11 +59,17 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 	player->maxhp = ((corpse->maxhp)*4)+6;
 	player->health = player->maxhp;
 
-	player->hunger += corpse->nutrition;
+	player->hunger += nut;
 	if(player->hunger > player->max_hunger)
 	{
 		player->hunger = player->max_hunger;
 	}
+
+	ApplyFormTraits(player, corpse->symbol);
+
+	mvprintw(0,0,"\n");
+	mvprintw(0,0,"Devoured %s! (+%d hunger) Polymorphed into %s! [%s]", 
+		corpse->name, nut, corpse->name, player->trait_desc);
 
 	corpse->active = NO;
 	leveli[leveli->lvl].map_backup[player->Position.yPos][player->Position.xPos] = '.';
@@ -119,13 +127,48 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 
 		if(monster->health > 0)
 		{
-			monster->health -= player->attack;
-			sprintf(buf,"%d",player->attack);
+			int dmg = player->attack;
+
+			// Cleave trait
+			if(player->cleave_chance > 0 && (rand() % 100) < player->cleave_chance)
+			{
+				dmg += 3;
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"CRUSHING CLEAVE! (+3 damage)");
+				refresh(); getch();
+			}
+
+			monster->health -= dmg;
+			sprintf(buf,"%d",dmg);
 			mvprintw(0,0,"\n");
 			mvprintw(0,0,"You hit the ");
 			printw(monster->name); printw(" for "); printw(buf); printw(" damage!"); 
 			refresh(); getch();	
 			mvprintw(0,0,"\n"); refresh();
+
+			// Snake Venomous Strike trait
+			if(player->poison_attack && monster->symbol != 's' && monster->health > 0)
+			{
+				monster->poison_turns = 3;
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"You inject venom into the %s!", monster->name);
+				refresh(); getch();
+				mvprintw(0,0,"\n"); refresh();
+			}
+
+			// Spider Skitter trait: second attack
+			if(player->extra_attack_chance > 0 && (rand() % 100) < player->extra_attack_chance && monster->health > 0)
+			{
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"SKITTER! You strike a second time!");
+				refresh(); getch();
+				monster->health -= player->attack;
+				sprintf(buf,"%d",player->attack);
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"Second bite hits for "); printw(buf); printw(" damage!");
+				refresh(); getch();
+				mvprintw(0,0,"\n"); refresh();
+			}
 
 			if(monster->health <= 0)
 			{
@@ -147,13 +190,31 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 			// If the monster is following, don't fight back!
 			if(monster->type!=FOLLOW)
 			{
-				player->health -= monster->attack;
-				sprintf(buf,"%d",monster->attack);
+				int m_dmg = monster->attack;
+				if(monster->cleave_chance > 0 && (rand() % 100) < monster->cleave_chance)
+				{
+					m_dmg += 3;
+					mvprintw(0,0,"\n");
+					mvprintw(0,0,"The %s lands a CRUSHING CLEAVE!", monster->name);
+					refresh(); getch();
+				}
+
+				player->health -= m_dmg;
+				sprintf(buf,"%d",m_dmg);
 				mvprintw(0,0,"\n");
 				mvprintw(0,0,"You were hit by a ");
 				printw(monster->name); printw(" for "); printw(buf); printw(" damage!"); 
 				refresh(); getch();	
 				mvprintw(0,0,"\n"); refresh();
+
+				if(monster->poison_attack && player->symbol != 's' && player->health > 0)
+				{
+					player->poison_turns = 3;
+					mvprintw(0,0,"\n");
+					mvprintw(0,0,"The %s bit you with lethal venom!", monster->name);
+					refresh(); getch();
+					mvprintw(0,0,"\n"); refresh();
+				}
 			}
 		}
 	}
@@ -167,13 +228,44 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 
 		if(monster->health > 0)
 		{
-			player->health -= monster->attack;
-			sprintf(buf,"%d",monster->attack);
+			int m_dmg = monster->attack;
+			if(monster->cleave_chance > 0 && (rand() % 100) < monster->cleave_chance)
+			{
+				m_dmg += 3;
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"The %s lands a CRUSHING CLEAVE!", monster->name);
+				refresh(); getch();
+			}
+
+			player->health -= m_dmg;
+			sprintf(buf,"%d",m_dmg);
 			mvprintw(0,0,"\n");
 			mvprintw(0,0,"You were hit by a ");
 			printw(monster->name); printw(" for "); printw(buf); printw(" damage!"); 
 			refresh(); getch();	
 			mvprintw(0,0,"\n"); refresh();
+
+			if(monster->poison_attack && player->symbol != 's' && player->health > 0)
+			{
+				player->poison_turns = 3;
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"The %s bit you with lethal venom!", monster->name);
+				refresh(); getch();
+				mvprintw(0,0,"\n"); refresh();
+			}
+
+			if(monster->extra_attack_chance > 0 && (rand() % 100) < monster->extra_attack_chance && player->health > 0)
+			{
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"The %s skitters rapidly and bites again!", monster->name);
+				refresh(); getch();
+				player->health -= monster->attack;
+				sprintf(buf,"%d",monster->attack);
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"Second strike hits for "); printw(buf); printw(" damage!");
+				refresh(); getch();
+				mvprintw(0,0,"\n"); refresh();
+			}
 		}
 	}
 

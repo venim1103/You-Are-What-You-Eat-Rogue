@@ -52,10 +52,21 @@ int *HandleInput(Level *leveli, Level level, int *yx)
 
 		// Close door:
 		case 'c': 
-			TurnNearby(y,x,':',"+");
-			mvprintw(0,0,"\n");
-			mvprintw(0,0,"You are closing nearby doors!");
-			refresh();
+			if(level.player->can_open_doors == NO)
+			{
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"You cannot operate doors as a %s! (You lack hands)", level.player->name);
+				refresh(); getch();
+				mvprintw(0,0,"\n");
+				refresh();
+			}
+			else
+			{
+				TurnNearby(y,x,':',"+");
+				mvprintw(0,0,"\n");
+				mvprintw(0,0,"You are closing nearby doors!");
+				refresh();
+			}
 		break;
 	
 		case 'u':

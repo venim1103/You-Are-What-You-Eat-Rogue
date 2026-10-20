@@ -106,6 +106,49 @@ Level *Game(Level *level)
 			}
 		}
 
+		// POISON HANDLING (PLAYER):
+		if(level[level->lvl].player->alive != DEAD && level[level->lvl].player->poison_turns > 0)
+		{
+			level[level->lvl].player->poison_turns--;
+			level[level->lvl].player->health -= 1;
+			mvprintw(0,0,"\n");
+			mvprintw(0,0,"Poison wracks your body! (-1 HP, %d turns left)", level[level->lvl].player->poison_turns);
+			refresh();
+			if(level[level->lvl].player->health <= 0)
+			{
+				level[level->lvl].player->alive = DEAD;
+				level->killer = "Lethal Poison";
+			}
+		}
+
+		// POISON HANDLING (MONSTERS):
+		for(int m = 0; m < level[level->lvl].mons; m++)
+		{
+			Entity *mon = level[level->lvl].monsters[m];
+			if(mon != NULL && mon->alive == YES && mon->poison_turns > 0)
+			{
+				mon->poison_turns--;
+				mon->health -= 1;
+				if(mon->health <= 0)
+				{
+					mon->alive = DEAD;
+					DropCorpse(level, mon, mon->Position.yPos, mon->Position.xPos);
+					mon->Position.yPos = -1;
+					mon->Position.xPos = -1;
+				}
+			}
+		}
+
+		// TROLL REGENERATION:
+		if(level[level->lvl].player->alive != DEAD &&
+		   level[level->lvl].player->regen_rate > 0 &&
+		   (level->turn % level[level->lvl].player->regen_rate) == 0 &&
+		   level[level->lvl].player->hunger > 0 &&
+		   level[level->lvl].player->health < level[level->lvl].player->maxhp)
+		{
+			level[level->lvl].player->health += 1;
+		}
+
 		PlayerInfoBar(level);
 
 
@@ -182,16 +225,7 @@ Level *Upstairs(Level *level, int r)
 ///////////////////////////////////////////////////////////////////
 
 	// SAVE OLD VALUES TO NEXT LEVEL!
-	level[r].player->health=level[r+1].player->health;
-	level[r].player->maxhp=level[r+1].player->maxhp;
-	level[r].player->attack=level[r+1].player->attack;
-	level[r].player->xp=level[r+1].player->xp;
-	level[r].player->hunger=level[r+1].player->hunger;
-	level[r].player->max_hunger=level[r+1].player->max_hunger;
-	level[r].player->hunger_rate=level[r+1].player->hunger_rate;
-	level[r].player->name=level[r+1].player->name;
-	level[r].player->symbol=level[r+1].player->symbol;
-	level[r].player->Position.type=level[r+1].player->Position.type;
+	CopyPlayer(level[r].player, level[r+1].player);
 	//
 
 	move(level[r].player->Position.yPos,level[r].player->Position.xPos);  
@@ -217,16 +251,7 @@ Level *Downstairs(Level *level, int r)
 		r++;
 		
 		// SAVE OLD VALUES TO NEXT LEVEL!
-		level[r].player->health=level[r-1].player->health;
-		level[r].player->maxhp=level[r-1].player->maxhp;
-		level[r].player->Position.type=level[r-1].player->Position.type;
-		level[r].player->attack=level[r-1].player->attack;
-		level[r].player->xp=level[r-1].player->xp;
-		level[r].player->hunger=level[r-1].player->hunger;
-		level[r].player->max_hunger=level[r-1].player->max_hunger;
-		level[r].player->hunger_rate=level[r-1].player->hunger_rate;
-		level[r].player->name=level[r-1].player->name;
-		level[r].player->symbol=level[r-1].player->symbol;
+		CopyPlayer(level[r].player, level[r-1].player);
 		//
 
 		level->lvl = r;
@@ -246,15 +271,7 @@ Level *Downstairs(Level *level, int r)
 		level[r] = MakeLvl(level[r], r, level);
 	
 		// SAVE OLD VALUES TO NEXT LEVEL!	
-		level[r].player->health=level[r-1].player->health;
-		level[r].player->maxhp=level[r-1].player->maxhp;
-		level[r].player->attack=level[r-1].player->attack;
-		level[r].player->xp=level[r-1].player->xp;
-		level[r].player->hunger=level[r-1].player->hunger;
-		level[r].player->max_hunger=level[r-1].player->max_hunger;
-		level[r].player->hunger_rate=level[r-1].player->hunger_rate;
-		level[r].player->name=level[r-1].player->name;
-		level[r].player->symbol=level[r-1].player->symbol;
+		CopyPlayer(level[r].player, level[r-1].player);
 		//
 
 		level->lvl = r;

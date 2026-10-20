@@ -49,10 +49,14 @@ int PlayerInfoBar(Level *level)
 	}
 
 	mvprintw(MAX_Y, 0,"    Player: "); printw(level[level->lvl].player->name);
-	printw("    Hp: %d", level[level->lvl].player->health);
+	printw("    Hp: %d/%d", level[level->lvl].player->health, level[level->lvl].player->maxhp);
 	printw("    Att: %d", level[level->lvl].player->attack);
 	printw("    Level: %d", level->lvl);
 	printw("    Hunger: %s", hunger_status);
+	if(level[level->lvl].player->poison_turns > 0)
+	{
+		printw(" [POISON:%d]", level[level->lvl].player->poison_turns);
+	}
 	printw("    XP: %d", level[level->lvl].player->xp);
 	printw("      ");
 
@@ -154,6 +158,17 @@ int AskStairs(int stairs, Entity *player)
 
 int OpenDoor(Entity *player, int y, int x)
 {
+	if(player->can_open_doors == NO)
+	{
+		mvprintw(0,0,"\n");
+		mvprintw(0,0,"You cannot open doors as a %s! (You lack hands)", player->name);
+		refresh(); getch();
+		mvprintw(0,0,"\n");
+		refresh();
+		move(player->Position.yPos, player->Position.xPos);
+		return 0;
+	}
+
 	mvprintw(0,0,"\n"); // Clear the line	
 	mvprintw(0,0, "Do you want to open the door? y/n");
 	refresh(); mvprintw(0,0,"\n");

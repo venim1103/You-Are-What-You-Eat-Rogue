@@ -96,6 +96,8 @@ Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name)
 
 	monster->Position.type = NO;
 	monster->alive = YES;
+	monster->poison_turns = 0;
+	ApplyFormTraits(monster, c);
 
 	return monster;
 }

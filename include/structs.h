@@ -29,6 +29,14 @@ typedef struct Entity
 	int hunger;
 	int max_hunger;
 	int hunger_rate;
+	int poison_turns;
+	int regen_rate;
+	int can_open_doors;
+	int extra_attack_chance;
+	int poison_attack;
+	int cleave_chance;
+	int scavenger_bonus;
+	char *trait_desc;
 	char input;
 	char symbol;
 	char *name;

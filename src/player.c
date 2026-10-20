@@ -1,5 +1,85 @@
 #include "global.h"
 
+void ApplyFormTraits(Entity *entity, char symbol)
+{
+	switch(symbol)
+	{
+		case 'x': // Spider
+			entity->hunger_rate = 2;
+			entity->regen_rate = 0;
+			entity->can_open_doors = NO;
+			entity->extra_attack_chance = 40;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 0;
+			entity->trait_desc = "Skitter (40% 2nd hit), Fast Metabolism (2 hunger/t), No Hands";
+			break;
+		case 's': // Snake
+			entity->hunger_rate = 1;
+			entity->regen_rate = 0;
+			entity->can_open_doors = NO;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 1;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 0;
+			entity->trait_desc = "Venomous Strike, Poison Immune, No Hands";
+			break;
+		case 'g': // Goblin
+			entity->hunger_rate = 1;
+			entity->regen_rate = 0;
+			entity->can_open_doors = YES;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 50;
+			entity->trait_desc = "Scavenger (+50% corpse nutrition)";
+			break;
+		case 'T': // Troll
+			entity->hunger_rate = 3;
+			entity->regen_rate = 2;
+			entity->can_open_doors = YES;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 35;
+			entity->scavenger_bonus = 0;
+			entity->trait_desc = "Regen (1HP/2t), Crushing Cleave, Gluttony (3 hunger/t)";
+			break;
+		case '@': // Human
+		default:
+			entity->hunger_rate = 1;
+			entity->regen_rate = 0;
+			entity->can_open_doors = YES;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 0;
+			entity->trait_desc = "Balanced Human Form";
+			break;
+	}
+}
+
+void CopyPlayer(Entity *dest, Entity *src)
+{
+	dest->health = src->health;
+	dest->maxhp = src->maxhp;
+	dest->attack = src->attack;
+	dest->xp = src->xp;
+	dest->hunger = src->hunger;
+	dest->max_hunger = src->max_hunger;
+	dest->hunger_rate = src->hunger_rate;
+	dest->poison_turns = src->poison_turns;
+	dest->regen_rate = src->regen_rate;
+	dest->can_open_doors = src->can_open_doors;
+	dest->extra_attack_chance = src->extra_attack_chance;
+	dest->poison_attack = src->poison_attack;
+	dest->cleave_chance = src->cleave_chance;
+	dest->scavenger_bonus = src->scavenger_bonus;
+	dest->trait_desc = src->trait_desc;
+	dest->name = src->name;
+	dest->symbol = src->symbol;
+	dest->Position.type = src->Position.type;
+}
+
 Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 {
 	player = malloc(sizeof(Entity));
@@ -28,9 +108,11 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->xp = 0;
 	player->hunger = 800;
 	player->max_hunger = 1000;
-	player->hunger_rate = 1;
 	player->name = "Human";
+	player->symbol = '@';
 	player->alive = YES;
+	player->poison_turns = 0;
+	ApplyFormTraits(player, '@');
 
 	// Print upstairs and downstairs + update the cursor
 	PrintChar(player->Position.yPos,player->Position.xPos,'>');
