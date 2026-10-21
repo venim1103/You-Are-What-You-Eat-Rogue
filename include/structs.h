@@ -14,6 +14,31 @@ typedef struct Position
 	char ch;
 } Position;
 
+typedef struct Corpse
+{
+	Position Position;
+	char symbol;
+	char *name;
+	int maxhp;
+	int attack;
+	int nutrition;
+	int age;
+	int active;
+} Corpse;
+
+typedef struct Item
+{
+	Position Position;
+	char symbol;       // ')' for weapon, '[' for armor, '%' for corpse
+	char *name;
+	int bonus_att;
+	int bonus_def;
+	int item_type;     // ITEM_WEAPON, ITEM_ARMOR, ITEM_CORPSE
+	int equipped;      // YES / NO
+	int active;        // On floor? YES / NO
+	Corpse corpse_data;
+} Item;
+
 typedef struct Entity
 {
 	Position Position;
@@ -45,22 +70,14 @@ typedef struct Entity
 	int ability_cost;
 	char *ability_name;
 	char *trait_desc;
+	Item inventory[10];
+	int num_items;
+	int equipped_weapon; // -1 if none
+	int equipped_armor;  // -1 if none
 	char input;
 	char symbol;
 	char *name;
 } Entity;
-
-typedef struct Corpse
-{
-	Position Position;
-	char symbol;
-	char *name;
-	int maxhp;
-	int attack;
-	int nutrition;
-	int age;
-	int active;
-} Corpse;
 
 typedef struct Level
 {
@@ -68,6 +85,7 @@ typedef struct Level
 	Entity *player;
 	struct Entity **monsters;
 	struct Corpse *corpses;
+	struct Item *items;
 	char player_symbol;
 	char *killer;
 	char **map;
@@ -78,6 +96,8 @@ typedef struct Level
 	int turn;
 	int num_corpses;
 	int max_corpses;
+	int num_items;
+	int max_items;
 } Level;
 
 #endif // TO END THE DEFINITION FUNCTION TO ONE TIME USE ONLY!

@@ -24,6 +24,10 @@ int Free(Level level, int lvl, int lvls)
 	{
 		free(level.corpses);
 	}
+	if(level.items != NULL)
+	{
+		free(level.items);
+	}
 	free(level.player);
 
 	// Free the allocated door space!

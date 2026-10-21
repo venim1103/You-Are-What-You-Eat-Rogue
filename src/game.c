@@ -54,28 +54,6 @@ Level *Game(Level *level)
 
 		level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);
 	
-		if(c == 'r' || level[level->lvl].player->Position.type==DSTAIRS)
-		{
-			level = Downstairs(level,level->lvl); 
-//			r = level->lvl;
-			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
-			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
-			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);	
-			level[level->lvl].player->Position.type = UNKNOWN;
-			PlayerInfoBar(level);
-		}
-		if(level[level->lvl].player->Position.type==USTAIRS)
-		{
-			level = Upstairs(level,level->lvl);
-//			r = level->lvl; 
-			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
-			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
-			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);
-			level[level->lvl].player->Position.type = UNKNOWN;
-			PlayerInfoBar(level);
-		}
-
-		
 		level[level->lvl].player->input = c; 
 
 		if(c=='L')
@@ -104,6 +82,29 @@ Level *Game(Level *level)
 		
 	// HANDLE INPUT:
 		int action_taken = HandleInput(level,level[level->lvl], yx);
+
+		// IMMEDIATE STAIR TRANSITIONS:
+		if(c == 'r' || level[level->lvl].player->Position.type==DSTAIRS)
+		{
+			level = Downstairs(level,level->lvl); 
+			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
+			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
+			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);	
+			level[level->lvl].player->Position.type = UNKNOWN;
+			PlayerInfoBar(level);
+			continue;
+		}
+		if(level[level->lvl].player->Position.type==USTAIRS)
+		{
+			level = Upstairs(level,level->lvl);
+			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
+			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
+			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);
+			level[level->lvl].player->Position.type = UNKNOWN;
+			PlayerInfoBar(level);
+			continue;
+		}
+
 		if(!action_taken)
 		{
 			PlayerInfoBar(level);
@@ -127,6 +128,7 @@ Level *Game(Level *level)
 			level[level->lvl].player->health -= 1;
 			ClearMsg();
 			mvprintw(0,0,"You are starving to death!");
+			PlayerInfoBar(level);
 			refresh();
 			if(level[level->lvl].player->health <= 0)
 			{
@@ -142,6 +144,7 @@ Level *Game(Level *level)
 			level[level->lvl].player->health -= 1;
 			ClearMsg();
 			mvprintw(0,0,"Poison wracks your body! (-1 HP, %d turns left)", level[level->lvl].player->poison_turns);
+			PlayerInfoBar(level);
 			refresh();
 			if(level[level->lvl].player->health <= 0)
 			{

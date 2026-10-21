@@ -75,12 +75,35 @@ int PlayerInfoBar(Level *level)
 		hunger_status = "Starving";
 	}
 
+	int total_att = GetPlayerAttack(level[level->lvl].player);
+	int total_def = GetPlayerDefense(level[level->lvl].player);
+
 	move(MAX_Y, 0);
 	clrtoeol();
 	mvprintw(MAX_Y, 0,"    Player: %s (%c)", level[level->lvl].player->name, level->player_symbol);
 	printw("    Hp: %d/%d", level[level->lvl].player->health, level[level->lvl].player->maxhp);
-	printw("    Att: %d", level[level->lvl].player->attack);
-	printw("    Level: %d", level->lvl);
+	
+	int ew = level[level->lvl].player->equipped_weapon;
+	if(level[level->lvl].player->can_open_doors == YES && ew >= 0 && ew < level[level->lvl].player->num_items)
+	{
+		printw("    Att: %d [%s]", total_att, level[level->lvl].player->inventory[ew].name);
+	}
+	else
+	{
+		printw("    Att: %d", total_att);
+	}
+
+	int ea = level[level->lvl].player->equipped_armor;
+	if(level[level->lvl].player->can_open_doors == YES && ea >= 0 && ea < level[level->lvl].player->num_items)
+	{
+		printw("    Def: %d [%s]", total_def, level[level->lvl].player->inventory[ea].name);
+	}
+	else if(total_def > 0)
+	{
+		printw("    Def: %d", total_def);
+	}
+
+	printw("    Lvl: %d", level->lvl);
 	printw("    Hunger: %s (%d)", hunger_status, level[level->lvl].player->hunger);
 	if(level[level->lvl].player->poison_turns > 0)
 	{
@@ -97,10 +120,490 @@ int PlayerInfoBar(Level *level)
 			printw(" [%s:READY]", level[level->lvl].player->ability_name);
 		}
 	}
+	printw("    Inv: %d/10", level[level->lvl].player->num_items);
 	printw("    XP: %d", level[level->lvl].player->xp);
 	printw("      ");
 
 	return 1;
+}
+
+void SpawnFloorItems(Level *level, Entity rooms, int lvl)
+{
+	int spawn_count = (rand() % 3) + 2; // 2 to 4 items per level
+	int *yx = malloc(sizeof(int) * 3);
+
+	for(int i = 0; i < spawn_count && level->num_items < level->max_items; i++)
+	{
+		int random_room = rand() % rooms.mode;
+		yx = RandomCoords(yx, rooms.mode, rooms.Area[random_room]);
+		int y = yx[0];
+		int x = yx[1];
+
+		// Only place on free floor:
+		if((mvinch(y, x) & A_CHARTEXT) != '.')
+		{
+			continue;
+		}
+
+		int idx = level->num_items;
+		level->items[idx].Position.yPos = y;
+		level->items[idx].Position.xPos = x;
+		level->items[idx].active = YES;
+		level->items[idx].equipped = NO;
+
+		int roll = rand() % 7;
+		if(roll == 0)
+		{
+			level->items[idx].symbol = ')';
+			level->items[idx].name = "Iron Dagger";
+			level->items[idx].bonus_att = 2;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_WEAPON;
+		}
+		else if(roll == 1)
+		{
+			level->items[idx].symbol = ')';
+			level->items[idx].name = "Steel Shortsword";
+			level->items[idx].bonus_att = 4;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_WEAPON;
+		}
+		else if(roll == 2)
+		{
+			level->items[idx].symbol = ')';
+			level->items[idx].name = "Heavy Broadsword";
+			level->items[idx].bonus_att = 6;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_WEAPON;
+		}
+		else if(roll == 3)
+		{
+			level->items[idx].symbol = ')';
+			level->items[idx].name = "Trollish Warhammer";
+			level->items[idx].bonus_att = 8;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_WEAPON;
+		}
+		else if(roll == 4)
+		{
+			level->items[idx].symbol = '[';
+			level->items[idx].name = "Leather Tunic";
+			level->items[idx].bonus_att = 0;
+			level->items[idx].bonus_def = 2;
+			level->items[idx].item_type = ITEM_ARMOR;
+		}
+		else if(roll == 5)
+		{
+			level->items[idx].symbol = '[';
+			level->items[idx].name = "Iron Chainmail";
+			level->items[idx].bonus_att = 0;
+			level->items[idx].bonus_def = 4;
+			level->items[idx].item_type = ITEM_ARMOR;
+		}
+		else
+		{
+			level->items[idx].symbol = '[';
+			level->items[idx].name = "Steel Plate Armor";
+			level->items[idx].bonus_att = 0;
+			level->items[idx].bonus_def = 6;
+			level->items[idx].item_type = ITEM_ARMOR;
+		}
+
+		level->map_backup[y][x] = level->items[idx].symbol;
+		PrintChar(y, x, level->items[idx].symbol);
+		level->num_items++;
+	}
+
+	free(yx);
+}
+
+Item *GetItemAt(Level level, int y, int x)
+{
+	for(int i = 0; i < level.num_items; i++)
+	{
+		if(level.items[i].active == YES &&
+		   level.items[i].Position.yPos == y &&
+		   level.items[i].Position.xPos == x)
+		{
+			return &level.items[i];
+		}
+	}
+	return NULL;
+}
+
+int PickUpFloorItem(Level *leveli, Level level, Entity *player)
+{
+	int py = player->Position.yPos;
+	int px = player->Position.xPos;
+
+	if(player->num_items >= 10)
+	{
+		ClearMsg();
+		mvprintw(0, 0, "Your backpack is full! (10/10 items)");
+		refresh();
+		return 0;
+	}
+
+	// 1. Check for floor item (')' or '[')
+	Item *it = GetItemAt(level, py, px);
+	if(it != NULL && it->active == YES)
+	{
+		int slot = player->num_items;
+		player->inventory[slot] = *it;
+		player->inventory[slot].active = YES;
+		player->inventory[slot].equipped = NO;
+		player->num_items++;
+
+		it->active = NO;
+		leveli[leveli->lvl].map_backup[py][px] = '.';
+		player->Position.ch = '.';
+
+		ClearMsg();
+		if(it->item_type == ITEM_WEAPON)
+		{
+			mvprintw(0, 0, "Picked up %s (+%d ATK)! Press 'w' to wield or 'i' for pack.", it->name, it->bonus_att);
+		}
+		else
+		{
+			mvprintw(0, 0, "Picked up %s (+%d DEF)! Press 'w' to wear or 'i' for pack.", it->name, it->bonus_def);
+		}
+		PlayerInfoBar(leveli);
+		refresh();
+		return 1;
+	}
+
+	// 2. Check for corpse ('%')
+	Corpse *c = GetCorpseAt(level, py, px);
+	if(c != NULL && c->active == YES)
+	{
+		int slot = player->num_items;
+		player->inventory[slot].symbol = '%';
+		player->inventory[slot].name = c->name;
+		player->inventory[slot].bonus_att = c->attack;
+		player->inventory[slot].bonus_def = 0;
+		player->inventory[slot].item_type = ITEM_CORPSE;
+		player->inventory[slot].equipped = NO;
+		player->inventory[slot].active = YES;
+		player->inventory[slot].corpse_data = *c;
+		player->num_items++;
+
+		c->active = NO;
+		leveli[leveli->lvl].map_backup[py][px] = '.';
+		player->Position.ch = '.';
+
+		ClearMsg();
+		mvprintw(0, 0, "Stowed %s corpse into backpack! (Slot %c) Press 'E' to eat anytime.", c->name, 'a' + slot);
+		PlayerInfoBar(leveli);
+		refresh();
+		return 1;
+	}
+
+	ClearMsg();
+	mvprintw(0, 0, "There is nothing here on the floor to pick up.");
+	refresh();
+	return 0;
+}
+
+int ShowInventory(Level *leveli, Level level, Entity *player)
+{
+	ClearMsg();
+	if(player->num_items == 0)
+	{
+		mvprintw(0, 0, "Your backpack is empty. Pick up items with 'g' or ','.");
+		refresh();
+		return 0;
+	}
+
+	clear();
+	mvprintw(1, 2, "==========================================================");
+	mvprintw(2, 2, "   BACKPACK & EQUIPMENT (Select 'a'-'j' to equip/eat, 'd' to drop, Esc/Space to exit)");
+	mvprintw(3, 2, "==========================================================");
+
+	for(int i = 0; i < player->num_items; i++)
+	{
+		char tag[32] = "";
+		if(player->inventory[i].equipped == YES)
+		{
+			if(player->inventory[i].item_type == ITEM_WEAPON) sprintf(tag, " [WIELDED]");
+			else if(player->inventory[i].item_type == ITEM_ARMOR) sprintf(tag, " [EQUIPPED]");
+		}
+
+		if(player->inventory[i].item_type == ITEM_WEAPON)
+		{
+			mvprintw(5 + i, 4, "[%c] %s (+%d ATK)%s", 'a' + i, player->inventory[i].name, player->inventory[i].bonus_att, tag);
+		}
+		else if(player->inventory[i].item_type == ITEM_ARMOR)
+		{
+			mvprintw(5 + i, 4, "[%c] %s (+%d DEF)%s", 'a' + i, player->inventory[i].name, player->inventory[i].bonus_def, tag);
+		}
+		else if(player->inventory[i].item_type == ITEM_CORPSE)
+		{
+			const char *st = GetCorpseStage(player->inventory[i].corpse_data.age);
+			mvprintw(5 + i, 4, "[%c] %s %s Corpse (%d nutrition) [EATABLE]", 'a' + i, st, player->inventory[i].name, player->inventory[i].corpse_data.nutrition);
+		}
+	}
+
+	mvprintw(6 + player->num_items, 2, "----------------------------------------------------------");
+	mvprintw(7 + player->num_items, 4, "Current Form: %s (%c) | Hands: %s", player->name, player->symbol, (player->can_open_doors == YES ? "YES" : "NO (Beast - cannot wield)"));
+	refresh();
+
+	int ch = getch();
+	if(ch >= 'a' && ch < ('a' + player->num_items))
+	{
+		int idx = ch - 'a';
+		if(player->inventory[idx].item_type == ITEM_WEAPON)
+		{
+			if(player->can_open_doors == NO)
+			{
+				ClearMsg();
+				mvprintw(0, 0, "Your %s body lacks hands to wield weapons!", player->name);
+			}
+			else
+			{
+				if(player->inventory[idx].equipped == YES)
+				{
+					player->inventory[idx].equipped = NO;
+					player->equipped_weapon = -1;
+					ClearMsg();
+					mvprintw(0, 0, "Sheathed %s.", player->inventory[idx].name);
+				}
+				else
+				{
+					if(player->equipped_weapon >= 0)
+					{
+						player->inventory[player->equipped_weapon].equipped = NO;
+					}
+					player->inventory[idx].equipped = YES;
+					player->equipped_weapon = idx;
+					ClearMsg();
+					mvprintw(0, 0, "Wielded %s (+%d ATK)!", player->inventory[idx].name, player->inventory[idx].bonus_att);
+				}
+			}
+		}
+		else if(player->inventory[idx].item_type == ITEM_ARMOR)
+		{
+			if(player->can_open_doors == NO)
+			{
+				ClearMsg();
+				mvprintw(0, 0, "Your %s body lacks hands to wear armor!", player->name);
+			}
+			else
+			{
+				if(player->inventory[idx].equipped == YES)
+				{
+					player->inventory[idx].equipped = NO;
+					player->equipped_armor = -1;
+					ClearMsg();
+					mvprintw(0, 0, "Took off %s.", player->inventory[idx].name);
+				}
+				else
+				{
+					if(player->equipped_armor >= 0)
+					{
+						player->inventory[player->equipped_armor].equipped = NO;
+					}
+					player->inventory[idx].equipped = YES;
+					player->equipped_armor = idx;
+					ClearMsg();
+					mvprintw(0, 0, "Equipped %s (+%d DEF)!", player->inventory[idx].name, player->inventory[idx].bonus_def);
+				}
+			}
+		}
+		else if(player->inventory[idx].item_type == ITEM_CORPSE)
+		{
+			Corpse saved_corpse = player->inventory[idx].corpse_data;
+			// Remove from inventory
+			for(int k = idx; k < player->num_items - 1; k++)
+			{
+				player->inventory[k] = player->inventory[k + 1];
+			}
+			player->num_items--;
+			EatCorpse(leveli, level, player, &saved_corpse);
+		}
+	}
+	else if(ch == 'd' || ch == 'D')
+	{
+		QuickDrop(leveli, level, player);
+	}
+
+	PrintMap(MAX_Y, MAX_X, leveli[leveli->lvl].map);
+	PrintChar(player->Position.yPos, player->Position.xPos, leveli->player_symbol);
+	PlayerInfoBar(leveli);
+	refresh();
+	return 1;
+}
+
+int QuickWield(Level *leveli, Level level, Entity *player)
+{
+	if(player->can_open_doors == NO)
+	{
+		ClearMsg();
+		mvprintw(0, 0, "Your %s body lacks hands to wield weapons!", player->name);
+		refresh();
+		return 0;
+	}
+
+	ClearMsg();
+	mvprintw(0, 0, "Wield which item? (Press 'a'-'%c' or Space to cancel)", 'a' + player->num_items - 1);
+	refresh();
+	int ch = getch();
+	if(ch >= 'a' && ch < ('a' + player->num_items))
+	{
+		int idx = ch - 'a';
+		if(player->inventory[idx].item_type == ITEM_WEAPON)
+		{
+			if(player->equipped_weapon >= 0)
+			{
+				player->inventory[player->equipped_weapon].equipped = NO;
+			}
+			player->inventory[idx].equipped = YES;
+			player->equipped_weapon = idx;
+			ClearMsg();
+			mvprintw(0, 0, "Wielded %s (+%d ATK)!", player->inventory[idx].name, player->inventory[idx].bonus_att);
+			PlayerInfoBar(leveli);
+			refresh();
+			return 1;
+		}
+		else if(player->inventory[idx].item_type == ITEM_ARMOR)
+		{
+			if(player->equipped_armor >= 0)
+			{
+				player->inventory[player->equipped_armor].equipped = NO;
+			}
+			player->inventory[idx].equipped = YES;
+			player->equipped_armor = idx;
+			ClearMsg();
+			mvprintw(0, 0, "Equipped %s (+%d DEF)!", player->inventory[idx].name, player->inventory[idx].bonus_def);
+			PlayerInfoBar(leveli);
+			refresh();
+			return 1;
+		}
+	}
+	ClearMsg();
+	return 0;
+}
+
+int QuickDrop(Level *leveli, Level level, Entity *player)
+{
+	int py = player->Position.yPos;
+	int px = player->Position.xPos;
+
+	if(player->num_items == 0)
+	{
+		ClearMsg();
+		mvprintw(0, 0, "Your backpack is empty.");
+		refresh();
+		return 0;
+	}
+
+	ClearMsg();
+	mvprintw(0, 0, "Drop which item? (Press 'a'-'%c' or Space to cancel)", 'a' + player->num_items - 1);
+	refresh();
+	int ch = getch();
+	if(ch >= 'a' && ch < ('a' + player->num_items))
+	{
+		int idx = ch - 'a';
+		Item it = player->inventory[idx];
+
+		// If dropping an equipped item, unequip it
+		if(idx == player->equipped_weapon) player->equipped_weapon = -1;
+		else if(player->equipped_weapon > idx) player->equipped_weapon--;
+
+		if(idx == player->equipped_armor) player->equipped_armor = -1;
+		else if(player->equipped_armor > idx) player->equipped_armor--;
+
+		// Remove from inventory
+		for(int k = idx; k < player->num_items - 1; k++)
+		{
+			player->inventory[k] = player->inventory[k + 1];
+		}
+		player->num_items--;
+
+		// If corpse, drop as corpse
+		if(it.item_type == ITEM_CORPSE)
+		{
+			Entity dummy;
+			dummy.symbol = it.corpse_data.symbol;
+			dummy.name = it.corpse_data.name;
+			dummy.maxhp = it.corpse_data.maxhp;
+			dummy.attack = it.corpse_data.attack;
+			DropCorpse(leveli, &dummy, py, px);
+			ClearMsg();
+			mvprintw(0, 0, "Dropped %s corpse on the floor.", it.name);
+		}
+		else
+		{
+			// Add to floor items
+			int lidx = leveli[leveli->lvl].num_items;
+			if(lidx < leveli[leveli->lvl].max_items)
+			{
+				leveli[leveli->lvl].items[lidx] = it;
+				leveli[leveli->lvl].items[lidx].Position.yPos = py;
+				leveli[leveli->lvl].items[lidx].Position.xPos = px;
+				leveli[leveli->lvl].items[lidx].active = YES;
+				leveli[leveli->lvl].items[lidx].equipped = NO;
+				leveli[leveli->lvl].num_items++;
+			}
+			leveli[leveli->lvl].map_backup[py][px] = it.symbol;
+			ClearMsg();
+			mvprintw(0, 0, "Dropped %s on the floor.", it.name);
+		}
+		PlayerInfoBar(leveli);
+		refresh();
+		return 1;
+	}
+	ClearMsg();
+	return 0;
+}
+
+int EatFromInventory(Level *leveli, Level level, Entity *player)
+{
+	int corpses[10];
+	int count = 0;
+	for(int i = 0; i < player->num_items; i++)
+	{
+		if(player->inventory[i].item_type == ITEM_CORPSE)
+		{
+			corpses[count++] = i;
+		}
+	}
+
+	if(count == 0)
+	{
+		ClearMsg();
+		mvprintw(0, 0, "No corpses stored in your backpack.");
+		refresh();
+		return 0;
+	}
+
+	ClearMsg();
+	mvprintw(0, 0, "Eat stored corpse: ");
+	for(int i = 0; i < count; i++)
+	{
+		int idx = corpses[i];
+		printw("[%c] %s  ", 'a' + idx, player->inventory[idx].name);
+	}
+	printw("(or Space to cancel)");
+	refresh();
+
+	int ch = getch();
+	if(ch >= 'a' && ch < ('a' + player->num_items))
+	{
+		int idx = ch - 'a';
+		if(player->inventory[idx].item_type == ITEM_CORPSE)
+		{
+			Corpse saved = player->inventory[idx].corpse_data;
+			for(int k = idx; k < player->num_items - 1; k++)
+			{
+				player->inventory[k] = player->inventory[k + 1];
+			}
+			player->num_items--;
+			EatCorpse(leveli, level, player, &saved);
+			return 1;
+		}
+	}
+	ClearMsg();
+	return 0;
 }
 
 int ExitScreen(Level *level)

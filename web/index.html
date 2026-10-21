@@ -157,6 +157,8 @@
     .g-stair { color: #fbbf24; font-weight: bold; }
     .g-door  { color: #d97706; }
     .g-wall  { color: #64748b; }
+    .g-weapon{ color: #38bdf8; font-weight: bold; }
+    .g-armor { color: #a78bfa; font-weight: bold; }
     .g-mon-x { color: #c084fc; font-weight: bold; }
     .g-mon-s { color: #4ade80; font-weight: bold; }
     .g-mon-g { color: #facc15; font-weight: bold; }
@@ -171,19 +173,19 @@
       max-width: 620px;
       background: #090d16;
       border-top: 1px solid var(--border-color);
-      padding: 8px 10px;
+      padding: 6px 10px;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-shrink: 0;
     }
 
     .dpad {
       display: grid;
-      grid-template-columns: repeat(3, 46px);
-      grid-template-rows: repeat(3, 42px);
-      gap: 4px;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(3, 40px);
+      gap: 3px;
     }
 
     .ctrl-btn {
@@ -209,13 +211,13 @@
 
     .action-panel {
       display: grid;
-      grid-template-columns: repeat(2, 72px);
-      grid-template-rows: repeat(3, 42px);
-      gap: 5px;
+      grid-template-columns: repeat(2, 70px);
+      grid-template-rows: repeat(4, 34px);
+      gap: 4px;
     }
 
     .action-btn {
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       border-radius: 6px;
       font-weight: 600;
       background: #1e293b;
@@ -231,6 +233,11 @@
     .action-btn.abil-btn {
       color: #facc15;
       border-color: #854d0e;
+    }
+
+    .action-btn.inv-btn {
+      color: #a78bfa;
+      border-color: #5b21b6;
     }
 
     #loading-indicator {
@@ -283,6 +290,8 @@
 
     <!-- Quick action buttons -->
     <div class="action-panel">
+      <button class="ctrl-btn action-btn inv-btn" onpointerdown="handleKey('i', event)">🎒 Pack (i)</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey('g', event)">🖐 Pick (g)</button>
       <button class="ctrl-btn action-btn eat-btn" onpointerdown="handleKey('E', event)">🍽️ Eat (E)</button>
       <button class="ctrl-btn action-btn abil-btn" onpointerdown="handleKey('f', event)">⚡ Abil (f)</button>
       <button class="ctrl-btn action-btn" onpointerdown="handleKey('y', event)">✅ Yes (y)</button>
@@ -439,6 +448,8 @@
             switch (ch) {
               case '@': rowHtml += '<span class="g-at">@</span>'; break;
               case '%': rowHtml += '<span class="g-corpse">%</span>'; break;
+              case ')': rowHtml += '<span class="g-weapon">)</span>'; break;
+              case '[': rowHtml += '<span class="g-armor">[</span>'; break;
               case '<': rowHtml += '<span class="g-stair">&lt;</span>'; break;
               case '>': rowHtml += '<span class="g-stair">&gt;</span>'; break;
               case '+':

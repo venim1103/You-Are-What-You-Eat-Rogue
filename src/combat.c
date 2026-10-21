@@ -112,6 +112,21 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 
 	ApplyFormTraits(player, corpse->symbol);
 
+	// If newly polymorphed form lacks hands, auto-sheathe weapons and armor:
+	if(player->can_open_doors == NO)
+	{
+		if(player->equipped_weapon >= 0)
+		{
+			player->inventory[player->equipped_weapon].equipped = NO;
+			player->equipped_weapon = -1;
+		}
+		if(player->equipped_armor >= 0)
+		{
+			player->inventory[player->equipped_armor].equipped = NO;
+			player->equipped_armor = -1;
+		}
+	}
+
 	// Handle Sickness/Poison penalties from spoiled meat
 	if(sick == 1)
 	{
@@ -145,6 +160,7 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 	PrintChar(player->Position.yPos, player->Position.xPos, leveli->player_symbol);
 	move(player->Position.yPos, player->Position.xPos);
 
+	PlayerInfoBar(leveli);
 	refresh();
 	getch();
 	ClearMsg();
@@ -180,9 +196,29 @@ int AskEatCorpse(Level *leveli, Level level, Entity *player, int y, int x)
 	return 1;
 }
 
+int GetPlayerAttack(Entity *player)
+{
+	int att = player->attack;
+	if(player->can_open_doors == YES && player->equipped_weapon >= 0 && player->equipped_weapon < player->num_items)
+	{
+		att += player->inventory[player->equipped_weapon].bonus_att;
+	}
+	return att;
+}
+
+int GetPlayerDefense(Entity *player)
+{
+	int def = 0;
+	if(player->can_open_doors == YES && player->equipped_armor >= 0 && player->equipped_armor < player->num_items)
+	{
+		def += player->inventory[player->equipped_armor].bonus_def;
+	}
+	return def;
+}
+
 int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int attacker)
 {
-	char buf[8];
+	char buf[32];
 	
 	if(attacker==PLAYER)
 	{
@@ -200,12 +236,13 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 			{
 				ClearMsg();
 				mvprintw(0,0,"The %s deftly evades your attack!", monster->name);
+				PlayerInfoBar(leveli);
 				refresh(); getch();
 				ClearMsg(); refresh();
 			}
 			else
 			{
-				int dmg = player->attack;
+				int dmg = GetPlayerAttack(player);
 
 				// Cleave trait
 				if(player->cleave_chance > 0 && (rand() % 100) < player->cleave_chance)
@@ -213,6 +250,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					dmg += 3;
 					ClearMsg();
 					mvprintw(0,0,"CRUSHING CLEAVE! (+3 damage)");
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 				}
 
@@ -220,6 +258,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				sprintf(buf,"%d",dmg);
 				ClearMsg();
 				mvprintw(0,0,"You hit the %s for %s damage!", monster->name, buf);
+				PlayerInfoBar(leveli);
 				refresh(); getch();	
 				ClearMsg(); refresh();
 
@@ -229,6 +268,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					player->health += 1;
 					ClearMsg();
 					mvprintw(0,0,"You drain life from the %s! (+1 HP)", monster->name);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -239,6 +279,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					player->health -= 1;
 					ClearMsg();
 					mvprintw(0,0,"Acidic spray burns you! (-1 HP)");
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 					if(player->health <= 0)
@@ -254,6 +295,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					monster->poison_turns = 3;
 					ClearMsg();
 					mvprintw(0,0,"You inject venom into the %s!", monster->name);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -263,11 +305,14 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				{
 					ClearMsg();
 					mvprintw(0,0,"SKITTER! You strike a second time!");
+					PlayerInfoBar(leveli);
 					refresh(); getch();
-					monster->health -= player->attack;
-					sprintf(buf,"%d",player->attack);
+					int second_dmg = GetPlayerAttack(player);
+					monster->health -= second_dmg;
+					sprintf(buf,"%d",second_dmg);
 					ClearMsg();
 					mvprintw(0,0,"Second bite hits for %s damage!", buf);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -280,6 +325,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				ClearMsg();
 				mvprintw(0,0,"Congratulations you killed a %s! You gained %s XP points!", monster->name, buf);
 				player->xp += monster->attack;
+				PlayerInfoBar(leveli);
 				refresh(); getch();
 				ClearMsg(); refresh();
 
@@ -297,6 +343,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				{
 					ClearMsg();
 					mvprintw(0,0,"You gracefully evade the %s's attack!", monster->name);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -308,13 +355,18 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 						m_dmg += 3;
 						ClearMsg();
 						mvprintw(0,0,"The %s lands a CRUSHING CLEAVE!", monster->name);
+						PlayerInfoBar(leveli);
 						refresh(); getch();
 					}
+
+					m_dmg -= GetPlayerDefense(player);
+					if(m_dmg < 1) m_dmg = 1;
 
 					player->health -= m_dmg;
 					sprintf(buf,"%d",m_dmg);
 					ClearMsg();
 					mvprintw(0,0,"You were hit by a %s for %s damage!", monster->name, buf);
+					PlayerInfoBar(leveli);
 					refresh(); getch();	
 					ClearMsg(); refresh();
 
@@ -324,6 +376,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 						monster->health -= 1;
 						ClearMsg();
 						mvprintw(0,0,"Your caustic body corrodes the %s! (-1 HP)", monster->name);
+						PlayerInfoBar(leveli);
 						refresh(); getch();
 						ClearMsg(); refresh();
 					}
@@ -339,6 +392,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 						player->poison_turns = 3;
 						ClearMsg();
 						mvprintw(0,0,"The %s bit you with lethal venom!", monster->name);
+						PlayerInfoBar(leveli);
 						refresh(); getch();
 						ClearMsg(); refresh();
 					}
@@ -361,6 +415,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 			{
 				ClearMsg();
 				mvprintw(0,0,"You gracefully evade the %s's attack!", monster->name);
+				PlayerInfoBar(leveli);
 				refresh(); getch();
 				ClearMsg(); refresh();
 			}
@@ -372,13 +427,18 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					m_dmg += 3;
 					ClearMsg();
 					mvprintw(0,0,"The %s lands a CRUSHING CLEAVE!", monster->name);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 				}
+
+				m_dmg -= GetPlayerDefense(player);
+				if(m_dmg < 1) m_dmg = 1;
 
 				player->health -= m_dmg;
 				sprintf(buf,"%d",m_dmg);
 				ClearMsg();
 				mvprintw(0,0,"You were hit by a %s for %s damage!", monster->name, buf);
+				PlayerInfoBar(leveli);
 				refresh(); getch();	
 				ClearMsg(); refresh();
 
@@ -388,6 +448,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					monster->health -= 1;
 					ClearMsg();
 					mvprintw(0,0,"Your caustic body corrodes the %s! (-1 HP)", monster->name);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -403,6 +464,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					player->poison_turns = 3;
 					ClearMsg();
 					mvprintw(0,0,"The %s bit you with lethal venom!", monster->name);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -411,11 +473,13 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				{
 					ClearMsg();
 					mvprintw(0,0,"The %s skitters rapidly and bites again!", monster->name);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					player->health -= monster->attack;
 					sprintf(buf,"%d",monster->attack);
 					ClearMsg();
 					mvprintw(0,0,"Second strike hits for %s damage!", buf);
+					PlayerInfoBar(leveli);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -681,6 +745,7 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 		player->hunger -= player->ability_cost;
 		if(player->hunger < 0) player->hunger = 0;
 		player->ability_cd = player->ability_max_cd;
+		PlayerInfoBar(leveli);
 		refresh();
 		getch();
 		ClearMsg();

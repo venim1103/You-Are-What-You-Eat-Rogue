@@ -172,14 +172,18 @@ void CopyPlayer(Entity *dest, Entity *src)
 	dest->name = src->name;
 	dest->symbol = src->symbol;
 	dest->Position.type = src->Position.type;
+	dest->num_items = src->num_items;
+	dest->equipped_weapon = src->equipped_weapon;
+	dest->equipped_armor = src->equipped_armor;
+	for (int i = 0; i < 10; i++)
+	{
+		dest->inventory[i] = src->inventory[i];
+	}
 }
 
 Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 {
 	player = malloc(sizeof(Entity));
-
-//	leveli->player_symbol = '@';
-//	player->symbol = leveli->player_symbol;
 
 	player->Position.type = UNKNOWN;
 
@@ -208,6 +212,26 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->alive = YES;
 	player->poison_turns = 0;
 	player->ability_cd = 0;
+	player->num_items = 0;
+	player->equipped_weapon = -1;
+	player->equipped_armor = -1;
+	for (int i = 0; i < 10; i++)
+	{
+		player->inventory[i].active = NO;
+		player->inventory[i].equipped = NO;
+	}
+
+	// Starting weapon for Human: Iron Dagger (+2 ATK)
+	player->inventory[0].symbol = ')';
+	player->inventory[0].name = "Iron Dagger";
+	player->inventory[0].bonus_att = 2;
+	player->inventory[0].bonus_def = 0;
+	player->inventory[0].item_type = ITEM_WEAPON;
+	player->inventory[0].equipped = YES;
+	player->inventory[0].active = YES;
+	player->num_items = 1;
+	player->equipped_weapon = 0;
+
 	ApplyFormTraits(player, '@');
 
 	// Print upstairs and downstairs + update the cursor

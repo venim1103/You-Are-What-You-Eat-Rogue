@@ -30,6 +30,17 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 
 			level_in.lvl = lvl;
 			level_in.monsters = AddMonsters(&level_in, level_in.rooms, lvl);
+			// Spawn 2-4 floor items (weapons & armor):
+			level_in.max_items = 32;
+			level_in.num_items = 0;
+			level_in.items = malloc(sizeof(Item) * level_in.max_items);
+			for(int i = 0; i < level_in.max_items; i++)
+			{
+				level_in.items[i].active = NO;
+				level_in.items[i].equipped = NO;
+			}
+			SpawnFloorItems(&level_in, level_in.rooms, lvl);
+
 			// Draw player symbol on initial tile (while keeping '>' in map_backup and Position.ch):
 			level_in.player->mode = YES;
 			PrintChar(level_in.player->Position.yPos, level_in.player->Position.xPos, leveli->player_symbol);

@@ -41,7 +41,7 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			}
 			break;
 
-		// 'E': explicit eat command
+		// 'E': eat command (floor corpse or backpack corpse)
 		case 'E':
 			if(GetCorpseAt(level, orig_y, orig_x) != NULL)
 			{
@@ -49,10 +49,31 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			}
 			else
 			{
-				ClearMsg();
-				mvprintw(0,0,"There is no corpse here to eat.");
-				refresh();
+				action_taken = EatFromInventory(leveli, level, level.player);
 			}
+			break;
+
+		// Inventory Menu ('i' or 'I'):
+		case 'i':
+		case 'I':
+			ShowInventory(leveli, level, level.player);
+			action_taken = 0; // Menu view doesn't waste a turn
+			break;
+
+		// Quick Wield ('W'):
+		case 'W':
+			action_taken = QuickWield(leveli, level, level.player);
+			break;
+
+		// Quick Pickup ('g' or ','):
+		case 'g':
+		case ',':
+			action_taken = PickUpFloorItem(leveli, level, level.player);
+			break;
+
+		// Quick Drop ('D'):
+		case 'D':
+			action_taken = QuickDrop(leveli, level, level.player);
 			break;
 
 		// Form Active Ability ('f' or 'a'):
@@ -143,6 +164,28 @@ int HandleInput(Level *leveli, Level level, int *yx)
 					AskEatCorpse(leveli, level, level.player, target_y, target_x);
 					action_taken = 1;
 					break;
+				case ')':
+				case '[':
+				{
+					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
+					level.player->Position.type = GROUND;
+					Item *it = GetItemAt(level, target_y, target_x);
+					if(it != NULL)
+					{
+						ClearMsg();
+						if(it->item_type == ITEM_WEAPON)
+						{
+							mvprintw(0, 0, "You see %s (+%d ATK) here. Press 'g' or ',' to pick up.", it->name, it->bonus_att);
+						}
+						else if(it->item_type == ITEM_ARMOR)
+						{
+							mvprintw(0, 0, "You see %s (+%d DEF) here. Press 'g' or ',' to pick up.", it->name, it->bonus_def);
+						}
+						refresh();
+					}
+					action_taken = 1;
+					break;
+				}
 				default:
 					if(level.player->can_phase_walls && (target_y > 0 && target_y < MAX_Y && target_x > 0 && target_x < MAX_X))
 					{
