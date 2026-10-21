@@ -3,6 +3,27 @@
 
 int IntroScreen()
 {
+#ifdef __EMSCRIPTEN__
+	clear();
+	mvprintw(2, 2, "========================================");
+	mvprintw(3, 2, "   YOU ARE WHAT YOU EAT - ROGUE");
+	mvprintw(4, 2, "========================================");
+	mvprintw(6, 2, "A tactical roguelike where you polymorph");
+	mvprintw(7, 2, "directly into whatever beast you devour!");
+	mvprintw(9, 2, "* Devour corpses to inherit stats & traits.");
+	mvprintw(10, 2, "* Beware: older corpses rot and cause sickness!");
+	mvprintw(11, 2, "* Starvation will kill you - hunt wisely.");
+	mvprintw(13, 2, "Controls:");
+	mvprintw(14, 4, "Move:    D-Pad / WASD / Numpad");
+	mvprintw(15, 4, "Ability: 'f' / [Abil] (Form active)");
+	mvprintw(16, 4, "Eat:     'e' or 'E' / [Eat]");
+	mvprintw(17, 4, "Wait:    '.' or Space / [Next]");
+	mvprintw(18, 4, "Close:   'c' / [Close] (doors)");
+	mvprintw(20, 2, ">> Tap [ Next ] or press any key to enter <<");
+	refresh();
+	getch();
+	return 1;
+#else
 	clear();
 	mvprintw(1,0,"%s",intro0);
 	printw("%s",intro1);
@@ -13,6 +34,7 @@ int IntroScreen()
 	getch();
 
 	return 1;
+#endif
 }
 
 void ClearMsg(void)

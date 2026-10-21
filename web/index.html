@@ -85,6 +85,21 @@
       background: var(--btn-active);
     }
 
+    #error-banner {
+      display: none;
+      width: calc(100% - 16px);
+      max-width: 600px;
+      background: #450a0a;
+      border: 1px solid #ef4444;
+      color: #fecaca;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      margin: 4px auto;
+      word-break: break-all;
+      flex-shrink: 0;
+    }
+
     #terminal-wrapper {
       flex: 1;
       width: 100%;
@@ -112,8 +127,8 @@
       padding: 8px 10px;
       display: inline-block;
       position: relative;
-      min-width: 300px;
-      min-height: 200px;
+      min-width: 280px;
+      min-height: 180px;
     }
 
     pre#terminal {
@@ -121,7 +136,7 @@
       padding: 0;
       font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace;
       font-size: 8px;
-      line-height: 1.12;
+      line-height: 1.15;
       letter-spacing: 0px;
       color: #cbd5e1;
       white-space: pre;
@@ -137,7 +152,7 @@
     /* Syntax Colorization for Map Glyphs */
     .g-msg   { color: #fde047; font-weight: bold; }
     .g-hud   { color: #38ef7d; font-weight: bold; }
-    .g-at    { color: #ffffff; font-weight: bold; background: rgba(56, 189, 248, 0.25); text-shadow: 0 0 6px #38bdf8; }
+    .g-at    { color: #ffffff; font-weight: bold; background: rgba(56, 189, 248, 0.35); text-shadow: 0 0 6px #38bdf8; }
     .g-corpse{ color: #f87171; font-weight: bold; }
     .g-stair { color: #fbbf24; font-weight: bold; }
     .g-door  { color: #d97706; }
@@ -220,9 +235,9 @@
 
     #loading-indicator {
       position: absolute;
-      top: 40px;
-      left: 20px;
-      font-size: 0.95rem;
+      top: 35px;
+      left: 15px;
+      font-size: 0.92rem;
       color: #38ef7d;
       font-weight: 600;
     }
@@ -242,6 +257,8 @@
       <button onclick="location.reload()">🔄 Reset</button>
     </div>
   </header>
+
+  <div id="error-banner"></div>
 
   <div id="terminal-wrapper">
     <div id="terminal-card">
@@ -279,14 +296,30 @@
     window.rogueKeyQueue = [];
     window.rogueResolveKey = null;
 
-    let curFontSize = (window.innerWidth < 768) ? 7 : 11;
+    let curFontSize = (window.innerWidth < 768) ? 8 : 11;
     let lastPlayerX = 0;
     let lastPlayerY = 0;
     const termEl = document.getElementById('terminal');
     const wrapEl = document.getElementById('terminal-wrapper');
     const loadEl = document.getElementById('loading-indicator');
+    const errBanner = document.getElementById('error-banner');
 
     termEl.style.fontSize = curFontSize + 'px';
+
+    window.onerror = function(msg, url, line, col, error) {
+      if (errBanner) {
+        errBanner.style.display = 'block';
+        errBanner.innerHTML = '<strong>Error:</strong> ' + msg + ' (line ' + line + ')';
+      }
+      console.error(msg, error);
+    };
+
+    window.showRogueError = function(msg) {
+      if (errBanner) {
+        errBanner.style.display = 'block';
+        errBanner.innerHTML = '<strong>Engine Error:</strong> ' + msg;
+      }
+    };
 
     function changeFontSize(delta) {
       curFontSize = Math.max(4, Math.min(22, curFontSize + delta));
@@ -295,11 +328,11 @@
     }
 
     function fitToScreen() {
-      // Fit 160 columns into screen width
-      let availW = window.innerWidth - 28;
+      let availW = window.innerWidth - 24;
       let idealFont = Math.floor((availW / 162) * 1.65 * 10) / 10;
       curFontSize = Math.max(3.5, Math.min(14, idealFont));
       termEl.style.fontSize = curFontSize + 'px';
+      if (wrapEl) wrapEl.scrollTo({ left: 0, top: 0, behavior: 'instant' });
     }
 
     function toggleControls() {
@@ -309,19 +342,21 @@
 
     function centerOnPlayer() {
       if (!wrapEl || !termEl) return;
+      if (lastPlayerX === 0 && lastPlayerY === 0) {
+        wrapEl.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+        return;
+      }
       const totalCols = 160;
       const totalRows = 46;
-      if (lastPlayerX > 0 || lastPlayerY > 0) {
-        const scrollW = termEl.scrollWidth;
-        const scrollH = termEl.scrollHeight;
-        const targetX = (lastPlayerX / totalCols) * scrollW - (wrapEl.clientWidth / 2);
-        const targetY = (lastPlayerY / totalRows) * scrollH - (wrapEl.clientHeight / 2);
-        wrapEl.scrollTo({
-          left: Math.max(0, targetX),
-          top: Math.max(0, targetY),
-          behavior: 'smooth'
-        });
-      }
+      const scrollW = termEl.scrollWidth;
+      const scrollH = termEl.scrollHeight;
+      const targetX = (lastPlayerX / totalCols) * scrollW - (wrapEl.clientWidth / 2);
+      const targetY = (lastPlayerY / totalRows) * scrollH - (wrapEl.clientHeight / 2);
+      wrapEl.scrollTo({
+        left: Math.max(0, targetX),
+        top: Math.max(0, targetY),
+        behavior: 'smooth'
+      });
     }
 
     function sendRogueKey(key) {
@@ -372,10 +407,14 @@
     });
 
     function colorizeDungeon(rawText) {
+      if (!rawText || rawText.trim().length === 0) {
+        return '<span class="g-hud">Generating dungeon level...</span>';
+      }
+
       // Check if we are on the intro/exit splash screen
-      if (rawText.indexOf("PRESS A KEY TO CONTINUE") !== -1 || rawText.indexOf("GAME OVER!") !== -1 || rawText.indexOf("THANK YOU FOR PLAYING!") !== -1) {
-        lastPlayerX = 80;
-        lastPlayerY = 20;
+      if (rawText.indexOf("YOU ARE WHAT YOU EAT") !== -1 || rawText.indexOf("PRESS A KEY") !== -1 || rawText.indexOf("GAME OVER!") !== -1 || rawText.indexOf("THANK YOU FOR PLAYING!") !== -1) {
+        lastPlayerX = 0;
+        lastPlayerY = 0;
         return '<span class="g-hud">' + rawText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>';
       }
 
@@ -427,10 +466,36 @@
       if (loadEl) loadEl.style.display = 'none';
     };
 
-    window.updateRogueDisplay = function(screenText) {
+    window.updateRogueDisplay = function(screenText, py, px) {
       if (loadEl) loadEl.style.display = 'none';
-      termEl.innerHTML = colorizeDungeon(screenText);
+      if (py > 0 && py < 45) {
+        lastPlayerY = py;
+        lastPlayerX = px;
+      }
+      try {
+        termEl.innerHTML = colorizeDungeon(screenText);
+      } catch (err) {
+        termEl.textContent = screenText;
+      }
       centerOnPlayer();
+    };
+
+    var Module = {
+      print: function(text) {
+        console.log('[WASM stdout] ' + text);
+      },
+      printErr: function(text) {
+        console.error('[WASM stderr] ' + text);
+        if (window.showRogueError) {
+          window.showRogueError(text);
+        }
+      },
+      onAbort: function(what) {
+        console.error('[WASM Abort] ' + what);
+        if (window.showRogueError) {
+          window.showRogueError('WASM Aborted: ' + what);
+        }
+      }
     };
   </script>
 

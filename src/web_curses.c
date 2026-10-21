@@ -22,22 +22,36 @@ EM_JS(void, js_init_screen, (), {
 });
 
 EM_JS(void, js_update_display, (const char* str, int py, int px), {
-    if (window.updateRogueDisplay) {
-        if (py > 0 && py < 45) {
-            window.lastPlayerY = py;
-            window.lastPlayerX = px;
+    try {
+        var text = "";
+        if (typeof UTF8ToString !== 'undefined') {
+            text = UTF8ToString(str);
+        } else if (typeof Module !== 'undefined' && Module.UTF8ToString) {
+            text = Module.UTF8ToString(str);
+        } else if (typeof stringToUTF8 !== 'undefined' || typeof HEAPU8 !== 'undefined') {
+            var len = 0;
+            while (HEAPU8[str + len] !== 0) len++;
+            var bytes = new Uint8Array(HEAPU8.buffer, str, len);
+            text = new TextDecoder('utf-8').decode(bytes);
         }
-        window.updateRogueDisplay(UTF8ToString(str));
+        if (window.updateRogueDisplay) {
+            window.updateRogueDisplay(text, py, px);
+        }
+    } catch(err) {
+        console.error("js_update_display error:", err);
+        if (window.showRogueError) {
+            window.showRogueError("Display render error: " + err);
+        }
     }
 });
 
-EM_ASYNC_JS(int, js_getch_async, (), {
-    return new Promise((resolve) => {
+EM_JS(int, js_getch_async, (), {
+    return Asyncify.handleSleep(function(wakeUp) {
         if (window.rogueKeyQueue && window.rogueKeyQueue.length > 0) {
-            resolve(window.rogueKeyQueue.shift());
+            wakeUp(window.rogueKeyQueue.shift());
             return;
         }
-        window.rogueResolveKey = resolve;
+        window.rogueResolveKey = wakeUp;
     });
 });
 
