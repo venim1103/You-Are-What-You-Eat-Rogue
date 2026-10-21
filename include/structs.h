@@ -40,6 +40,10 @@ typedef struct Entity
 	int acid_corrosion;
 	int evasion_chance;
 	int life_drain;
+	int ability_cd;
+	int ability_max_cd;
+	int ability_cost;
+	char *ability_name;
 	char *trait_desc;
 	char input;
 	char symbol;

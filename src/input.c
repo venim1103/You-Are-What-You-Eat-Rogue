@@ -55,6 +55,12 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			}
 			break;
 
+		// Form Active Ability ('f' or 'a'):
+		case 'f':
+		case 'F':
+			action_taken = ActivateFormAbility(leveli, level, level.player);
+			break;
+
 		// Rest / Wait a turn:
 		case '.':
 		case ' ':

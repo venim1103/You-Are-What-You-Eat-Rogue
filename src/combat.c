@@ -439,20 +439,259 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 	return 1;
 }
 
-int Eat(Level *leveli, Level level, Entity *player, Entity *monster)
+int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 {
-	if(monster != NULL)
+	if(player == NULL || player->alive != YES)
 	{
-		Corpse dummy;
-		dummy.Position = monster->Position;
-		dummy.symbol = monster->symbol;
-		dummy.name = monster->name;
-		dummy.maxhp = monster->maxhp;
-		dummy.attack = monster->attack;
-		dummy.nutrition = 400;
-		dummy.active = YES;
-		return EatCorpse(leveli, level, player, &dummy);
+		return 0;
 	}
+
+	if(player->ability_cd > 0)
+	{
+		ClearMsg();
+		mvprintw(0,0,"Ability '%s' is on cooldown! (%d turns left)", player->ability_name, player->ability_cd);
+		refresh();
+		return 0;
+	}
+
+	if(player->hunger < player->ability_cost)
+	{
+		ClearMsg();
+		mvprintw(0,0,"Too hungry to use '%s'! (Needs %d hunger)", player->ability_name, player->ability_cost);
+		refresh();
+		return 0;
+	}
+
+	int py = player->Position.yPos;
+	int px = player->Position.xPos;
+	int used = 0;
+
+	switch(player->symbol)
+	{
+		case '@': // Human: Bandage
+			ClearMsg();
+			player->poison_turns = 0;
+			player->health += 5;
+			if(player->health > player->maxhp) player->health = player->maxhp;
+			mvprintw(0,0,"You bandage your wounds! (+5 HP, Cured Poison)");
+			used = 1;
+			break;
+
+		case 'x': // Spider: Spin Web
+		{
+			ClearMsg();
+			int dy[4] = {-1, 1, 0, 0};
+			int dx[4] = {0, 0, -1, 1};
+			int hits = 0;
+			for(int i = 0; i < 4; i++)
+			{
+				Entity *mon = GetMonsterAt(py + dy[i], px + dx[i], level);
+				if(mon != NULL && mon->alive == YES)
+				{
+					mon->poison_turns += 2;
+					hits++;
+				}
+			}
+			if(hits > 0)
+			{
+				mvprintw(0,0,"You shoot sticky webbing! Ensnared %d nearby enemies!", hits);
+			}
+			else
+			{
+				mvprintw(0,0,"You spin webs around you, setting a defensive perimeter!");
+			}
+			used = 1;
+			break;
+		}
+
+		case 's': // Snake: Venom Spit
+		{
+			ClearMsg();
+			// Look for closest monster within 4 tiles
+			Entity *target = NULL;
+			int min_dist = 999;
+			for(int m = 0; m < level.mons; m++)
+			{
+				Entity *mon = level.monsters[m];
+				if(mon != NULL && mon->alive == YES)
+				{
+					int dist = abs(mon->Position.yPos - py) + abs(mon->Position.xPos - px);
+					if(dist <= 4 && dist < min_dist)
+					{
+						min_dist = dist;
+						target = mon;
+					}
+				}
+			}
+			if(target != NULL)
+			{
+				target->health -= (player->attack + 2);
+				target->poison_turns += 4;
+				mvprintw(0,0,"You spit toxic venom at %s! (%d damage, 4t poison)", target->name, player->attack + 2);
+				if(target->health <= 0)
+				{
+					target->alive = DEAD;
+					DropCorpse(leveli, target, target->Position.yPos, target->Position.xPos);
+					target->Position.yPos = -1;
+					target->Position.xPos = -1;
+				}
+			}
+			else
+			{
+				mvprintw(0,0,"You spit venom forward into the shadows!");
+			}
+			used = 1;
+			break;
+		}
+
+		case 'g': // Goblin: Flashbang
+		{
+			ClearMsg();
+			int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
+			int dx[8] = {0, 0, -1, 1, 1, -1, 1, -1};
+			int blinded = 0;
+			for(int i = 0; i < 8; i++)
+			{
+				Entity *mon = GetMonsterAt(py + dy[i], px + dx[i], level);
+				if(mon != NULL && mon->alive == YES)
+				{
+					mon->health -= 2;
+					blinded++;
+					if(mon->health <= 0)
+					{
+						mon->alive = DEAD;
+						DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
+						mon->Position.yPos = -1;
+						mon->Position.xPos = -1;
+					}
+				}
+			}
+			mvprintw(0,0,"BANG! Tinkered flashbang detonates! Blinded %d nearby foes!", blinded);
+			used = 1;
+			break;
+		}
+
+		case 'T': // Troll: Ground Slam
+		{
+			ClearMsg();
+			int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
+			int dx[8] = {0, 0, -1, 1, 1, -1, 1, -1};
+			int hit_count = 0;
+			for(int i = 0; i < 8; i++)
+			{
+				Entity *mon = GetMonsterAt(py + dy[i], px + dx[i], level);
+				if(mon != NULL && mon->alive == YES)
+				{
+					mon->health -= 7;
+					hit_count++;
+					if(mon->health <= 0)
+					{
+						mon->alive = DEAD;
+						DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
+						mon->Position.yPos = -1;
+						mon->Position.xPos = -1;
+					}
+				}
+			}
+			mvprintw(0,0,"ROAR! GROUND SLAM! Tremor crushes %d surrounding enemies for 7 damage!", hit_count);
+			used = 1;
+			break;
+		}
+
+		case 'G': // Ghost: Shadow Blink
+		{
+			ClearMsg();
+			int ran_dir = rand() % 4;
+			int dy[4] = {-3, 3, 0, 0};
+			int dx[4] = {0, 0, -3, 3};
+			int ny = py + dy[ran_dir];
+			int nx = px + dx[ran_dir];
+			if(ny > 0 && ny < MAX_Y && nx > 0 && nx < MAX_X)
+			{
+				PrintChar(py, px, level.map_backup[py][px]);
+				player->Position.yPos = ny;
+				player->Position.xPos = nx;
+				player->Position.ch = (mvinch(ny, nx) & A_CHARTEXT);
+				PrintChar(ny, nx, leveli->player_symbol);
+				move(ny, nx);
+				mvprintw(0,0,"You ethereal-warp across space through the shadows!");
+				used = 1;
+			}
+			else
+			{
+				mvprintw(0,0,"Ethereal warp dissipated against the void barrier.");
+				used = 1;
+			}
+			break;
+		}
+
+		case 'B': // Slime: Acid Jet
+		{
+			ClearMsg();
+			int dy[4] = {-1, 1, 0, 0};
+			int dx[4] = {0, 0, -1, 1};
+			int dissolved = 0;
+			for(int step = 1; step <= 3; step++)
+			{
+				for(int d = 0; d < 4; d++)
+				{
+					int ny = py + dy[d] * step;
+					int nx = px + dx[d] * step;
+					if(ny > 0 && ny < MAX_Y && nx > 0 && nx < MAX_X)
+					{
+						Entity *mon = GetMonsterAt(ny, nx, level);
+						if(mon != NULL && mon->alive == YES)
+						{
+							mon->health -= 5;
+							dissolved++;
+							if(mon->health <= 0)
+							{
+								mon->alive = DEAD;
+								DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
+								mon->Position.yPos = -1;
+								mon->Position.xPos = -1;
+							}
+						}
+					}
+				}
+			}
+			mvprintw(0,0,"SPLAT! Acid Jet dissolves %d targets with burning caustic spray!", dissolved);
+			used = 1;
+			break;
+		}
+
+		case 'V': // Vampire Bat: Echo Screech
+		{
+			ClearMsg();
+			for(int m = 0; m < level.mons; m++)
+			{
+				Entity *mon = level.monsters[m];
+				if(mon != NULL && mon->alive == YES)
+				{
+					PrintChar(mon->Position.yPos, mon->Position.xPos, mon->symbol);
+				}
+			}
+			mvprintw(0,0,"SKREEE! Echolocation pulse detects all creature locations on this floor!");
+			used = 1;
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	if(used)
+	{
+		player->hunger -= player->ability_cost;
+		if(player->hunger < 0) player->hunger = 0;
+		player->ability_cd = player->ability_max_cd;
+		refresh();
+		getch();
+		ClearMsg();
+		refresh();
+		return 1;
+	}
+
 	return 0;
 }
  

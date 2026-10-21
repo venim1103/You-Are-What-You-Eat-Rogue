@@ -112,6 +112,10 @@ Level *Game(Level *level)
 
 		// TURN & HUNGER PROGRESSION:
 		level->turn++;
+		if(level[level->lvl].player->ability_cd > 0)
+		{
+			level[level->lvl].player->ability_cd--;
+		}
 		if(level[level->lvl].player->hunger_rate <= 0)
 		{
 			level[level->lvl].player->hunger_rate = 1;

@@ -25,7 +25,7 @@ int WelcomeTxt()
 {
 	// WELCOME TEXT + INSTRUCTIONS:
 	ClearMsg();
-	mvprintw(0,0, "Move: wasd/qezx/numpad | Wait: '.' | Eat: 'e'/'E' | Close: 'c' | Quit: 'Q'");
+	mvprintw(0,0, "Move: wasd/qezx/numpad | Ability: 'f' | Wait: '.' | Eat: 'e'/'E' | Close: 'c' | Quit: 'Q'");
 	refresh(); getch();
 	ClearMsg();
 
@@ -63,6 +63,17 @@ int PlayerInfoBar(Level *level)
 	if(level[level->lvl].player->poison_turns > 0)
 	{
 		printw(" [POISON:%d]", level[level->lvl].player->poison_turns);
+	}
+	if(level[level->lvl].player->ability_name != NULL)
+	{
+		if(level[level->lvl].player->ability_cd > 0)
+		{
+			printw(" [%s:%dt]", level[level->lvl].player->ability_name, level[level->lvl].player->ability_cd);
+		}
+		else
+		{
+			printw(" [%s:READY]", level[level->lvl].player->ability_name);
+		}
 	}
 	printw("    XP: %d", level[level->lvl].player->xp);
 	printw("      ");

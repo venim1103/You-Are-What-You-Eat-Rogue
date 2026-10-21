@@ -33,6 +33,7 @@ Corpse *GetCorpseAt(Level level, int y, int x);
 const char *GetCorpseStage(int age);
 int AskEatCorpse(Level *leveli, Level level, Entity *player, int y, int x);
 int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse);
+int ActivateFormAbility(Level *leveli, Level level, Entity *player);
 
 int ScreenInit();
 int IntroScreen();

@@ -16,6 +16,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 0;
 			entity->evasion_chance = 0;
 			entity->life_drain = 0;
+			entity->ability_name = "Spin Web";
+			entity->ability_max_cd = 6;
+			entity->ability_cost = 40;
 			entity->trait_desc = "Skitter (40% 2nd hit), Fast Metabolism (2 hunger/t), No Hands";
 			break;
 		case 's': // Snake
@@ -30,6 +33,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 0;
 			entity->evasion_chance = 0;
 			entity->life_drain = 0;
+			entity->ability_name = "Venom Spit";
+			entity->ability_max_cd = 5;
+			entity->ability_cost = 30;
 			entity->trait_desc = "Venomous Strike, Poison Immune, No Hands";
 			break;
 		case 'g': // Goblin
@@ -44,6 +50,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 0;
 			entity->evasion_chance = 0;
 			entity->life_drain = 0;
+			entity->ability_name = "Flashbang";
+			entity->ability_max_cd = 8;
+			entity->ability_cost = 35;
 			entity->trait_desc = "Scavenger (+50% corpse nutrition)";
 			break;
 		case 'T': // Troll
@@ -58,6 +67,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 0;
 			entity->evasion_chance = 0;
 			entity->life_drain = 0;
+			entity->ability_name = "Ground Slam";
+			entity->ability_max_cd = 8;
+			entity->ability_cost = 60;
 			entity->trait_desc = "Regen (1HP/2t), Crushing Cleave, Gluttony (3 hunger/t)";
 			break;
 		case 'G': // Ghost
@@ -72,6 +84,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 0;
 			entity->evasion_chance = 25;
 			entity->life_drain = 0;
+			entity->ability_name = "Shadow Blink";
+			entity->ability_max_cd = 7;
+			entity->ability_cost = 50;
 			entity->trait_desc = "Incorporeal (Phases through walls/doors), 25% Evasion, No Hands";
 			break;
 		case 'B': // Slime / Acid Blob
@@ -86,6 +101,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 1;
 			entity->evasion_chance = 0;
 			entity->life_drain = 0;
+			entity->ability_name = "Acid Jet";
+			entity->ability_max_cd = 5;
+			entity->ability_cost = 45;
 			entity->trait_desc = "Caustic Body (Reflects acid dmg on hit/attacker), Poison Immune, No Hands";
 			break;
 		case 'V': // Vampire Bat
@@ -100,6 +118,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 0;
 			entity->evasion_chance = 50;
 			entity->life_drain = 1;
+			entity->ability_name = "Echo Screech";
+			entity->ability_max_cd = 6;
+			entity->ability_cost = 30;
 			entity->trait_desc = "Flight (50% Evasion), Life Drain (+1 HP on hit), Fast Burn (2 hunger/t), No Hands";
 			break;
 		case '@': // Human
@@ -115,6 +136,9 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->acid_corrosion = 0;
 			entity->evasion_chance = 0;
 			entity->life_drain = 0;
+			entity->ability_name = "Bandage";
+			entity->ability_max_cd = 10;
+			entity->ability_cost = 35;
 			entity->trait_desc = "Balanced Human Form";
 			break;
 	}
@@ -140,6 +164,10 @@ void CopyPlayer(Entity *dest, Entity *src)
 	dest->acid_corrosion = src->acid_corrosion;
 	dest->evasion_chance = src->evasion_chance;
 	dest->life_drain = src->life_drain;
+	dest->ability_cd = src->ability_cd;
+	dest->ability_max_cd = src->ability_max_cd;
+	dest->ability_cost = src->ability_cost;
+	dest->ability_name = src->ability_name;
 	dest->trait_desc = src->trait_desc;
 	dest->name = src->name;
 	dest->symbol = src->symbol;
@@ -179,6 +207,7 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->symbol = '@';
 	player->alive = YES;
 	player->poison_turns = 0;
+	player->ability_cd = 0;
 	ApplyFormTraits(player, '@');
 
 	// Print upstairs and downstairs + update the cursor
