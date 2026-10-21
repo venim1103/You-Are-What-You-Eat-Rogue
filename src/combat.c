@@ -25,6 +25,7 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 			case 'T': leveli[lvl].corpses[idx].nutrition = 700; break;
 			default:  leveli[lvl].corpses[idx].nutrition = 300; break;
 		}
+		leveli[lvl].corpses[idx].age = 0;
 		leveli[lvl].num_corpses++;
 	}
 
@@ -47,9 +48,50 @@ Corpse *GetCorpseAt(Level level, int y, int x)
 	return NULL;
 }
 
+const char *GetCorpseStage(int age)
+{
+	if(age < 40) return "Fresh";
+	if(age < 90) return "Aging";
+	if(age < 150) return "Tainted";
+	return "Rotten";
+}
+
 int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 {
 	int nut = corpse->nutrition;
+	const char *stage = GetCorpseStage(corpse->age);
+	int sick = 0;
+
+	// Nutrition and spoilage degradation:
+	if(strcmp(stage, "Aging") == 0)
+	{
+		nut = nut * 80 / 100;
+	}
+	else if(strcmp(stage, "Tainted") == 0)
+	{
+		nut = nut * 50 / 100;
+		// 50% chance of food poisoning unless player has scavenger bonus or acid/poison immunity
+		if(player->scavenger_bonus == 0 && player->symbol != 'B' && player->symbol != 's')
+		{
+			if((rand() % 100) < 50)
+			{
+				sick = 1;
+			}
+		}
+	}
+	else if(strcmp(stage, "Rotten") == 0)
+	{
+		nut = nut * 25 / 100;
+		// 85% chance of severe food poisoning / sickness
+		if(player->scavenger_bonus == 0 && player->symbol != 'B')
+		{
+			if((rand() % 100) < 85)
+			{
+				sick = 2;
+			}
+		}
+	}
+
 	if(player->scavenger_bonus > 0)
 	{
 		nut = nut + (nut * player->scavenger_bonus / 100);
@@ -70,9 +112,31 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 
 	ApplyFormTraits(player, corpse->symbol);
 
+	// Handle Sickness/Poison penalties from spoiled meat
+	if(sick == 1)
+	{
+		player->poison_turns += 4;
+		player->health -= 3;
+		if(player->health < 1) player->health = 1;
+	}
+	else if(sick == 2)
+	{
+		player->poison_turns += 8;
+		player->health -= 6;
+		if(player->health < 1) player->health = 1;
+	}
+
 	ClearMsg();
-	mvprintw(0,0,"Devoured %s! (+%d hunger) Polymorphed into %s! [%s]", 
-		corpse->name, nut, corpse->name, player->trait_desc);
+	if(sick > 0)
+	{
+		mvprintw(0,0,"Ugh! You ate a %s %s corpse! SICKENED! (+%d hunger) Polymorphed into %s!", 
+			stage, corpse->name, nut, corpse->name);
+	}
+	else
+	{
+		mvprintw(0,0,"Devoured %s %s! (+%d hunger) Polymorphed into %s! [%s]", 
+			stage, corpse->name, nut, corpse->name, player->trait_desc);
+	}
 
 	corpse->active = NO;
 	leveli[leveli->lvl].map_backup[player->Position.yPos][player->Position.xPos] = '.';
@@ -96,8 +160,9 @@ int AskEatCorpse(Level *leveli, Level level, Entity *player, int y, int x)
 		return 0;
 	}
 
+	const char *stage = GetCorpseStage(corpse->age);
 	ClearMsg();
-	mvprintw(0,0,"You see a %s corpse here. Eat it? (y/n)", corpse->name);
+	mvprintw(0,0,"You see a %s %s corpse here. Eat it? (y/n)", stage, corpse->name);
 	refresh();
 
 	int ch = getch();
@@ -109,7 +174,7 @@ int AskEatCorpse(Level *leveli, Level level, Entity *player, int y, int x)
 	{
 		player->Position.ch = '%';
 		ClearMsg();
-		mvprintw(0,0,"You decide not to eat the %s corpse.", corpse->name);
+		mvprintw(0,0,"You decide not to eat the %s %s corpse.", stage, corpse->name);
 		refresh();
 	}
 	return 1;

@@ -174,6 +174,31 @@ Level *Game(Level *level)
 			level[level->lvl].player->health += 1;
 		}
 
+		// CORPSE AGING & SPOILAGE:
+		for(int c_idx = 0; c_idx < level[level->lvl].num_corpses; c_idx++)
+		{
+			if(level[level->lvl].corpses[c_idx].active == YES)
+			{
+				level[level->lvl].corpses[c_idx].age++;
+				// Completely decomposes after 220 turns
+				if(level[level->lvl].corpses[c_idx].age >= 220)
+				{
+					level[level->lvl].corpses[c_idx].active = NO;
+					int cy = level[level->lvl].corpses[c_idx].Position.yPos;
+					int cx = level[level->lvl].corpses[c_idx].Position.xPos;
+					level[level->lvl].map_backup[cy][cx] = '.';
+					if(cy != level[level->lvl].player->Position.yPos || cx != level[level->lvl].player->Position.xPos)
+					{
+						PrintChar(cy, cx, '.');
+					}
+					else
+					{
+						level[level->lvl].player->Position.ch = '.';
+					}
+				}
+			}
+		}
+
 		PlayerInfoBar(level);
 	} else
 	{

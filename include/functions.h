@@ -30,6 +30,7 @@ Position *DrawRoom(Position pos, int d);
 int Eat(Level *leveli, Level level, Entity *player, Entity *monster);
 int DropCorpse(Level *leveli, Entity *monster, int y, int x);
 Corpse *GetCorpseAt(Level level, int y, int x);
+const char *GetCorpseStage(int age);
 int AskEatCorpse(Level *leveli, Level level, Entity *player, int y, int x);
 int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse);
 

@@ -54,6 +54,7 @@ typedef struct Corpse
 	int maxhp;
 	int attack;
 	int nutrition;
+	int age;
 	int active;
 } Corpse;
 

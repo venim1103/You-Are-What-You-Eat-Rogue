@@ -25,6 +25,7 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 			for(int i = 0; i < level_in.max_corpses; i++)
 			{
 				level_in.corpses[i].active = NO;
+				level_in.corpses[i].age = 0;
 			}
 
 			level_in.lvl = lvl;
