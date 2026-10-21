@@ -21,8 +21,12 @@ EM_JS(void, js_init_screen, (), {
     }
 });
 
-EM_JS(void, js_update_display, (const char* str), {
+EM_JS(void, js_update_display, (const char* str, int py, int px), {
     if (window.updateRogueDisplay) {
+        if (py > 0 && py < 45) {
+            window.lastPlayerY = py;
+            window.lastPlayerX = px;
+        }
         window.updateRogueDisplay(UTF8ToString(str));
     }
 });
@@ -171,7 +175,7 @@ int refresh(void)
     }
     render_flat_buf[ptr] = '\0';
 
-    js_update_display(render_flat_buf);
+    js_update_display(render_flat_buf, cur_y, cur_x);
     return 0;
 }
 
