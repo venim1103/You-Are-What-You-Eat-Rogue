@@ -9,12 +9,11 @@
       --bg-color: #0b0e14;
       --term-bg: #05080c;
       --text-color: #38ef7d;
-      --text-glow: rgba(56, 239, 125, 0.4);
+      --text-glow: rgba(56, 239, 125, 0.35);
       --border-color: #1b263b;
       --btn-bg: #162032;
       --btn-active: #243452;
       --btn-text: #e0e6ed;
-      --accent: #11998e;
     }
 
     * {
@@ -51,20 +50,17 @@
 
     .title {
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: #fff;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .title span {
-      color: var(--text-color);
-    }
-
     .toolbar {
       display: flex;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     .toolbar button {
@@ -73,7 +69,7 @@
       color: var(--btn-text);
       padding: 4px 10px;
       border-radius: 4px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
       font-family: inherit;
     }
@@ -89,7 +85,7 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 10px;
+      padding: 8px;
       overflow: auto;
       background: radial-gradient(circle at center, #0a111a 0%, #03060a 100%);
     }
@@ -99,7 +95,7 @@
       border: 1px solid #1e293b;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 239, 125, 0.05);
       border-radius: 8px;
-      padding: 12px;
+      padding: 10px 14px;
       display: inline-block;
       overflow: visible;
       position: relative;
@@ -112,16 +108,31 @@
       font-size: 11px;
       line-height: 1.12;
       letter-spacing: 0px;
-      color: var(--text-color);
-      text-shadow: 0 0 3px var(--text-glow);
+      color: #94a3b8;
       white-space: pre;
       cursor: default;
     }
 
+    /* Syntax Colorization for Map Glyphs */
+    .g-msg   { color: #fde047; font-weight: bold; }
+    .g-hud   { color: #38ef7d; font-weight: bold; }
+    .g-at    { color: #ffffff; font-weight: bold; text-shadow: 0 0 6px #38bdf8; }
+    .g-corpse{ color: #f87171; font-weight: bold; }
+    .g-stair { color: #fbbf24; font-weight: bold; }
+    .g-door  { color: #d97706; }
+    .g-wall  { color: #64748b; }
+    .g-mon-x { color: #c084fc; font-weight: bold; }
+    .g-mon-s { color: #4ade80; font-weight: bold; }
+    .g-mon-g { color: #facc15; font-weight: bold; }
+    .g-mon-T { color: #ef4444; font-weight: bold; }
+    .g-mon-G { color: #67e8f9; font-weight: bold; }
+    .g-mon-B { color: #a3e635; font-weight: bold; }
+    .g-mon-V { color: #fb923c; font-weight: bold; }
+
     /* Mobile Virtual Controls */
     #mobile-controls {
       width: 100%;
-      max-width: 600px;
+      max-width: 620px;
       background: #090d16;
       border-top: 1px solid var(--border-color);
       padding: 10px;
@@ -161,13 +172,13 @@
 
     .action-panel {
       display: grid;
-      grid-template-columns: repeat(2, 68px);
+      grid-template-columns: repeat(2, 74px);
       grid-template-rows: repeat(3, 44px);
       gap: 6px;
     }
 
     .action-btn {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       border-radius: 6px;
       font-weight: 600;
       background: #1e293b;
@@ -185,20 +196,14 @@
       border-color: #854d0e;
     }
 
-    .action-btn:active {
-      background: #475569;
-      color: #fff;
-    }
-
     #loading-indicator {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: #38ef7d;
       font-weight: 600;
-      text-shadow: 0 0 8px var(--text-glow);
     }
 
     @media (min-width: 900px) {
@@ -219,6 +224,7 @@
       <button onclick="changeFontSize(1)">A+</button>
       <button onclick="toggleControls()">📱 Controls</button>
       <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
+      <button onclick="location.reload()">🔄 Restart</button>
     </div>
   </header>
 
@@ -234,7 +240,7 @@
     <div class="dpad">
       <button class="ctrl-btn" onpointerdown="handleKey('q', event)">↖</button>
       <button class="ctrl-btn" onpointerdown="handleKey('w', event)">⬆</button>
-      <button class="ctrl-btn" onpointerdown="handleKey('e', event)">↗</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('u', event)">↗</button>
       <button class="ctrl-btn" onpointerdown="handleKey('a', event)">⬅</button>
       <button class="ctrl-btn" onpointerdown="handleKey('.', event)">⏳</button>
       <button class="ctrl-btn" onpointerdown="handleKey('d', event)">➡</button>
@@ -245,12 +251,12 @@
 
     <!-- Quick action buttons -->
     <div class="action-panel">
-      <button class="ctrl-btn action-btn eat-btn" onpointerdown="handleKey('e', event)">🍽️ Eat</button>
-      <button class="ctrl-btn action-btn abil-btn" onpointerdown="handleKey('f', event)">⚡ Abil</button>
-      <button class="ctrl-btn action-btn" onpointerdown="handleKey('y', event)">✅ Yes</button>
-      <button class="ctrl-btn action-btn" onpointerdown="handleKey('n', event)">❌ No</button>
+      <button class="ctrl-btn action-btn eat-btn" onpointerdown="handleKey('E', event)">🍽️ Eat (E)</button>
+      <button class="ctrl-btn action-btn abil-btn" onpointerdown="handleKey('f', event)">⚡ Abil (f)</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey('y', event)">✅ Yes (y)</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey('n', event)">❌ No (n)</button>
       <button class="ctrl-btn action-btn" onpointerdown="handleKey('c', event)">🚪 Close</button>
-      <button class="ctrl-btn action-btn" onpointerdown="handleKey(' ', event)">Space</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey(' ', event)">Next ⏭</button>
     </div>
   </div>
 
@@ -263,7 +269,7 @@
     const loadEl = document.getElementById('loading-indicator');
 
     function changeFontSize(delta) {
-      curFontSize = Math.max(7, Math.min(22, curFontSize + delta));
+      curFontSize = Math.max(6, Math.min(22, curFontSize + delta));
       termEl.style.fontSize = curFontSize + 'px';
     }
 
@@ -298,9 +304,7 @@
       sendRogueKey(char);
     }
 
-    // Keyboard listener for desktop & laptops
     window.addEventListener('keydown', function(e) {
-      // Ignore if user is using browser shortcuts (e.g. F5, Ctrl+R)
       if (e.ctrlKey || e.altKey || e.metaKey) return;
 
       const keyMap = {
@@ -313,7 +317,7 @@
         'Numpad4': 'a',
         'Numpad6': 'd',
         'Numpad7': 'q',
-        'Numpad9': 'e',
+        'Numpad9': 'u',
         'Numpad1': 'z',
         'Numpad3': 'x',
         'Numpad5': '.',
@@ -329,18 +333,62 @@
       }
     });
 
-    // C WebAssembly callbacks
+    function colorizeDungeon(rawText) {
+      // Check if we are on the intro/exit splash screen
+      if (rawText.indexOf("PRESS A KEY TO CONTINUE") !== -1 || rawText.indexOf("GAME OVER!") !== -1 || rawText.indexOf("THANK YOU FOR PLAYING!") !== -1) {
+        return '<span class="g-hud">' + rawText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>';
+      }
+
+      const lines = rawText.split('\n');
+      let out = [];
+      for (let r = 0; r < lines.length; r++) {
+        let line = lines[r];
+        if (r === 0) {
+          let esc = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          out.push('<span class="g-msg">' + esc + '</span>');
+        } else if (r >= 45) {
+          let esc = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          out.push('<span class="g-hud">' + esc + '</span>');
+        } else {
+          let rowHtml = '';
+          for (let c = 0; c < line.length; c++) {
+            let ch = line[c];
+            switch (ch) {
+              case '@': rowHtml += '<span class="g-at">@</span>'; break;
+              case '%': rowHtml += '<span class="g-corpse">%</span>'; break;
+              case '<': rowHtml += '<span class="g-stair">&lt;</span>'; break;
+              case '>': rowHtml += '<span class="g-stair">&gt;</span>'; break;
+              case '+':
+              case ':': rowHtml += '<span class="g-door">' + ch + '</span>'; break;
+              case '-':
+              case '|': rowHtml += '<span class="g-wall">' + ch + '</span>'; break;
+              case 'x': rowHtml += '<span class="g-mon-x">x</span>'; break;
+              case 's': rowHtml += '<span class="g-mon-s">s</span>'; break;
+              case 'g': rowHtml += '<span class="g-mon-g">g</span>'; break;
+              case 'T': rowHtml += '<span class="g-mon-T">T</span>'; break;
+              case 'G': rowHtml += '<span class="g-mon-G">G</span>'; break;
+              case 'B': rowHtml += '<span class="g-mon-B">B</span>'; break;
+              case 'V': rowHtml += '<span class="g-mon-V">V</span>'; break;
+              case '&': rowHtml += '&amp;'; break;
+              default:  rowHtml += ch; break;
+            }
+          }
+          out.push(rowHtml);
+        }
+      }
+      return out.join('\n');
+    }
+
     window.initRogueScreen = function() {
       if (loadEl) loadEl.style.display = 'none';
     };
 
     window.updateRogueDisplay = function(screenText) {
       if (loadEl) loadEl.style.display = 'none';
-      termEl.textContent = screenText;
+      termEl.innerHTML = colorizeDungeon(screenText);
     };
   </script>
 
-  <!-- Load the Emscripten compiled WebAssembly script -->
   <script src="rogue.js"></script>
 
 </body>

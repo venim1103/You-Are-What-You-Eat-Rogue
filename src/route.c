@@ -64,7 +64,7 @@ int Route(Position *p1, Position *p2, int i, int j, char chk1, char chk2, char i
 	
 	if(mode==YES)
 	{
-		mvprintw(y1,x1,buf); // Print free space
+		mvprintw(y1,x1,"%s",buf); // Print free space
 	}
 	
 	}	

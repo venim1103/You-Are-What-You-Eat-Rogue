@@ -219,8 +219,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				monster->health -= dmg;
 				sprintf(buf,"%d",dmg);
 				ClearMsg();
-				mvprintw(0,0,"You hit the ");
-				printw(monster->name); printw(" for "); printw(buf); printw(" damage!"); 
+				mvprintw(0,0,"You hit the %s for %s damage!", monster->name, buf);
 				refresh(); getch();	
 				ClearMsg(); refresh();
 
@@ -268,7 +267,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					monster->health -= player->attack;
 					sprintf(buf,"%d",player->attack);
 					ClearMsg();
-					mvprintw(0,0,"Second bite hits for "); printw(buf); printw(" damage!");
+					mvprintw(0,0,"Second bite hits for %s damage!", buf);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}
@@ -279,8 +278,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				monster->alive = DEAD;
 				sprintf(buf,"%d",monster->attack);
 				ClearMsg();
-				mvprintw(0,0,"Congratulations you killed a ");
-				printw(monster->name); printw("!  You gained "); printw(buf); printw(" XP points!");
+				mvprintw(0,0,"Congratulations you killed a %s! You gained %s XP points!", monster->name, buf);
 				player->xp += monster->attack;
 				refresh(); getch();
 				ClearMsg(); refresh();
@@ -316,8 +314,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					player->health -= m_dmg;
 					sprintf(buf,"%d",m_dmg);
 					ClearMsg();
-					mvprintw(0,0,"You were hit by a ");
-					printw(monster->name); printw(" for "); printw(buf); printw(" damage!"); 
+					mvprintw(0,0,"You were hit by a %s for %s damage!", monster->name, buf);
 					refresh(); getch();	
 					ClearMsg(); refresh();
 
@@ -381,8 +378,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				player->health -= m_dmg;
 				sprintf(buf,"%d",m_dmg);
 				ClearMsg();
-				mvprintw(0,0,"You were hit by a ");
-				printw(monster->name); printw(" for "); printw(buf); printw(" damage!"); 
+				mvprintw(0,0,"You were hit by a %s for %s damage!", monster->name, buf);
 				refresh(); getch();	
 				ClearMsg(); refresh();
 
@@ -419,7 +415,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					player->health -= monster->attack;
 					sprintf(buf,"%d",monster->attack);
 					ClearMsg();
-					mvprintw(0,0,"Second strike hits for "); printw(buf); printw(" damage!");
+					mvprintw(0,0,"Second strike hits for %s damage!", buf);
 					refresh(); getch();
 					ClearMsg(); refresh();
 				}

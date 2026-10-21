@@ -157,7 +157,7 @@ int *MonSetup(Entity *monster, Entity room, int *yx)
 	monster->Position.c = mvinch(monster->Position.yPos,monster->Position.xPos);
 	
 	sprintf(buf,"%c",monster->symbol);
-	mvprintw(monster->Position.yPos, monster->Position.xPos, buf);
+	mvprintw(monster->Position.yPos, monster->Position.xPos, "%s", buf);
 	refresh();
 
 

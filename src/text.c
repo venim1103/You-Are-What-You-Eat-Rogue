@@ -4,9 +4,9 @@
 int IntroScreen()
 {
 	clear();
-	mvprintw(1,0,intro0);
-	printw(intro1);
-	printw(intro2);
+	mvprintw(1,0,"%s",intro0);
+	printw("%s",intro1);
+	printw("%s",intro2);
 	
 	printw("\n\n\n\n\n                                                                       PRESS A KEY TO CONTINUE\n");
 
@@ -55,11 +55,11 @@ int PlayerInfoBar(Level *level)
 
 	move(MAX_Y, 0);
 	clrtoeol();
-	mvprintw(MAX_Y, 0,"    Player: "); printw(level[level->lvl].player->name);
+	mvprintw(MAX_Y, 0,"    Player: %s (%c)", level[level->lvl].player->name, level->player_symbol);
 	printw("    Hp: %d/%d", level[level->lvl].player->health, level[level->lvl].player->maxhp);
 	printw("    Att: %d", level[level->lvl].player->attack);
 	printw("    Level: %d", level->lvl);
-	printw("    Hunger: %s", hunger_status);
+	printw("    Hunger: %s (%d)", hunger_status, level[level->lvl].player->hunger);
 	if(level[level->lvl].player->poison_turns > 0)
 	{
 		printw(" [POISON:%d]", level[level->lvl].player->poison_turns);
@@ -87,9 +87,8 @@ int ExitScreen(Level *level)
 	sprintf(buf,"%d",level[level->lvl].player->xp);
 	clear();
 
-	mvprintw(25,0,"                                                               YOU WERE A "); printw(level[level->lvl].player->name); 
-	printw(" KILLED BY A "); printw(level->killer); 
-	printw(" AND DIED WITH "); printw(buf); printw(" XP!");
+	mvprintw(25,0,"                                                               YOU WERE A %s KILLED BY A %s AND DIED WITH %s XP!",
+		level[level->lvl].player->name, level->killer, buf);
 	printw("\n\n\n\n\n                                                                                   GAME OVER!");
 	refresh(); getch();
 	
@@ -102,9 +101,7 @@ int ExitScreen(Level *level)
 
 int PrintChar(int y, int x, char c)
 {
-	char buf[8]; 
-	sprintf(buf, "%c", c);
-	mvprintw(y,x,buf);
+	mvprintw(y, x, "%c", c);
 	return 1;
 }
 
@@ -114,10 +111,10 @@ int PrintNum(int num, char *c)
 	
 	int len = 1; len = strlen(c);
 	
-	mvprintw(0,0,"\n");	
-	mvprintw(0,0,c);
+	ClearMsg();
+	mvprintw(0,0,"%s",c);
 	sprintf(buf,"%d",num);	
-	mvprintw(0,(len-3),buf);	
+	mvprintw(0,(len-3),"%s",buf);	
 	refresh();
 	getch();
 	

@@ -30,6 +30,9 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 
 			level_in.lvl = lvl;
 			level_in.monsters = AddMonsters(&level_in, level_in.rooms, lvl);
+			// Draw player symbol on initial tile (while keeping '>' in map_backup and Position.ch):
+			level_in.player->mode = YES;
+			PrintChar(level_in.player->Position.yPos, level_in.player->Position.xPos, leveli->player_symbol);
 			// Make sure the upstairs by updating map:
 			level_in.map = UpdateMap(level_in.map,Y_SCR,X_SCR);
 			move(level_in.player->Position.yPos,level_in.player->Position.xPos);

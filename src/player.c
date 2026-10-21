@@ -239,12 +239,12 @@ Entity *PlayerMove(Entity *player, char *buf, char c, int nexty, int nextx)
         ///// FOR FIRST MOVEMENT BUG FIXING!!://////  
         if(player->mode==YES) // As long as the there was one movement:
         { // cause for the bug:   
-                mvprintw(player->Position.yPos,player->Position.xPos, buf);        
+                mvprintw(player->Position.yPos,player->Position.xPos, "%s", buf);        
 	}      
         ////               
 
         player->Position.yPos=nexty; player->Position.xPos=nextx;  
-        mvprintw(player->Position.yPos, player->Position.xPos, ch); 
+        mvprintw(player->Position.yPos, player->Position.xPos, "%s", ch); 
         move(player->Position.yPos, player->Position.xPos);
  
         player->mode=YES; // AFTER FIRST RUN KEEP PRINTING  
