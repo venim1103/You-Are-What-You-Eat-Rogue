@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>You Are What You Eat - Rogue</title>
+  <style>
+    :root {
+      --bg-color: #0b0e14;
+      --term-bg: #05080c;
+      --text-color: #38ef7d;
+      --text-glow: rgba(56, 239, 125, 0.4);
+      --border-color: #1b263b;
+      --btn-bg: #162032;
+      --btn-active: #243452;
+      --btn-text: #e0e6ed;
+      --accent: #11998e;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      background: #0f172a;
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title span {
+      color: var(--text-color);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 6px;
+    }
+
+    .toolbar button {
+      background: var(--btn-bg);
+      border: 1px solid var(--border-color);
+      color: var(--btn-text);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .toolbar button:active {
+      background: var(--btn-active);
+    }
+
+    #terminal-wrapper {
+      flex: 1;
+      width: 100%;
+      max-width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 10px;
+      overflow: auto;
+      background: radial-gradient(circle at center, #0a111a 0%, #03060a 100%);
+    }
+
+    #terminal-card {
+      background: var(--term-bg);
+      border: 1px solid #1e293b;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 239, 125, 0.05);
+      border-radius: 8px;
+      padding: 12px;
+      display: inline-block;
+      overflow: visible;
+      position: relative;
+    }
+
+    pre#terminal {
+      margin: 0;
+      padding: 0;
+      font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace;
+      font-size: 11px;
+      line-height: 1.12;
+      letter-spacing: 0px;
+      color: var(--text-color);
+      text-shadow: 0 0 3px var(--text-glow);
+      white-space: pre;
+      cursor: default;
+    }
+
+    /* Mobile Virtual Controls */
+    #mobile-controls {
+      width: 100%;
+      max-width: 600px;
+      background: #090d16;
+      border-top: 1px solid var(--border-color);
+      padding: 10px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 48px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 5px;
+    }
+
+    .ctrl-btn {
+      background: var(--btn-bg);
+      border: 1px solid #2a3a52;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .ctrl-btn:active {
+      background: #3b82f6;
+      color: #fff;
+      transform: translateY(1px);
+    }
+
+    .action-panel {
+      display: grid;
+      grid-template-columns: repeat(2, 68px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 6px;
+    }
+
+    .action-btn {
+      font-size: 0.85rem;
+      border-radius: 6px;
+      font-weight: 600;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+    }
+
+    .action-btn.eat-btn {
+      color: #4ade80;
+      border-color: #166534;
+    }
+
+    .action-btn.abil-btn {
+      color: #facc15;
+      border-color: #854d0e;
+    }
+
+    .action-btn:active {
+      background: #475569;
+      color: #fff;
+    }
+
+    #loading-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.1rem;
+      color: #38ef7d;
+      font-weight: 600;
+      text-shadow: 0 0 8px var(--text-glow);
+    }
+
+    @media (min-width: 900px) {
+      pre#terminal {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title">
+      <span>🍽️</span> You-Are-What-You-Eat-Rogue
+    </div>
+    <div class="toolbar">
+      <button onclick="changeFontSize(-1)">A-</button>
+      <button onclick="changeFontSize(1)">A+</button>
+      <button onclick="toggleControls()">📱 Controls</button>
+      <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    </div>
+  </header>
+
+  <div id="terminal-wrapper">
+    <div id="terminal-card">
+      <div id="loading-indicator">⚡ Loading WebAssembly Rogue Engine...</div>
+      <pre id="terminal"></pre>
+    </div>
+  </div>
+
+  <div id="mobile-controls">
+    <!-- 8-way directional D-pad -->
+    <div class="dpad">
+      <button class="ctrl-btn" onpointerdown="handleKey('q', event)">↖</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('w', event)">⬆</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('e', event)">↗</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('a', event)">⬅</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('.', event)">⏳</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('d', event)">➡</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('z', event)">↙</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('s', event)">⬇</button>
+      <button class="ctrl-btn" onpointerdown="handleKey('x', event)">↘</button>
+    </div>
+
+    <!-- Quick action buttons -->
+    <div class="action-panel">
+      <button class="ctrl-btn action-btn eat-btn" onpointerdown="handleKey('e', event)">🍽️ Eat</button>
+      <button class="ctrl-btn action-btn abil-btn" onpointerdown="handleKey('f', event)">⚡ Abil</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey('y', event)">✅ Yes</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey('n', event)">❌ No</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey('c', event)">🚪 Close</button>
+      <button class="ctrl-btn action-btn" onpointerdown="handleKey(' ', event)">Space</button>
+    </div>
+  </div>
+
+  <script>
+    window.rogueKeyQueue = [];
+    window.rogueResolveKey = null;
+
+    let curFontSize = 11;
+    const termEl = document.getElementById('terminal');
+    const loadEl = document.getElementById('loading-indicator');
+
+    function changeFontSize(delta) {
+      curFontSize = Math.max(7, Math.min(22, curFontSize + delta));
+      termEl.style.fontSize = curFontSize + 'px';
+    }
+
+    function toggleControls() {
+      const ctrl = document.getElementById('mobile-controls');
+      ctrl.style.display = (ctrl.style.display === 'none') ? 'flex' : 'none';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function sendRogueKey(key) {
+      let code = (typeof key === 'string') ? key.charCodeAt(0) : key;
+      if (window.rogueResolveKey) {
+        let cb = window.rogueResolveKey;
+        window.rogueResolveKey = null;
+        cb(code);
+      } else {
+        window.rogueKeyQueue.push(code);
+      }
+    }
+
+    function handleKey(char, event) {
+      if (event) {
+        event.preventDefault();
+      }
+      sendRogueKey(char);
+    }
+
+    // Keyboard listener for desktop & laptops
+    window.addEventListener('keydown', function(e) {
+      // Ignore if user is using browser shortcuts (e.g. F5, Ctrl+R)
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+      const keyMap = {
+        'ArrowUp': 'w',
+        'ArrowDown': 's',
+        'ArrowLeft': 'a',
+        'ArrowRight': 'd',
+        'Numpad8': 'w',
+        'Numpad2': 's',
+        'Numpad4': 'a',
+        'Numpad6': 'd',
+        'Numpad7': 'q',
+        'Numpad9': 'e',
+        'Numpad1': 'z',
+        'Numpad3': 'x',
+        'Numpad5': '.',
+        'Enter': ' '
+      };
+
+      if (keyMap[e.code]) {
+        e.preventDefault();
+        sendRogueKey(keyMap[e.code]);
+      } else if (e.key.length === 1) {
+        e.preventDefault();
+        sendRogueKey(e.key);
+      }
+    });
+
+    // C WebAssembly callbacks
+    window.initRogueScreen = function() {
+      if (loadEl) loadEl.style.display = 'none';
+    };
+
+    window.updateRogueDisplay = function(screenText) {
+      if (loadEl) loadEl.style.display = 'none';
+      termEl.textContent = screenText;
+    };
+  </script>
+
+  <!-- Load the Emscripten compiled WebAssembly script -->
+  <script src="rogue.js"></script>
+
+</body>
+</html>

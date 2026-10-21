@@ -11,7 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#ifdef __EMSCRIPTEN__
+#include "web_curses.h"
+#else
 #include <ncurses.h>
+#endif
 
 // Define global types:
 //		0	1	2	3	4	5	6

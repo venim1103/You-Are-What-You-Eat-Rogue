@@ -7,13 +7,17 @@ CFLAGS = -Wall -lncurses -I$(IDIR)
 
 SRCDIR = ./src/
 IDIR = ./include/
+WEBDIR = ./web/
 
 SOURCES = $(SRCDIR)*.c
+
+.PHONY: all run test clean web
 
 all: $(NAME)
 
 $(NAME): clean
 	$(CC) $(STD) $(POSIX) $(SOURCES) $(CFLAGS) -o $@
+
 run:
 	./$(NAME)
 
@@ -23,3 +27,6 @@ test:
 clean:
 	if [ -e $(NAME) ]; then rm $(NAME); fi
 
+web:
+	mkdir -p $(WEBDIR)
+	emcc $(STD) $(POSIX) $(SOURCES) -I$(IDIR) -sASYNCIFY=1 -sASYNCIFY_STACK_SIZE=65536 -sALLOW_MEMORY_GROWTH=1 -o $(WEBDIR)rogue.js
