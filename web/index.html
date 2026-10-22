@@ -403,12 +403,17 @@
         'Numpad1': 'z',
         'Numpad3': 'x',
         'Numpad5': '.',
-        'Enter': ' '
+        'Enter': 10,
+        'Escape': 27,
+        'Space': ' '
       };
 
       if (keyMap[e.code]) {
         e.preventDefault();
         sendRogueKey(keyMap[e.code]);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        sendRogueKey(27);
       } else if (e.key.length === 1) {
         e.preventDefault();
         sendRogueKey(e.key);

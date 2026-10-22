@@ -85,6 +85,8 @@ int HandleInput(Level *leveli, Level level, int *yx)
 		// Rest / Wait a turn:
 		case '.':
 		case ' ':
+		case 10:
+		case 13:
 		case '5':
 			action_taken = 1;
 			break;

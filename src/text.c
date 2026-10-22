@@ -307,13 +307,23 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 int ShowInventory(Level *leveli, Level level, Entity *player)
 {
 	int selected = 0;
+	char inv_msg[128] = "";
 
 	while (1)
 	{
 		clear();
 		mvprintw(1, 2, "==========================================================");
-		mvprintw(2, 2, "   BACKPACK & INVENTORY SLOTS (10 Slots Total)");
+		mvprintw(2, 2, "   BACKPACK & INVENTORY (10 Slots Total)");
 		mvprintw(3, 2, "==========================================================");
+
+		if (inv_msg[0] != '\0')
+		{
+			mvprintw(4, 2, ">> %s", inv_msg);
+		}
+		else
+		{
+			mvprintw(4, 2, " ");
+		}
 
 		for (int i = 0; i < 10; i++)
 		{
@@ -346,7 +356,7 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 			}
 			else
 			{
-				mvprintw(5 + i, 2, "%c%c [Slot %2d] <Empty>", p1, p2, i + 1);
+				mvprintw(5 + i, 2, "%c%c [Slot %2d] ", p1, p2, i + 1);
 			}
 		}
 
@@ -356,13 +366,18 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 		mvprintw(19, 4, "[Up/Down / w/s / 8/2]: Move selection (Current: Slot %d)", selected + 1);
 		mvprintw(20, 4, "[Enter / Space / 'e' / 'f']: Use/Equip/Eat selected item");
 		mvprintw(21, 4, "['g' / 'd' / Pick]: Drop selected item to floor");
-		mvprintw(22, 4, "['q' / 'i' / 'c' / Esc]: Exit backpack");
+		mvprintw(22, 4, "['i' / 'q' / 'c' / Esc]: Exit backpack");
 		refresh();
 
 		int ch = getch();
 
+		// EXIT INVENTORY: 'i', 'I', 'q', 'Q', 'c', 'C', 'x', 'X', 27 (Esc)
+		if (ch == 'i' || ch == 'I' || ch == 'q' || ch == 'Q' || ch == 'c' || ch == 'C' || ch == 'x' || ch == 'X' || ch == 27)
+		{
+			break;
+		}
 		// Navigate Up:
-		if (ch == 'w' || ch == 'W' || ch == 'k' || ch == 'K' || ch == '8')
+		else if (ch == 'w' || ch == 'W' || ch == 'k' || ch == 'K' || ch == '8')
 		{
 			selected--;
 			if (selected < 0) selected = 9;
@@ -381,11 +396,6 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 		else if (ch == '0')
 		{
 			selected = 9;
-		}
-		// Letter keys 'a'-'j':
-		else if (ch >= 'a' && ch <= 'j')
-		{
-			selected = ch - 'a';
 		}
 		// DROP SELECTED ITEM: 'g', 'G', 'd', 'D', ','
 		else if (ch == 'g' || ch == 'G' || ch == 'd' || ch == 'D' || ch == ',')
@@ -431,15 +441,12 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 					}
 					leveli[leveli->lvl].map_backup[py][px] = it.symbol;
 				}
-				ClearMsg();
-				mvprintw(0, 0, "Dropped %s on the floor.", it.name);
-				refresh();
+				player->Position.ch = (it.item_type == ITEM_CORPSE) ? '%' : it.symbol;
+				snprintf(inv_msg, sizeof(inv_msg), "Dropped %s on the floor.", it.name);
 			}
 			else
 			{
-				ClearMsg();
-				mvprintw(0, 0, "Slot %d is empty, nothing to drop.", selected + 1);
-				refresh();
+				snprintf(inv_msg, sizeof(inv_msg), "Slot %d is empty, nothing to drop.", selected + 1);
 			}
 		}
 		// USE / EQUIP / EAT: Enter (10/13), Space (' '), 'e', 'E', 'f', 'F'
@@ -452,9 +459,7 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 				{
 					if (player->can_open_doors == NO)
 					{
-						ClearMsg();
-						mvprintw(0, 0, "Your %s body lacks hands to wield weapons!", player->name);
-						refresh();
+						snprintf(inv_msg, sizeof(inv_msg), "Your %s body lacks hands to wield weapons!", player->name);
 					}
 					else
 					{
@@ -462,8 +467,7 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 						{
 							it->equipped = NO;
 							player->equipped_weapon = -1;
-							ClearMsg();
-							mvprintw(0, 0, "Sheathed %s.", it->name);
+							snprintf(inv_msg, sizeof(inv_msg), "Sheathed %s.", it->name);
 						}
 						else
 						{
@@ -473,19 +477,15 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 							}
 							it->equipped = YES;
 							player->equipped_weapon = selected;
-							ClearMsg();
-							mvprintw(0, 0, "Wielded %s (+%d ATK)!", it->name, it->bonus_att);
+							snprintf(inv_msg, sizeof(inv_msg), "Wielded %s (+%d ATK)!", it->name, it->bonus_att);
 						}
-						refresh();
 					}
 				}
 				else if (it->item_type == ITEM_ARMOR)
 				{
 					if (player->can_open_doors == NO)
 					{
-						ClearMsg();
-						mvprintw(0, 0, "Your %s body lacks hands to wear armor!", player->name);
-						refresh();
+						snprintf(inv_msg, sizeof(inv_msg), "Your %s body lacks hands to wear armor!", player->name);
 					}
 					else
 					{
@@ -493,8 +493,7 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 						{
 							it->equipped = NO;
 							player->equipped_armor = -1;
-							ClearMsg();
-							mvprintw(0, 0, "Took off %s.", it->name);
+							snprintf(inv_msg, sizeof(inv_msg), "Took off %s.", it->name);
 						}
 						else
 						{
@@ -504,10 +503,8 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 							}
 							it->equipped = YES;
 							player->equipped_armor = selected;
-							ClearMsg();
-							mvprintw(0, 0, "Equipped %s (+%d DEF)!", it->name, it->bonus_def);
+							snprintf(inv_msg, sizeof(inv_msg), "Equipped %s (+%d DEF)!", it->name, it->bonus_def);
 						}
-						refresh();
 					}
 				}
 				else if (it->item_type == ITEM_CORPSE)
@@ -524,18 +521,16 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 			}
 			else
 			{
-				ClearMsg();
-				mvprintw(0, 0, "Slot %d is empty.", selected + 1);
-				refresh();
+				snprintf(inv_msg, sizeof(inv_msg), "Slot %d is empty.", selected + 1);
 			}
-		}
-		// EXIT INVENTORY: 'q', 'Q', 'i', 'I', 'c', 'C', 27 (Esc)
-		else if (ch == 'q' || ch == 'Q' || ch == 'i' || ch == 'I' || ch == 'c' || ch == 'C' || ch == 27)
-		{
-			break;
 		}
 	}
 
+	ClearMsg();
+	if (inv_msg[0] != '\0')
+	{
+		mvprintw(0, 0, "%s", inv_msg);
+	}
 	UpdateFOV(&leveli[leveli->lvl]);
 	RenderFOV(&leveli[leveli->lvl]);
 	PlayerInfoBar(leveli);
