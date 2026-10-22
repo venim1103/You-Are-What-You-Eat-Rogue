@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>You Are What You Eat - Rogue</title>
   <style>
     :root {
@@ -154,7 +157,7 @@
     .g-msg   { color: #fde047; font-weight: bold; }
     .g-hud   { color: #38ef7d; font-weight: bold; }
     .g-at    { color: #ffffff; font-weight: bold; background: rgba(56, 189, 248, 0.45); text-shadow: 0 0 6px #38bdf8; }
-    .g-look  { color: #000000; font-weight: bold; background: #fde047; box-shadow: 0 0 8px #fde047; }
+    .g-look  { color: #000000; font-weight: 800; background: #fde047; box-shadow: 0 0 10px #fde047; }
     .g-corpse{ color: #f87171; font-weight: bold; }
     .g-stair { color: #fbbf24; font-weight: bold; }
     .g-door  { color: #d97706; }
@@ -168,6 +171,13 @@
     .g-mon-G { color: #67e8f9; font-weight: bold; }
     .g-mon-B { color: #a3e635; font-weight: bold; }
     .g-mon-V { color: #fb923c; font-weight: bold; }
+
+    .look-btn.active-look {
+      background: #fde047 !important;
+      color: #000 !important;
+      font-weight: 800 !important;
+      box-shadow: 0 0 12px #fde047 !important;
+    }
 
     /* Mobile Virtual Controls */
     #mobile-controls {
@@ -259,7 +269,7 @@
       <span>🍽️</span> YAWYE Rogue
     </div>
     <div class="toolbar">
-      <button onclick="handleKey('v', event)">👁️ Look</button>
+      <button class="look-btn" onpointerdown="handleKey('v', event)">👁️ Look</button>
       <button onclick="changeFontSize(-1)">A-</button>
       <button onclick="changeFontSize(1)">A+</button>
       <button onclick="fitToScreen()">🔍 Fit</button>
@@ -386,6 +396,9 @@
       if (event) {
         event.preventDefault();
       }
+      if (document.activeElement && document.activeElement.blur) {
+        document.activeElement.blur();
+      }
       sendRogueKey(char);
     }
 
@@ -503,10 +516,28 @@
       } catch (err) {
         termEl.textContent = screenText;
       }
+
+      // Update active state on Look buttons:
+      const isLookMode = screenText.indexOf("LOOK [") !== -1;
+      const lookBtns = document.querySelectorAll('.look-btn');
+      for (let i = 0; i < lookBtns.length; i++) {
+        if (isLookMode) {
+          lookBtns[i].classList.add('active-look');
+        } else {
+          lookBtns[i].classList.remove('active-look');
+        }
+      }
+
       centerOnPlayer();
     };
 
     var Module = {
+      locateFile: function(path, prefix) {
+        if (path.indexOf('.wasm') !== -1) {
+          return prefix + path + '?v=' + Date.now();
+        }
+        return prefix + path;
+      },
       print: function(text) {
         console.log('[WASM stdout] ' + text);
       },
@@ -525,7 +556,13 @@
     };
   </script>
 
-  <script src="rogue.js"></script>
+  <script>
+    (function() {
+      var s = document.createElement('script');
+      s.src = 'rogue.js?v=' + Date.now();
+      document.body.appendChild(s);
+    })();
+  </script>
 
 </body>
 </html>
