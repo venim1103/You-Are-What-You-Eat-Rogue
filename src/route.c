@@ -70,7 +70,7 @@ int Route(Position *p1, Position *p2, int i, int j, char chk1, char chk2, char i
 	}	
 	return 1;
 }
-int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map)
+int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map, int can_phase)
 {
 	int best_dist = abs(y1 - y2) + abs(x1 - x2);
 	int best_y = y1;
@@ -86,7 +86,7 @@ int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map)
 		int nx = x1 + dx[i];
 		int d = abs(ny - y2) + abs(nx - x2);
 
-		if(d < best_dist && ny >= 0 && ny < MAX_Y && nx >= 0 && nx < MAX_X)
+		if(d < best_dist && ny > 0 && ny < MAX_Y - 1 && nx > 0 && nx < MAX_X - 1)
 		{
 			// Check if target is player or walkable terrain:
 			if(ny == y2 && nx == x2)
@@ -98,7 +98,7 @@ int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map)
 			else
 			{
 				chtype ch = (map != NULL) ? map[ny][nx] : '.';
-				if(ch == '.' || ch == '#' || ch == ':' || ch == '%')
+				if(can_phase || ch == '.' || ch == '#' || ch == ':' || ch == '%' || ch == ')' || ch == '[' || ch == '<' || ch == '>')
 				{
 					best_dist = d;
 					best_y = ny;

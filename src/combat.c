@@ -29,7 +29,11 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 		leveli[lvl].num_corpses++;
 	}
 
-	leveli[lvl].map_backup[y][x] = '%';
+	char cur_tile = leveli[lvl].map_backup[y][x];
+	if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+')
+	{
+		leveli[lvl].map_backup[y][x] = '%';
+	}
 	PrintChar(y, x, '%');
 	return 1;
 }
@@ -154,16 +158,18 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 	}
 
 	corpse->active = NO;
-	leveli[leveli->lvl].map_backup[player->Position.yPos][player->Position.xPos] = '.';
-	player->Position.ch = '.';
+	int py = player->Position.yPos;
+	int px = player->Position.xPos;
+	if(leveli[leveli->lvl].map_backup[py][px] == '%')
+	{
+		leveli[leveli->lvl].map_backup[py][px] = '.';
+	}
+	player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 
-	PrintChar(player->Position.yPos, player->Position.xPos, leveli->player_symbol);
-	move(player->Position.yPos, player->Position.xPos);
+	PrintChar(py, px, leveli->player_symbol);
+	move(py, px);
 
 	PlayerInfoBar(leveli);
-	refresh();
-	getch();
-	ClearMsg();
 	refresh();
 	return 1;
 }
@@ -218,70 +224,61 @@ int GetPlayerDefense(Entity *player)
 
 int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int attacker)
 {
-	char buf[32];
-	
-	if(attacker==PLAYER)
+	char log_buf[256] = "";
+	char tmp[128];
+
+	if(attacker == PLAYER)
 	{
 		if(monster == NULL || monster->alive != YES)
 		{
 			return 0;
 		}
 
-		move(player->Position.yPos,player->Position.xPos);
+		move(player->Position.yPos, player->Position.xPos);
 
 		if(monster->health > 0)
 		{
 			// Check monster evasion (e.g. Bat, Ghost)
 			if(monster->evasion_chance > 0 && (rand() % 100) < monster->evasion_chance)
 			{
-				ClearMsg();
-				mvprintw(0,0,"The %s deftly evades your attack!", monster->name);
-				PlayerInfoBar(leveli);
-				refresh(); getch();
-				ClearMsg(); refresh();
+				snprintf(tmp, sizeof(tmp), "The %s evades! ", monster->name);
+				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 			}
 			else
 			{
 				int dmg = GetPlayerAttack(player);
+				int cleaved = 0;
 
 				// Cleave trait
 				if(player->cleave_chance > 0 && (rand() % 100) < player->cleave_chance)
 				{
 					dmg += 3;
-					ClearMsg();
-					mvprintw(0,0,"CRUSHING CLEAVE! (+3 damage)");
-					PlayerInfoBar(leveli);
-					refresh(); getch();
+					cleaved = 1;
 				}
 
 				monster->health -= dmg;
-				sprintf(buf,"%d",dmg);
-				ClearMsg();
-				mvprintw(0,0,"You hit the %s for %s damage!", monster->name, buf);
-				PlayerInfoBar(leveli);
-				refresh(); getch();	
-				ClearMsg(); refresh();
+				if(cleaved)
+				{
+					snprintf(tmp, sizeof(tmp), "CLEAVE! Hit %s for %d dmg! ", monster->name, dmg);
+				}
+				else
+				{
+					snprintf(tmp, sizeof(tmp), "Hit %s for %d dmg! ", monster->name, dmg);
+				}
+				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 
 				// Bat Life Drain trait
 				if(player->life_drain > 0 && player->health < player->maxhp)
 				{
 					player->health += 1;
-					ClearMsg();
-					mvprintw(0,0,"You drain life from the %s! (+1 HP)", monster->name);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					strncat(log_buf, "(+1 HP drain) ", sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 
 				// Slime Acid Corrosion retaliation on hit
 				if(monster->acid_corrosion > 0)
 				{
 					player->health -= 1;
-					ClearMsg();
-					mvprintw(0,0,"Acidic spray burns you! (-1 HP)");
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					strncat(log_buf, "[Acid burn -1 HP] ", sizeof(log_buf) - strlen(log_buf) - 1);
 					if(player->health <= 0)
 					{
 						player->alive = DEAD;
@@ -293,59 +290,44 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				if(player->poison_attack && monster->symbol != 's' && monster->symbol != 'B' && monster->health > 0)
 				{
 					monster->poison_turns = 3;
-					ClearMsg();
-					mvprintw(0,0,"You inject venom into the %s!", monster->name);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					strncat(log_buf, "(Venom!) ", sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 
 				// Spider Skitter trait: second attack
 				if(player->extra_attack_chance > 0 && (rand() % 100) < player->extra_attack_chance && monster->health > 0)
 				{
-					ClearMsg();
-					mvprintw(0,0,"SKITTER! You strike a second time!");
-					PlayerInfoBar(leveli);
-					refresh(); getch();
 					int second_dmg = GetPlayerAttack(player);
 					monster->health -= second_dmg;
-					sprintf(buf,"%d",second_dmg);
-					ClearMsg();
-					mvprintw(0,0,"Second bite hits for %s damage!", buf);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					snprintf(tmp, sizeof(tmp), "SKITTER 2nd hit +%d dmg! ", second_dmg);
+					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 			}
 
 			if(monster->health <= 0)
 			{
 				monster->alive = DEAD;
-				sprintf(buf,"%d",monster->attack);
-				ClearMsg();
-				mvprintw(0,0,"Congratulations you killed a %s! You gained %s XP points!", monster->name, buf);
 				player->xp += monster->attack;
-				PlayerInfoBar(leveli);
-				refresh(); getch();
-				ClearMsg(); refresh();
+				snprintf(tmp, sizeof(tmp), "Killed %s (+%d XP)!", monster->name, monster->attack);
+				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 
 				DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
 				monster->Position.yPos = -1;
 				monster->Position.xPos = -1;
+
+				ClearMsg();
+				mvprintw(0, 0, "%s", log_buf);
+				PlayerInfoBar(leveli);
+				refresh();
 				return 1;
 			}
 
-			// If the monster is following, don't fight back!
-			if(monster->type!=FOLLOW)
+			// If the monster is not FOLLOW, it counter-attacks immediately here:
+			if(monster->type != FOLLOW)
 			{
-				// Check player evasion (Bat, Ghost)
 				if(player->evasion_chance > 0 && (rand() % 100) < player->evasion_chance)
 				{
-					ClearMsg();
-					mvprintw(0,0,"You gracefully evade the %s's attack!", monster->name);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					snprintf(tmp, sizeof(tmp), "| You evade %s! ", monster->name);
+					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 				else
 				{
@@ -353,55 +335,56 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					if(monster->cleave_chance > 0 && (rand() % 100) < monster->cleave_chance)
 					{
 						m_dmg += 3;
-						ClearMsg();
-						mvprintw(0,0,"The %s lands a CRUSHING CLEAVE!", monster->name);
-						PlayerInfoBar(leveli);
-						refresh(); getch();
 					}
 
 					m_dmg -= GetPlayerDefense(player);
 					if(m_dmg < 1) m_dmg = 1;
 
 					player->health -= m_dmg;
-					sprintf(buf,"%d",m_dmg);
-					ClearMsg();
-					mvprintw(0,0,"You were hit by a %s for %s damage!", monster->name, buf);
-					PlayerInfoBar(leveli);
-					refresh(); getch();	
-					ClearMsg(); refresh();
+					snprintf(tmp, sizeof(tmp), "| %s hits you for %d! ", monster->name, m_dmg);
+					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 
-					// Player acid reflection if Slime
 					if(player->acid_corrosion > 0)
 					{
 						monster->health -= 1;
-						ClearMsg();
-						mvprintw(0,0,"Your caustic body corrodes the %s! (-1 HP)", monster->name);
-						PlayerInfoBar(leveli);
-						refresh(); getch();
-						ClearMsg(); refresh();
+						if(monster->health <= 0)
+						{
+							monster->alive = DEAD;
+							player->xp += monster->attack;
+							DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
+							monster->Position.yPos = -1;
+							monster->Position.xPos = -1;
+							strncat(log_buf, "(Dissolved by your acid!) ", sizeof(log_buf) - strlen(log_buf) - 1);
+						}
 					}
 
-					// Bat monster life drain
-					if(monster->life_drain > 0 && monster->health < monster->maxhp)
+					if(monster->alive == YES && monster->life_drain > 0 && monster->health < monster->maxhp)
 					{
 						monster->health += 1;
 					}
 
-					if(monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->health > 0)
+					if(monster->alive == YES && monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->health > 0)
 					{
 						player->poison_turns = 3;
-						ClearMsg();
-						mvprintw(0,0,"The %s bit you with lethal venom!", monster->name);
-						PlayerInfoBar(leveli);
-						refresh(); getch();
-						ClearMsg(); refresh();
+						strncat(log_buf, "(Poisoned!) ", sizeof(log_buf) - strlen(log_buf) - 1);
 					}
 				}
 			}
+
+			if(monster->alive == YES)
+			{
+				snprintf(tmp, sizeof(tmp), "[%s: %d/%d HP]", monster->name, monster->health, monster->maxhp);
+				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
+			}
 		}
+
+		ClearMsg();
+		mvprintw(0, 0, "%s", log_buf);
+		PlayerInfoBar(leveli);
+		refresh();
 	}
-	
-	if(attacker==MONSTER)
+
+	if(attacker == MONSTER)
 	{
 		if(monster == NULL || monster->alive != YES)
 		{
@@ -410,86 +393,89 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 
 		if(monster->health > 0)
 		{
-			// Check player evasion (Bat, Ghost)
 			if(player->evasion_chance > 0 && (rand() % 100) < player->evasion_chance)
 			{
-				ClearMsg();
-				mvprintw(0,0,"You gracefully evade the %s's attack!", monster->name);
-				PlayerInfoBar(leveli);
-				refresh(); getch();
-				ClearMsg(); refresh();
+				snprintf(tmp, sizeof(tmp), "You evade the %s's attack! [%s: %d/%d HP]", monster->name, monster->name, monster->health, monster->maxhp);
+				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 			}
 			else
 			{
 				int m_dmg = monster->attack;
+				int m_cleave = 0;
 				if(monster->cleave_chance > 0 && (rand() % 100) < monster->cleave_chance)
 				{
 					m_dmg += 3;
-					ClearMsg();
-					mvprintw(0,0,"The %s lands a CRUSHING CLEAVE!", monster->name);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
+					m_cleave = 1;
 				}
 
 				m_dmg -= GetPlayerDefense(player);
 				if(m_dmg < 1) m_dmg = 1;
 
 				player->health -= m_dmg;
-				sprintf(buf,"%d",m_dmg);
-				ClearMsg();
-				mvprintw(0,0,"You were hit by a %s for %s damage!", monster->name, buf);
-				PlayerInfoBar(leveli);
-				refresh(); getch();	
-				ClearMsg(); refresh();
+				if(m_cleave)
+				{
+					snprintf(tmp, sizeof(tmp), "%s CLEAVES you for %d dmg! ", monster->name, m_dmg);
+				}
+				else
+				{
+					snprintf(tmp, sizeof(tmp), "%s hits you for %d dmg! ", monster->name, m_dmg);
+				}
+				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 
 				// Player acid reflection if Slime
 				if(player->acid_corrosion > 0)
 				{
 					monster->health -= 1;
-					ClearMsg();
-					mvprintw(0,0,"Your caustic body corrodes the %s! (-1 HP)", monster->name);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					strncat(log_buf, "(Acid reflects 1 dmg) ", sizeof(log_buf) - strlen(log_buf) - 1);
+					if(monster->health <= 0)
+					{
+						monster->alive = DEAD;
+						player->xp += monster->attack;
+						DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
+						monster->Position.yPos = -1;
+						monster->Position.xPos = -1;
+						strncat(log_buf, "(Enemy dissolved!) ", sizeof(log_buf) - strlen(log_buf) - 1);
+					}
 				}
 
 				// Bat monster life drain
-				if(monster->life_drain > 0 && monster->health < monster->maxhp)
+				if(monster->alive == YES && monster->life_drain > 0 && monster->health < monster->maxhp)
 				{
 					monster->health += 1;
 				}
 
-				if(monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->health > 0)
+				if(monster->alive == YES && monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->health > 0)
 				{
 					player->poison_turns = 3;
-					ClearMsg();
-					mvprintw(0,0,"The %s bit you with lethal venom!", monster->name);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					strncat(log_buf, "(Poisoned!) ", sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 
-				if(monster->extra_attack_chance > 0 && (rand() % 100) < monster->extra_attack_chance && player->health > 0)
+				if(monster->alive == YES && monster->extra_attack_chance > 0 && (rand() % 100) < monster->extra_attack_chance && player->health > 0)
 				{
-					ClearMsg();
-					mvprintw(0,0,"The %s skitters rapidly and bites again!", monster->name);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					player->health -= monster->attack;
-					sprintf(buf,"%d",monster->attack);
-					ClearMsg();
-					mvprintw(0,0,"Second strike hits for %s damage!", buf);
-					PlayerInfoBar(leveli);
-					refresh(); getch();
-					ClearMsg(); refresh();
+					int second_m = monster->attack - GetPlayerDefense(player);
+					if(second_m < 1) second_m = 1;
+					player->health -= second_m;
+					snprintf(tmp, sizeof(tmp), "(2nd bite: %d dmg!) ", second_m);
+					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
+				}
+
+				if(monster->alive == YES)
+				{
+					snprintf(tmp, sizeof(tmp), "[%s: %d/%d HP]", monster->name, monster->health, monster->maxhp);
+					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 			}
+
+			ClearMsg();
+			mvprintw(0, 0, "%s", log_buf);
+			PlayerInfoBar(leveli);
+			refresh();
 		}
 	}
 
-	if(player->health<=0)
+	if(player->health <= 0)
 	{
-		player->alive=DEAD;
+		player->alive = DEAD;
 		if(monster != NULL)
 		{
 			leveli->killer = monster->name;
@@ -666,12 +652,12 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 			int dx[4] = {0, 0, -3, 3};
 			int ny = py + dy[ran_dir];
 			int nx = px + dx[ran_dir];
-			if(ny > 0 && ny < MAX_Y && nx > 0 && nx < MAX_X)
+			if(ny > 0 && ny < MAX_Y - 1 && nx > 0 && nx < MAX_X - 1)
 			{
 				PrintChar(py, px, level.map_backup[py][px]);
 				player->Position.yPos = ny;
 				player->Position.xPos = nx;
-				player->Position.ch = (mvinch(ny, nx) & A_CHARTEXT);
+				player->Position.ch = level.map_backup[ny][nx];
 				PrintChar(ny, nx, leveli->player_symbol);
 				move(ny, nx);
 				mvprintw(0,0,"You ethereal-warp across space through the shadows!");
@@ -723,15 +709,32 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 		case 'V': // Vampire Bat: Echo Screech
 		{
 			ClearMsg();
-			for(int m = 0; m < level.mons; m++)
+			int detected = 0;
+			for(int m = 0; m < leveli[leveli->lvl].mons; m++)
 			{
-				Entity *mon = level.monsters[m];
+				Entity *mon = leveli[leveli->lvl].monsters[m];
 				if(mon != NULL && mon->alive == YES)
 				{
-					PrintChar(mon->Position.yPos, mon->Position.xPos, mon->symbol);
+					int my = mon->Position.yPos;
+					int mx = mon->Position.xPos;
+					detected++;
+					for(int ry = my - 1; ry <= my + 1; ry++)
+					{
+						for(int rx = mx - 1; rx <= mx + 1; rx++)
+						{
+							if(ry >= 0 && ry < MAX_Y && rx >= 0 && rx < MAX_X)
+							{
+								if(leveli[leveli->lvl].discovered != NULL)
+									leveli[leveli->lvl].discovered[ry][rx] = 1;
+								if(leveli[leveli->lvl].visible != NULL)
+									leveli[leveli->lvl].visible[ry][rx] = 1;
+							}
+						}
+					}
 				}
 			}
-			mvprintw(0,0,"SKREEE! Echolocation pulse detects all creature locations on this floor!");
+			RenderFOV(&leveli[leveli->lvl]);
+			mvprintw(0,0,"SKREEE! Echolocation pulse reveals %d creatures across this floor!", detected);
 			used = 1;
 			break;
 		}
@@ -747,9 +750,10 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 		player->ability_cd = player->ability_max_cd;
 		PlayerInfoBar(leveli);
 		refresh();
-		getch();
-		ClearMsg();
-		refresh();
+		if(player->symbol == 'V')
+		{
+			getch(); // Let the player inspect the revealed monster locations before monsters move
+		}
 		return 1;
 	}
 

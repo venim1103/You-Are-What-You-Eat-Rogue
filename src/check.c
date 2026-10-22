@@ -53,7 +53,7 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 				level.player->Position.type=GROUND;
 			break;
 			case '+':
-				OpenDoor(level.player, y, x);
+				OpenDoor(leveli, level.player, y, x);
 			break;
 			case ':':
 				StepOn(leveli,PLAYER,y,x,ch,c,level,monster);
@@ -112,6 +112,10 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 			case '.':
 			case '#':
 			case '%':
+			case ')':
+			case '[':
+			case '<':
+			case '>':
 				StepOn(leveli,MONSTER,y,x,ch,c,level,monster);
 				monster->Position.type=GROUND;
 			break;
@@ -120,7 +124,15 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 				monster->Position.type=DOOR;
 			break;
 			default:
-				monster->Position.type=UNKNOWN;
+				if(monster->can_phase_walls && y > 0 && y < MAX_Y - 1 && x > 0 && x < MAX_X - 1)
+				{
+					StepOn(leveli,MONSTER,y,x,ch,c,level,monster);
+					monster->Position.type=GROUND;
+				}
+				else
+				{
+					monster->Position.type=UNKNOWN;
+				}
 			break;
 		}
 	}
@@ -139,7 +151,7 @@ int StepOn(Level *leveli, int type, int nexty, int nextx, char c, char symbol, L
 		switch(c)
 		{
 			case '+': // If there is a closed door:
-				OpenDoor(level.player, nexty, nextx);
+				OpenDoor(leveli, level.player, nexty, nextx);
 			break;
 	
 			default: // Print the previous character and only after that update

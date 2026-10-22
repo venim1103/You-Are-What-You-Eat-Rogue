@@ -60,13 +60,13 @@ int Route(Position *p1, Position *p2, int i, int j, char chk1, char chk2, char i
 int ConnectRooms(Position *doors1, Position *doors2, int d);
 int TurnNearby(int y, int x, int c, char *d, Level level); 
 void ClearMsg(void);
-int OpenDoor(Entity *player, int y, int x);
+int OpenDoor(Level *leveli, Entity *player, int y, int x);
 int PrintChar(int y, int x, char c); 
 int PrintNum(int num, char *c); 
 int StepOn(Level *leveli, int type, int nexty, int nextx, char c, char symbol, Level level, Entity *monster);
 
 int *PathFindRandom(int *yx, int y, int x, char **map, int mode);
-int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map);
+int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map, int can_phase);
 void UpdateFOV(Level *level);
 void RenderFOV(Level *level);
 int SpawnFogMonster(Level *level);

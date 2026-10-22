@@ -21,7 +21,6 @@ int ScreenInit()
 
 Level *Game(Level *level)
 {
-	char cp = ' ';
 	int c;
 	
 	level = malloc(sizeof(Level)*(LVLS+1));
@@ -204,14 +203,17 @@ Level *Game(Level *level)
 					level[level->lvl].corpses[c_idx].active = NO;
 					int cy = level[level->lvl].corpses[c_idx].Position.yPos;
 					int cx = level[level->lvl].corpses[c_idx].Position.xPos;
-					level[level->lvl].map_backup[cy][cx] = '.';
+					if(level[level->lvl].map_backup[cy][cx] == '%')
+					{
+						level[level->lvl].map_backup[cy][cx] = '.';
+					}
 					if(cy != level[level->lvl].player->Position.yPos || cx != level[level->lvl].player->Position.xPos)
 					{
-						PrintChar(cy, cx, '.');
+						PrintChar(cy, cx, level[level->lvl].map_backup[cy][cx]);
 					}
 					else
 					{
-						level[level->lvl].player->Position.ch = '.';
+						level[level->lvl].player->Position.ch = level[level->lvl].map_backup[cy][cx];
 					}
 				}
 			}

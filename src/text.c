@@ -139,8 +139,11 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 		int y = yx[0];
 		int x = yx[1];
 
-		// Only place on free floor:
-		if((mvinch(y, x) & A_CHARTEXT) != '.')
+		// Only place on free floor (and never overwrite player/stairs/monsters/other items):
+		if(level->map_backup[y][x] != '.' ||
+		   (level->player != NULL && level->player->Position.yPos == y && level->player->Position.xPos == x) ||
+		   GetMonsterAt(y, x, *level) != NULL ||
+		   GetItemAt(*level, y, x) != NULL)
 		{
 			continue;
 		}
@@ -255,17 +258,20 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 		player->num_items++;
 
 		it->active = NO;
-		leveli[leveli->lvl].map_backup[py][px] = '.';
-		player->Position.ch = '.';
+		if(leveli[leveli->lvl].map_backup[py][px] == ')' || leveli[leveli->lvl].map_backup[py][px] == '[')
+		{
+			leveli[leveli->lvl].map_backup[py][px] = '.';
+		}
+		player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 
 		ClearMsg();
 		if(it->item_type == ITEM_WEAPON)
 		{
-			mvprintw(0, 0, "Picked up %s (+%d ATK)! Press 'w' to wield or 'i' for pack.", it->name, it->bonus_att);
+			mvprintw(0, 0, "Picked up %s (+%d ATK)! Press 'i' for pack.", it->name, it->bonus_att);
 		}
 		else
 		{
-			mvprintw(0, 0, "Picked up %s (+%d DEF)! Press 'w' to wear or 'i' for pack.", it->name, it->bonus_def);
+			mvprintw(0, 0, "Picked up %s (+%d DEF)! Press 'i' for pack.", it->name, it->bonus_def);
 		}
 		PlayerInfoBar(leveli);
 		refresh();
@@ -288,11 +294,14 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 		player->num_items++;
 
 		c->active = NO;
-		leveli[leveli->lvl].map_backup[py][px] = '.';
-		player->Position.ch = '.';
+		if(leveli[leveli->lvl].map_backup[py][px] == '%')
+		{
+			leveli[leveli->lvl].map_backup[py][px] = '.';
+		}
+		player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 
 		ClearMsg();
-		mvprintw(0, 0, "Stowed %s corpse into backpack! (Slot %c) Press 'E' to eat anytime.", c->name, 'a' + slot);
+		mvprintw(0, 0, "Stowed %s corpse into backpack! (Slot %d) Press 'E' or 'i' to eat anytime.", c->name, slot + 1);
 		PlayerInfoBar(leveli);
 		refresh();
 		return 1;
@@ -439,7 +448,11 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 						leveli[leveli->lvl].items[lidx].equipped = NO;
 						leveli[leveli->lvl].num_items++;
 					}
-					leveli[leveli->lvl].map_backup[py][px] = it.symbol;
+					char cur_tile = leveli[leveli->lvl].map_backup[py][px];
+					if (cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+')
+					{
+						leveli[leveli->lvl].map_backup[py][px] = it.symbol;
+					}
 				}
 				player->Position.ch = (it.item_type == ITEM_CORPSE) ? '%' : it.symbol;
 				snprintf(inv_msg, sizeof(inv_msg), "Dropped %s on the floor.", it.name);
@@ -804,14 +817,12 @@ int AskStairs(int stairs, Entity *player)
 	return 1;
 }
 
-int OpenDoor(Entity *player, int y, int x)
+int OpenDoor(Level *leveli, Entity *player, int y, int x)
 {
 	if(player->can_open_doors == NO)
 	{
 		ClearMsg();
 		mvprintw(0,0,"You cannot open doors as a %s! (You lack hands)", player->name);
-		refresh(); getch();
-		ClearMsg();
 		refresh();
 		move(player->Position.yPos, player->Position.xPos);
 		return 0;
@@ -824,16 +835,21 @@ int OpenDoor(Entity *player, int y, int x)
 	ClearMsg();
 	if(player->input=='y' || player->input=='Y')
 	{
-		ClearMsg();
 		mvprintw(0,0, "You opened the door! (close a door with 'c')");
-		refresh(); getch();
-		ClearMsg();
+		if(leveli != NULL && leveli[leveli->lvl].map_backup != NULL)
+		{
+			leveli[leveli->lvl].map_backup[y][x] = ':';
+		}
 		PrintChar(y,x,':');
+		refresh();
+		move(player->Position.yPos,player->Position.xPos);
+		return 1;
 	} 
 	else
 	{
 		move(player->Position.yPos,player->Position.xPos);
+		refresh();
+		return 0;
 	}
-	return 1;
 }
 

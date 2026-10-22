@@ -425,8 +425,8 @@
         return '<span class="g-hud">Generating dungeon level...</span>';
       }
 
-      // Check if we are on the intro/exit splash screen
-      if (rawText.indexOf("YOU ARE WHAT YOU EAT") !== -1 || rawText.indexOf("PRESS A KEY") !== -1 || rawText.indexOf("GAME OVER!") !== -1 || rawText.indexOf("THANK YOU FOR PLAYING!") !== -1) {
+      // Check if we are on the intro/exit/inventory modal screen
+      if (rawText.indexOf("YOU ARE WHAT YOU EAT") !== -1 || rawText.indexOf("PRESS A KEY") !== -1 || rawText.indexOf("GAME OVER!") !== -1 || rawText.indexOf("THANK YOU FOR PLAYING!") !== -1 || rawText.indexOf("BACKPACK & INVENTORY") !== -1) {
         lastPlayerX = 0;
         lastPlayerY = 0;
         return '<span class="g-hud">' + rawText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>';

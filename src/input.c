@@ -97,15 +97,13 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			{
 				ClearMsg();
 				mvprintw(0,0,"You cannot operate doors as a %s! (You lack hands)", level.player->name);
-				refresh(); getch();
-				ClearMsg();
 				refresh();
 			}
 			else
 			{
 				TurnNearby(orig_y, orig_x, ':', "+", level);
 				ClearMsg();
-				mvprintw(0,0,"You are closing nearby doors!");
+				mvprintw(0,0,"You close the nearby doors.");
 				refresh();
 				action_taken = 1;
 			}
@@ -143,56 +141,56 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			{
 				case '.':
 				case '#':
-					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
-					level.player->Position.type = GROUND;
-					action_taken = 1;
-					break;
 				case ':':
-					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
-					level.player->Position.type = DOOR;
-					action_taken = 1;
-					break;
-				case '+':
-					action_taken = OpenDoor(level.player, target_y, target_x);
-					break;
 				case '>':
-					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
-					AskStairs(USTAIRS, level.player);
-					action_taken = 1;
-					break;
 				case '<':
-					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
-					AskStairs(DSTAIRS, level.player);
-					action_taken = 1;
-					break;
 				case '%':
-					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
-					level.player->Position.type = LOOT;
-					AskEatCorpse(leveli, level, level.player, target_y, target_x);
-					action_taken = 1;
-					break;
 				case ')':
 				case '[':
 				{
+					if(ch == '+')
+					{
+						action_taken = OpenDoor(leveli, level.player, target_y, target_x);
+						break;
+					}
 					StepOn(leveli, PLAYER, target_y, target_x, ch, leveli->player_symbol, level, NULL);
-					level.player->Position.type = GROUND;
+					level.player->Position.type = (ch == ':') ? DOOR : GROUND;
+					action_taken = 1;
+
+					// Check dynamic entities at target tile:
+					Corpse *corp = GetCorpseAt(level, target_y, target_x);
 					Item *it = GetItemAt(level, target_y, target_x);
-					if(it != NULL)
+					if(ch == '>')
+					{
+						AskStairs(USTAIRS, level.player);
+					}
+					else if(ch == '<')
+					{
+						AskStairs(DSTAIRS, level.player);
+					}
+					else if(corp != NULL && corp->active == YES)
+					{
+						level.player->Position.type = LOOT;
+						AskEatCorpse(leveli, level, level.player, target_y, target_x);
+					}
+					else if(it != NULL && it->active == YES)
 					{
 						ClearMsg();
 						if(it->item_type == ITEM_WEAPON)
 						{
-							mvprintw(0, 0, "You see %s (+%d ATK) here. Press 'g' or ',' to pick up.", it->name, it->bonus_att);
+							mvprintw(0, 0, "You see %s (+%d ATK) here. Press 'g' to pick up.", it->name, it->bonus_att);
 						}
 						else if(it->item_type == ITEM_ARMOR)
 						{
-							mvprintw(0, 0, "You see %s (+%d DEF) here. Press 'g' or ',' to pick up.", it->name, it->bonus_def);
+							mvprintw(0, 0, "You see %s (+%d DEF) here. Press 'g' to pick up.", it->name, it->bonus_def);
 						}
 						refresh();
 					}
-					action_taken = 1;
 					break;
 				}
+				case '+':
+					action_taken = OpenDoor(leveli, level.player, target_y, target_x);
+					break;
 				default:
 					if(level.player->can_phase_walls && (target_y > 0 && target_y < MAX_Y && target_x > 0 && target_x < MAX_X))
 					{
@@ -225,10 +223,14 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			}
 			int my = level.monsters[i]->Position.yPos;
 			int mx = level.monsters[i]->Position.xPos;
+			int py = level.player->Position.yPos;
+			int px = level.player->Position.xPos;
+			int dist = abs(my - py) + abs(mx - px);
+			int is_vis = (level.visible != NULL && my >= 0 && my < MAX_Y && mx >= 0 && mx < MAX_X) ? level.visible[my][mx] : 0;
 
-			if(level.monsters[i]->type==FOLLOW)
+			if(level.monsters[i]->type==FOLLOW && (dist <= 14 || is_vis))
 			{
-				yx = PathFindFollow(yx, my, mx, level.player->Position.yPos, level.player->Position.xPos, level.map_backup);
+				yx = PathFindFollow(yx, my, mx, py, px, level.map_backup, level.monsters[i]->can_phase_walls);
 			} else if(level.monsters[i]->mode==RANDOM_S)
 			{
 				yx = PathFindRandom(yx, my, mx, level.map_backup, RANDOM_S);
