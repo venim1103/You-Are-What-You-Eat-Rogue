@@ -122,6 +122,19 @@ int PlayerInfoBar(Level *level)
 	}
 	printw("    Inv: %d/10", level[level->lvl].player->num_items);
 	printw("    XP: %d", level[level->lvl].player->xp);
+
+	int py = level[level->lvl].player->Position.yPos;
+	int px = level[level->lvl].player->Position.xPos;
+	Item *floor_it = GetItemAt(level[level->lvl], py, px);
+	Corpse *floor_corp = GetCorpseAt(level[level->lvl], py, px);
+	if (floor_it != NULL && floor_it->active == YES)
+	{
+		printw("  [Floor: %s]", floor_it->name);
+	}
+	else if (floor_corp != NULL && floor_corp->active == YES)
+	{
+		printw("  [Floor: %s Corpse]", floor_corp->name);
+	}
 	printw("      ");
 
 	move(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos);

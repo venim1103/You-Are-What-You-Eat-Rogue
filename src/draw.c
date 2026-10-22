@@ -105,7 +105,7 @@ static void CastRay(Level *level, int y0, int x0, int y1, int x1, int max_dist)
 		int dist = abs(cy - y0) + abs(cx - x0);
 		if (dist > max_dist) break;
 
-		if (cy >= 0 && cy < MAX_Y && cx >= 0 && cx < MAX_X)
+		if (cy >= 1 && cy < MAX_Y && cx >= 0 && cx < MAX_X)
 		{
 			level->visible[cy][cx] = 1;
 			level->discovered[cy][cx] = 1;
@@ -151,7 +151,7 @@ void UpdateFOV(Level *level)
 		radius = 12; // Vampire Bat echolocation
 	}
 
-	for(int r = 0; r < MAX_Y; r++)
+	for(int r = 1; r < MAX_Y; r++)
 	{
 		for(int c = 0; c < MAX_X; c++)
 		{
@@ -159,13 +159,13 @@ void UpdateFOV(Level *level)
 		}
 	}
 
-	if (py >= 0 && py < MAX_Y && px >= 0 && px < MAX_X)
+	if (py >= 1 && py < MAX_Y && px >= 0 && px < MAX_X)
 	{
 		level->visible[py][px] = 1;
 		level->discovered[py][px] = 1;
 	}
 
-	int min_r = py - radius; if (min_r < 0) min_r = 0;
+	int min_r = py - radius; if (min_r < 1) min_r = 1;
 	int max_r = py + radius; if (max_r >= MAX_Y) max_r = MAX_Y - 1;
 	int min_c = px - radius; if (min_c < 0) min_c = 0;
 	int max_c = px + radius; if (max_c >= MAX_X) max_c = MAX_X - 1;
@@ -192,7 +192,7 @@ void RenderFOV(Level *level)
 	int py = level->player->Position.yPos;
 	int px = level->player->Position.xPos;
 
-	for(int r = 0; r < MAX_Y; r++)
+	for(int r = 1; r < MAX_Y; r++)
 	{
 		for(int c = 0; c < MAX_X; c++)
 		{
