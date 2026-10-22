@@ -174,14 +174,13 @@ int refresh(void)
     if (last_row < 46) last_row = 46; // ensure status line is visible
 
     for (int r = 0; r <= last_row; r++) {
-        int last_col = -1;
-        for (int c = WEB_SCR_COLS - 1; c >= 0; c--) {
+        int cols_to_print = 160;
+        for (int c = WEB_SCR_COLS - 1; c >= 160; c--) {
             if (screen_buf[r][c] != ' ') {
-                last_col = c;
+                cols_to_print = c + 1;
                 break;
             }
         }
-        int cols_to_print = (last_col >= 0) ? (last_col + 1) : 0;
         for (int c = 0; c < cols_to_print; c++) {
             render_flat_buf[ptr++] = screen_buf[r][c];
         }

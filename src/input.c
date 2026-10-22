@@ -60,6 +60,15 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			action_taken = 0; // Menu view doesn't waste a turn
 			break;
 
+		// Look / Examine Mode ('v', 'V', ';', '/'):
+		case 'v':
+		case 'V':
+		case ';':
+		case '/':
+			LookMode(leveli, level, level.player);
+			action_taken = 0; // Look mode doesn't waste a turn
+			break;
+
 		// Quick Wield ('W'):
 		case 'W':
 			action_taken = QuickWield(leveli, level, level.player);
@@ -110,10 +119,8 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			break;
 
 		case '?':
-			getch();
-			RenderFOV(&level);
-			refresh();
-			getch();	
+			LookMode(leveli, level, level.player);
+			action_taken = 0;
 			break;
 
 		default:
@@ -122,6 +129,9 @@ int HandleInput(Level *leveli, Level level, int *yx)
 
 	if(is_move)
 	{
+		// Clear previous turn's message when moving:
+		ClearMsg();
+
 		// 1. Check if an active monster is at target tile:
 		Entity *target = GetMonsterAt(target_y, target_x, level);
 		if(target != NULL && target->alive == YES)

@@ -41,6 +41,7 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl);
 Item *GetItemAt(Level level, int y, int x);
 int PickUpFloorItem(Level *leveli, Level level, Entity *player);
 int ShowInventory(Level *leveli, Level level, Entity *player);
+int LookMode(Level *leveli, Level level, Entity *player);
 int QuickWield(Level *leveli, Level level, Entity *player);
 int QuickDrop(Level *leveli, Level level, Entity *player);
 int EatFromInventory(Level *leveli, Level level, Entity *player);

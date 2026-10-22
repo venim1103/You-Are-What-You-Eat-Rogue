@@ -221,7 +221,37 @@ Level *Game(Level *level)
 
 		UpdateFOV(&level[level->lvl]);
 		RenderFOV(&level[level->lvl]);
+
+		// If the player is standing on a floor item or corpse and row 0 is empty, describe it:
+		{
+			int py = level[level->lvl].player->Position.yPos;
+			int px = level[level->lvl].player->Position.xPos;
+			Item *floor_it = GetItemAt(level[level->lvl], py, px);
+			Corpse *floor_corp = GetCorpseAt(level[level->lvl], py, px);
+			chtype msg_first = mvinch(0, 0) & A_CHARTEXT;
+			if(msg_first == ' ' || msg_first == 0)
+			{
+				if(floor_it != NULL && floor_it->active == YES)
+				{
+					if(floor_it->item_type == ITEM_WEAPON)
+					{
+						mvprintw(0, 0, "Standing on: %s (+%d ATK weapon). Press 'g' to pick up.", floor_it->name, floor_it->bonus_att);
+					}
+					else if(floor_it->item_type == ITEM_ARMOR)
+					{
+						mvprintw(0, 0, "Standing on: %s (+%d DEF armor). Press 'g' to pick up.", floor_it->name, floor_it->bonus_def);
+					}
+				}
+				else if(floor_corp != NULL && floor_corp->active == YES)
+				{
+					const char *st = GetCorpseStage(floor_corp->age);
+					mvprintw(0, 0, "Standing on: %s %s corpse (%d nut). Press 'e' to eat or 'g' to stow.", st, floor_corp->name, floor_corp->nutrition);
+				}
+			}
+		}
+
 		PlayerInfoBar(level);
+		refresh();
 	} else
 	{
 		break;

@@ -47,7 +47,7 @@ int WelcomeTxt()
 {
 	// WELCOME TEXT + INSTRUCTIONS:
 	ClearMsg();
-	mvprintw(0,0, "Move: wasd/qezx/numpad | Ability: 'f' | Wait: '.' | Eat: 'e'/'E' | Close: 'c' | Quit: 'Q'");
+	mvprintw(0,0, "Move: wasd/qezx | Look: 'v' | Pack: 'i' | Pick: 'g' | Ability: 'f' | Eat: 'E' | Quit: 'Q'");
 	refresh(); getch();
 	ClearMsg();
 
@@ -123,6 +123,8 @@ int PlayerInfoBar(Level *level)
 	printw("    Inv: %d/10", level[level->lvl].player->num_items);
 	printw("    XP: %d", level[level->lvl].player->xp);
 	printw("      ");
+
+	move(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos);
 
 	return 1;
 }
@@ -549,6 +551,145 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 	PlayerInfoBar(leveli);
 	refresh();
 	return 1;
+}
+
+int LookMode(Level *leveli, Level level, Entity *player)
+{
+	Level *cur_lvl = &leveli[leveli->lvl];
+	int cy = player->Position.yPos;
+	int cx = player->Position.xPos;
+
+	while (1)
+	{
+		RenderFOV(cur_lvl);
+		PlayerInfoBar(leveli);
+
+		char desc[200] = "";
+		int is_vis = (cur_lvl->visible != NULL && cy >= 0 && cy < MAX_Y && cx >= 0 && cx < MAX_X) ? cur_lvl->visible[cy][cx] : 0;
+		int is_disc = (cur_lvl->discovered != NULL && cy >= 0 && cy < MAX_Y && cx >= 0 && cx < MAX_X) ? cur_lvl->discovered[cy][cx] : 0;
+
+		if (cy == player->Position.yPos && cx == player->Position.xPos)
+		{
+			Item *it = GetItemAt(*cur_lvl, cy, cx);
+			Corpse *corp = GetCorpseAt(*cur_lvl, cy, cx);
+			if (it != NULL && it->active == YES)
+			{
+				if (it->item_type == ITEM_WEAPON)
+					snprintf(desc, sizeof(desc), "You (%s) standing on %s (+%d ATK weapon, 'g' to pick up)", player->name, it->name, it->bonus_att);
+				else
+					snprintf(desc, sizeof(desc), "You (%s) standing on %s (+%d DEF armor, 'g' to pick up)", player->name, it->name, it->bonus_def);
+			}
+			else if (corp != NULL && corp->active == YES)
+			{
+				snprintf(desc, sizeof(desc), "You (%s) standing on %s %s corpse (%d nut, 'e' to eat, 'g' to stow)", player->name, GetCorpseStage(corp->age), corp->name, corp->nutrition);
+			}
+			else
+			{
+				snprintf(desc, sizeof(desc), "You: %s (%c) | HP: %d/%d | ATK: %d | DEF: %d | Trait: %s",
+					player->name, leveli->player_symbol, player->health, player->maxhp,
+					GetPlayerAttack(player), GetPlayerDefense(player), player->trait_desc);
+			}
+		}
+		else if (!is_vis && !is_disc)
+		{
+			snprintf(desc, sizeof(desc), "Unexplored darkness (Fog of War)");
+		}
+		else
+		{
+			Entity *mon = is_vis ? GetMonsterAt(cy, cx, *cur_lvl) : NULL;
+			Corpse *corp = is_vis ? GetCorpseAt(*cur_lvl, cy, cx) : NULL;
+			Item *it = is_vis ? GetItemAt(*cur_lvl, cy, cx) : NULL;
+
+			if (mon != NULL && mon->alive == YES)
+			{
+				const char *beh = (mon->type == FOLLOW) ? "Aggressive" : "Wandering";
+				snprintf(desc, sizeof(desc), "Monster: %s (%c) | HP: %d/%d | ATK: %d | %s | Trait: %s",
+					mon->name, mon->symbol, mon->health, mon->maxhp, mon->attack, beh, mon->trait_desc);
+			}
+			else if (corp != NULL && corp->active == YES)
+			{
+				const char *st = GetCorpseStage(corp->age);
+				snprintf(desc, sizeof(desc), "Corpse: %s %s (%%) | Nutrition: %d | Polymorphs into: %s (HP:%d, ATK:%d)",
+					st, corp->name, corp->nutrition, corp->name, (corp->maxhp * 4) + 6, corp->attack);
+			}
+			else if (it != NULL && it->active == YES)
+			{
+				if (it->item_type == ITEM_WEAPON)
+				{
+					snprintf(desc, sizeof(desc), "Weapon: %s ()) | +%d Attack Bonus (Stand here & press 'g' to pick up)",
+						it->name, it->bonus_att);
+				}
+				else
+				{
+					snprintf(desc, sizeof(desc), "Armor: %s ([) | +%d Defense Bonus (Stand here & press 'g' to pick up)",
+						it->name, it->bonus_def);
+				}
+			}
+			else
+			{
+				char tile = (cur_lvl->map_backup != NULL) ? cur_lvl->map_backup[cy][cx] : ' ';
+				const char *vis_tag = is_vis ? "" : " (Memory)";
+				switch (tile)
+				{
+					case '.': snprintf(desc, sizeof(desc), "Stone Chamber Floor (.)%s", vis_tag); break;
+					case '#': snprintf(desc, sizeof(desc), "Dark Tunnel Corridor (#)%s", vis_tag); break;
+					case '+': snprintf(desc, sizeof(desc), "Closed Wooden Door (+)%s - Bump to open", vis_tag); break;
+					case ':': snprintf(desc, sizeof(desc), "Open Doorway (:)%s - Press 'c' nearby to close", vis_tag); break;
+					case '<': snprintf(desc, sizeof(desc), "Downstairs (<)%s - Leads deeper into the dungeon", vis_tag); break;
+					case '>': snprintf(desc, sizeof(desc), "Upstairs (>)%s - Leads toward the surface", vis_tag); break;
+					case '-':
+					case '|': snprintf(desc, sizeof(desc), "Solid Dungeon Wall (%c)%s", tile, vis_tag); break;
+					default:  snprintf(desc, sizeof(desc), "Empty Void%s", vis_tag); break;
+				}
+			}
+		}
+
+		// Draw Look Cursor 'X' at (cy, cx) and place terminal cursor there so camera pans to it:
+		PrintChar(cy, cx, 'X');
+		ClearMsg();
+		mvprintw(0, 0, "LOOK [Move: pan | v/c/Esc/Space: exit] >> %s", desc);
+		move(cy, cx);
+		refresh();
+
+		int ch = getch();
+
+		// Exit Look Mode:
+		if (ch == 'v' || ch == 'V' || ch == ';' || ch == '/' || ch == '?' ||
+		    ch == 'c' || ch == 'C' || ch == 'i' || ch == 'I' || ch == ' ' ||
+		    ch == 10 || ch == 13 || ch == 27)
+		{
+			break;
+		}
+
+		int ny = cy;
+		int nx = cx;
+		switch (ch)
+		{
+			case 'w': case 'W': case 'k': case 'K': case '8': ny--; break;
+			case 's': case 'S': case 'j': case 'J': case '2': ny++; break;
+			case 'a': case 'A': case 'h': case 'H': case '4': nx--; break;
+			case 'd': case 'D': case 'l': case 'L': case '6': nx++; break;
+			case 'q': case 'Q': case 'y': case 'Y': case '7': ny--; nx--; break;
+			case 'e': case 'E': case 'u': case 'U': case '9': ny--; nx++; break;
+			case 'z': case 'Z': case 'b': case 'B': case '1': ny++; nx--; break;
+			case 'x': case 'X': case 'n': case 'N': case '3': ny++; nx++; break;
+			default: break;
+		}
+
+		if (ny >= 1 && ny < MAX_Y && nx >= 0 && nx < MAX_X)
+		{
+			cy = ny;
+			cx = nx;
+		}
+	}
+
+	ClearMsg();
+	UpdateFOV(cur_lvl);
+	RenderFOV(cur_lvl);
+	PlayerInfoBar(leveli);
+	move(player->Position.yPos, player->Position.xPos);
+	refresh();
+	return 0;
 }
 
 int QuickWield(Level *leveli, Level level, Entity *player)
