@@ -65,8 +65,11 @@ int PrintChar(int y, int x, char c);
 int PrintNum(int num, char *c); 
 int StepOn(Level *leveli, int type, int nexty, int nextx, char c, char symbol, Level level, Entity *monster);
 
-int *PathFindRandom(int *yx, int y, int x, char *chk, int mode);
-int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char *chk);
+int *PathFindRandom(int *yx, int y, int x, char **map, int mode);
+int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map);
+void UpdateFOV(Level *level);
+void RenderFOV(Level *level);
+int SpawnFogMonster(Level *level);
 int *MonSetup(Entity *monster, Entity room, int *yx);
 int HandleInput(Level *leveli, Level level, int *yx);
 int *RandomCoords(int *yx, int rm, Position room);

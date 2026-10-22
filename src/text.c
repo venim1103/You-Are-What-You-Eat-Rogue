@@ -306,128 +306,238 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 
 int ShowInventory(Level *leveli, Level level, Entity *player)
 {
-	ClearMsg();
-	if(player->num_items == 0)
+	int selected = 0;
+
+	while (1)
 	{
-		mvprintw(0, 0, "Your backpack is empty. Pick up items with 'g' or ','.");
+		clear();
+		mvprintw(1, 2, "==========================================================");
+		mvprintw(2, 2, "   BACKPACK & INVENTORY SLOTS (10 Slots Total)");
+		mvprintw(3, 2, "==========================================================");
+
+		for (int i = 0; i < 10; i++)
+		{
+			char p1 = (i == selected) ? '-' : ' ';
+			char p2 = (i == selected) ? '>' : ' ';
+
+			if (i < player->num_items)
+			{
+				Item *it = &player->inventory[i];
+				char tag[32] = "";
+				if (it->equipped == YES)
+				{
+					if (it->item_type == ITEM_WEAPON) sprintf(tag, " [WIELDED]");
+					else if (it->item_type == ITEM_ARMOR) sprintf(tag, " [EQUIPPED]");
+				}
+
+				if (it->item_type == ITEM_WEAPON)
+				{
+					mvprintw(5 + i, 2, "%c%c [Slot %2d] %s (+%d ATK)%s", p1, p2, i + 1, it->name, it->bonus_att, tag);
+				}
+				else if (it->item_type == ITEM_ARMOR)
+				{
+					mvprintw(5 + i, 2, "%c%c [Slot %2d] %s (+%d DEF)%s", p1, p2, i + 1, it->name, it->bonus_def, tag);
+				}
+				else if (it->item_type == ITEM_CORPSE)
+				{
+					const char *st = GetCorpseStage(it->corpse_data.age);
+					mvprintw(5 + i, 2, "%c%c [Slot %2d] %s %s Corpse (%d nut) [EATABLE]", p1, p2, i + 1, st, it->name, it->corpse_data.nutrition);
+				}
+			}
+			else
+			{
+				mvprintw(5 + i, 2, "%c%c [Slot %2d] <Empty>", p1, p2, i + 1);
+			}
+		}
+
+		mvprintw(16, 2, "----------------------------------------------------------");
+		mvprintw(17, 2, "Current Form: %s (%c) | Hands: %s", player->name, player->symbol, (player->can_open_doors == YES ? "YES (Can wield/wear)" : "NO (Beast - cannot wield)"));
+		mvprintw(18, 2, "Controls:");
+		mvprintw(19, 4, "[Up/Down / w/s / 8/2]: Move selection (Current: Slot %d)", selected + 1);
+		mvprintw(20, 4, "[Enter / Space / 'e' / 'f']: Use/Equip/Eat selected item");
+		mvprintw(21, 4, "['g' / 'd' / Pick]: Drop selected item to floor");
+		mvprintw(22, 4, "['q' / 'i' / 'c' / Esc]: Exit backpack");
 		refresh();
-		return 0;
-	}
 
-	clear();
-	mvprintw(1, 2, "==========================================================");
-	mvprintw(2, 2, "   BACKPACK & EQUIPMENT (Select 'a'-'j' to equip/eat, 'd' to drop, Esc/Space to exit)");
-	mvprintw(3, 2, "==========================================================");
+		int ch = getch();
 
-	for(int i = 0; i < player->num_items; i++)
-	{
-		char tag[32] = "";
-		if(player->inventory[i].equipped == YES)
+		// Navigate Up:
+		if (ch == 'w' || ch == 'W' || ch == 'k' || ch == 'K' || ch == '8')
 		{
-			if(player->inventory[i].item_type == ITEM_WEAPON) sprintf(tag, " [WIELDED]");
-			else if(player->inventory[i].item_type == ITEM_ARMOR) sprintf(tag, " [EQUIPPED]");
+			selected--;
+			if (selected < 0) selected = 9;
 		}
-
-		if(player->inventory[i].item_type == ITEM_WEAPON)
+		// Navigate Down:
+		else if (ch == 's' || ch == 'S' || ch == 'j' || ch == 'J' || ch == '2')
 		{
-			mvprintw(5 + i, 4, "[%c] %s (+%d ATK)%s", 'a' + i, player->inventory[i].name, player->inventory[i].bonus_att, tag);
+			selected++;
+			if (selected > 9) selected = 0;
 		}
-		else if(player->inventory[i].item_type == ITEM_ARMOR)
+		// Number keys 1-9, 0 to select slot directly:
+		else if (ch >= '1' && ch <= '9')
 		{
-			mvprintw(5 + i, 4, "[%c] %s (+%d DEF)%s", 'a' + i, player->inventory[i].name, player->inventory[i].bonus_def, tag);
+			selected = ch - '1';
 		}
-		else if(player->inventory[i].item_type == ITEM_CORPSE)
+		else if (ch == '0')
 		{
-			const char *st = GetCorpseStage(player->inventory[i].corpse_data.age);
-			mvprintw(5 + i, 4, "[%c] %s %s Corpse (%d nutrition) [EATABLE]", 'a' + i, st, player->inventory[i].name, player->inventory[i].corpse_data.nutrition);
+			selected = 9;
 		}
-	}
-
-	mvprintw(6 + player->num_items, 2, "----------------------------------------------------------");
-	mvprintw(7 + player->num_items, 4, "Current Form: %s (%c) | Hands: %s", player->name, player->symbol, (player->can_open_doors == YES ? "YES" : "NO (Beast - cannot wield)"));
-	refresh();
-
-	int ch = getch();
-	if(ch >= 'a' && ch < ('a' + player->num_items))
-	{
-		int idx = ch - 'a';
-		if(player->inventory[idx].item_type == ITEM_WEAPON)
+		// Letter keys 'a'-'j':
+		else if (ch >= 'a' && ch <= 'j')
 		{
-			if(player->can_open_doors == NO)
+			selected = ch - 'a';
+		}
+		// DROP SELECTED ITEM: 'g', 'G', 'd', 'D', ','
+		else if (ch == 'g' || ch == 'G' || ch == 'd' || ch == 'D' || ch == ',')
+		{
+			if (selected < player->num_items)
 			{
-				ClearMsg();
-				mvprintw(0, 0, "Your %s body lacks hands to wield weapons!", player->name);
-			}
-			else
-			{
-				if(player->inventory[idx].equipped == YES)
+				int py = player->Position.yPos;
+				int px = player->Position.xPos;
+				Item it = player->inventory[selected];
+
+				if (selected == player->equipped_weapon) player->equipped_weapon = -1;
+				else if (player->equipped_weapon > selected) player->equipped_weapon--;
+
+				if (selected == player->equipped_armor) player->equipped_armor = -1;
+				else if (player->equipped_armor > selected) player->equipped_armor--;
+
+				for (int k = selected; k < player->num_items - 1; k++)
 				{
-					player->inventory[idx].equipped = NO;
-					player->equipped_weapon = -1;
-					ClearMsg();
-					mvprintw(0, 0, "Sheathed %s.", player->inventory[idx].name);
+					player->inventory[k] = player->inventory[k + 1];
+				}
+				player->num_items--;
+
+				if (it.item_type == ITEM_CORPSE)
+				{
+					Entity dummy;
+					dummy.symbol = it.corpse_data.symbol;
+					dummy.name = it.corpse_data.name;
+					dummy.maxhp = it.corpse_data.maxhp;
+					dummy.attack = it.corpse_data.attack;
+					DropCorpse(leveli, &dummy, py, px);
 				}
 				else
 				{
-					if(player->equipped_weapon >= 0)
+					int lidx = leveli[leveli->lvl].num_items;
+					if (lidx < leveli[leveli->lvl].max_items)
 					{
-						player->inventory[player->equipped_weapon].equipped = NO;
+						leveli[leveli->lvl].items[lidx] = it;
+						leveli[leveli->lvl].items[lidx].Position.yPos = py;
+						leveli[leveli->lvl].items[lidx].Position.xPos = px;
+						leveli[leveli->lvl].items[lidx].active = YES;
+						leveli[leveli->lvl].items[lidx].equipped = NO;
+						leveli[leveli->lvl].num_items++;
 					}
-					player->inventory[idx].equipped = YES;
-					player->equipped_weapon = idx;
-					ClearMsg();
-					mvprintw(0, 0, "Wielded %s (+%d ATK)!", player->inventory[idx].name, player->inventory[idx].bonus_att);
+					leveli[leveli->lvl].map_backup[py][px] = it.symbol;
 				}
-			}
-		}
-		else if(player->inventory[idx].item_type == ITEM_ARMOR)
-		{
-			if(player->can_open_doors == NO)
-			{
 				ClearMsg();
-				mvprintw(0, 0, "Your %s body lacks hands to wear armor!", player->name);
+				mvprintw(0, 0, "Dropped %s on the floor.", it.name);
+				refresh();
 			}
 			else
 			{
-				if(player->inventory[idx].equipped == YES)
-				{
-					player->inventory[idx].equipped = NO;
-					player->equipped_armor = -1;
-					ClearMsg();
-					mvprintw(0, 0, "Took off %s.", player->inventory[idx].name);
-				}
-				else
-				{
-					if(player->equipped_armor >= 0)
-					{
-						player->inventory[player->equipped_armor].equipped = NO;
-					}
-					player->inventory[idx].equipped = YES;
-					player->equipped_armor = idx;
-					ClearMsg();
-					mvprintw(0, 0, "Equipped %s (+%d DEF)!", player->inventory[idx].name, player->inventory[idx].bonus_def);
-				}
+				ClearMsg();
+				mvprintw(0, 0, "Slot %d is empty, nothing to drop.", selected + 1);
+				refresh();
 			}
 		}
-		else if(player->inventory[idx].item_type == ITEM_CORPSE)
+		// USE / EQUIP / EAT: Enter (10/13), Space (' '), 'e', 'E', 'f', 'F'
+		else if (ch == 10 || ch == 13 || ch == ' ' || ch == 'e' || ch == 'E' || ch == 'f' || ch == 'F')
 		{
-			Corpse saved_corpse = player->inventory[idx].corpse_data;
-			// Remove from inventory
-			for(int k = idx; k < player->num_items - 1; k++)
+			if (selected < player->num_items)
 			{
-				player->inventory[k] = player->inventory[k + 1];
+				Item *it = &player->inventory[selected];
+				if (it->item_type == ITEM_WEAPON)
+				{
+					if (player->can_open_doors == NO)
+					{
+						ClearMsg();
+						mvprintw(0, 0, "Your %s body lacks hands to wield weapons!", player->name);
+						refresh();
+					}
+					else
+					{
+						if (it->equipped == YES)
+						{
+							it->equipped = NO;
+							player->equipped_weapon = -1;
+							ClearMsg();
+							mvprintw(0, 0, "Sheathed %s.", it->name);
+						}
+						else
+						{
+							if (player->equipped_weapon >= 0)
+							{
+								player->inventory[player->equipped_weapon].equipped = NO;
+							}
+							it->equipped = YES;
+							player->equipped_weapon = selected;
+							ClearMsg();
+							mvprintw(0, 0, "Wielded %s (+%d ATK)!", it->name, it->bonus_att);
+						}
+						refresh();
+					}
+				}
+				else if (it->item_type == ITEM_ARMOR)
+				{
+					if (player->can_open_doors == NO)
+					{
+						ClearMsg();
+						mvprintw(0, 0, "Your %s body lacks hands to wear armor!", player->name);
+						refresh();
+					}
+					else
+					{
+						if (it->equipped == YES)
+						{
+							it->equipped = NO;
+							player->equipped_armor = -1;
+							ClearMsg();
+							mvprintw(0, 0, "Took off %s.", it->name);
+						}
+						else
+						{
+							if (player->equipped_armor >= 0)
+							{
+								player->inventory[player->equipped_armor].equipped = NO;
+							}
+							it->equipped = YES;
+							player->equipped_armor = selected;
+							ClearMsg();
+							mvprintw(0, 0, "Equipped %s (+%d DEF)!", it->name, it->bonus_def);
+						}
+						refresh();
+					}
+				}
+				else if (it->item_type == ITEM_CORPSE)
+				{
+					Corpse saved_corpse = it->corpse_data;
+					for (int k = selected; k < player->num_items - 1; k++)
+					{
+						player->inventory[k] = player->inventory[k + 1];
+					}
+					player->num_items--;
+					EatCorpse(leveli, level, player, &saved_corpse);
+					break; // Exit inventory after eating / polymorphing
+				}
 			}
-			player->num_items--;
-			EatCorpse(leveli, level, player, &saved_corpse);
+			else
+			{
+				ClearMsg();
+				mvprintw(0, 0, "Slot %d is empty.", selected + 1);
+				refresh();
+			}
 		}
-	}
-	else if(ch == 'd' || ch == 'D')
-	{
-		QuickDrop(leveli, level, player);
+		// EXIT INVENTORY: 'q', 'Q', 'i', 'I', 'c', 'C', 27 (Esc)
+		else if (ch == 'q' || ch == 'Q' || ch == 'i' || ch == 'I' || ch == 'c' || ch == 'C' || ch == 27)
+		{
+			break;
+		}
 	}
 
-	PrintMap(MAX_Y, MAX_X, leveli[leveli->lvl].map);
-	PrintChar(player->Position.yPos, player->Position.xPos, leveli->player_symbol);
+	UpdateFOV(&leveli[leveli->lvl]);
+	RenderFOV(&leveli[leveli->lvl]);
 	PlayerInfoBar(leveli);
 	refresh();
 	return 1;

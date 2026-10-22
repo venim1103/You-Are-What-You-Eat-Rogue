@@ -38,7 +38,11 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 		}
 
 		// 2. Otherwise check terrain:
-		chtype ch = mvinch(y, x) & A_CHARTEXT;
+		chtype ch = '.';
+		if(level.map_backup != NULL && y >= 0 && y < MAX_Y && x >= 0 && x < MAX_X)
+		{
+			ch = level.map_backup[y][x];
+		}
 		level.player->Position.c = ch;
 
 		switch(ch)
@@ -96,7 +100,11 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 		}
 
 		// 3. Otherwise check terrain:
-		chtype ch = mvinch(y, x) & A_CHARTEXT;
+		chtype ch = '.';
+		if(level.map_backup != NULL && y >= 0 && y < MAX_Y && x >= 0 && x < MAX_X)
+		{
+			ch = level.map_backup[y][x];
+		}
 		monster->Position.c = ch;
 
 		switch(ch)

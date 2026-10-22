@@ -37,14 +37,18 @@ int Free(Level level, int lvl, int lvls)
 	}	
 	free(level.rooms.Object); 
 	free(level.rooms.Area);
-	// Free map screenshot
+	// Free map screenshot and FOV arrays
 	for(int i=0; i<Y_SCR; i++)
 	{
 		free(level.map[i]);
 		free(level.map_backup[i]);
+		if(level.discovered != NULL) free(level.discovered[i]);
+		if(level.visible != NULL) free(level.visible[i]);
 	}
 	free(level.map);	
 	free(level.map_backup);	
+	if(level.discovered != NULL) free(level.discovered);
+	if(level.visible != NULL) free(level.visible);
 
 	return 1;
 }

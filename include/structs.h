@@ -90,9 +90,12 @@ typedef struct Level
 	char *killer;
 	char **map;
 	char **map_backup;
+	char **discovered;
+	char **visible;
 	int lvl;
 	int maxlvl;
 	int mons;
+	int max_mons;
 	int turn;
 	int num_corpses;
 	int max_corpses;

@@ -42,8 +42,13 @@ Level *Game(Level *level)
 	level->lvl = 0;
 	level->maxlvl = 0;
 
+	UpdateFOV(&level[level->lvl]);
+	RenderFOV(&level[level->lvl]);
 	PlayerInfoBar(level);
 	WelcomeTxt();
+	UpdateFOV(&level[level->lvl]);
+	RenderFOV(&level[level->lvl]);
+	PlayerInfoBar(level);
 
 //+++++++++++++++++++++++++++++++++++++MAIN LOOOP/++++++++++++++++++++++++++++++++++++++//
 	while(((c = getch()) != 'Q')) 
@@ -87,20 +92,20 @@ Level *Game(Level *level)
 		if(c == 'r' || level[level->lvl].player->Position.type==DSTAIRS)
 		{
 			level = Downstairs(level,level->lvl); 
-			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
-			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);	
 			level[level->lvl].player->Position.type = UNKNOWN;
+			UpdateFOV(&level[level->lvl]);
+			RenderFOV(&level[level->lvl]);
 			PlayerInfoBar(level);
 			continue;
 		}
 		if(level[level->lvl].player->Position.type==USTAIRS)
 		{
 			level = Upstairs(level,level->lvl);
-			PrintMap(MAX_Y,MAX_X,level[level->lvl].map);
-			PrintChar(level[level->lvl].player->Position.yPos, level[level->lvl].player->Position.xPos, level->player_symbol);
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);
 			level[level->lvl].player->Position.type = UNKNOWN;
+			UpdateFOV(&level[level->lvl]);
+			RenderFOV(&level[level->lvl]);
 			PlayerInfoBar(level);
 			continue;
 		}
@@ -181,6 +186,12 @@ Level *Game(Level *level)
 			level[level->lvl].player->health += 1;
 		}
 
+		// AMBIENT MONSTER SPAWN IN UNDISCOVERED FOG:
+		if(level->turn > 0 && (level->turn % 35 == 0))
+		{
+			SpawnFogMonster(&level[level->lvl]);
+		}
+
 		// CORPSE AGING & SPOILAGE:
 		for(int c_idx = 0; c_idx < level[level->lvl].num_corpses; c_idx++)
 		{
@@ -206,6 +217,8 @@ Level *Game(Level *level)
 			}
 		}
 
+		UpdateFOV(&level[level->lvl]);
+		RenderFOV(&level[level->lvl]);
 		PlayerInfoBar(level);
 	} else
 	{

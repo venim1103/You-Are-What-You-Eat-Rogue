@@ -70,7 +70,7 @@ int Route(Position *p1, Position *p2, int i, int j, char chk1, char chk2, char i
 	}	
 	return 1;
 }
-int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char *chk)
+int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map)
 {
 	int best_dist = abs(y1 - y2) + abs(x1 - x2);
 	int best_y = y1;
@@ -86,7 +86,7 @@ int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char *chk)
 		int nx = x1 + dx[i];
 		int d = abs(ny - y2) + abs(nx - x2);
 
-		if(d < best_dist)
+		if(d < best_dist && ny >= 0 && ny < MAX_Y && nx >= 0 && nx < MAX_X)
 		{
 			// Check if target is player or walkable terrain:
 			if(ny == y2 && nx == x2)
@@ -97,7 +97,7 @@ int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char *chk)
 			}
 			else
 			{
-				chtype ch = mvinch(ny, nx) & A_CHARTEXT;
+				chtype ch = (map != NULL) ? map[ny][nx] : '.';
 				if(ch == '.' || ch == '#' || ch == ':' || ch == '%')
 				{
 					best_dist = d;
@@ -113,7 +113,7 @@ int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char *chk)
 	return yx;
 }
 
-int *PathFindRandom(int *yx, int y, int x, char *chk, int mode)
+int *PathFindRandom(int *yx, int y, int x, char **map, int mode)
 {
 	int random = 0;
 	if(mode==RANDOM_S)
@@ -140,11 +140,14 @@ int *PathFindRandom(int *yx, int y, int x, char *chk, int mode)
 
 	int ny = y + dy;
 	int nx = x + dx;
-	chtype ch = mvinch(ny, nx) & A_CHARTEXT;
-	if(ch == '.' || ch == '#' || ch == ':' || ch == '%')
+	if(ny >= 0 && ny < MAX_Y && nx >= 0 && nx < MAX_X)
 	{
-		y = ny;
-		x = nx;
+		chtype ch = (map != NULL) ? map[ny][nx] : '.';
+		if(ch == '.' || ch == '#' || ch == ':' || ch == '%')
+		{
+			y = ny;
+			x = nx;
+		}
 	}
 
 	yx[0] = y;

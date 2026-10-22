@@ -4,9 +4,11 @@ Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 {
 	int makeamount = 0;
 	makeamount = ((ROOMS/2)+lvl);
+	if(makeamount > 45) makeamount = 45;
 
 	Entity **monsters;
-	monsters = malloc(sizeof(Entity*)*(makeamount+1)); // Half of the rooms might have mons.
+	level->max_mons = 64;
+	monsters = malloc(sizeof(Entity*)*level->max_mons);
 	int *yx; yx=malloc(sizeof(int)*3); 
 
 	level->mons = 0;
@@ -29,6 +31,80 @@ Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 	free(yx);
 	
 	return monsters;
+}
+
+int SpawnFogMonster(Level *level)
+{
+	if(level == NULL || level->monsters == NULL || level->mons >= level->max_mons)
+	{
+		return 0;
+	}
+
+	int py = level->player->Position.yPos;
+	int px = level->player->Position.xPos;
+	int *yx = malloc(sizeof(int) * 3);
+	int spawned = 0;
+
+	for(int attempt = 0; attempt < 60; attempt++)
+	{
+		int rm = rand() % level->rooms.mode;
+		yx = RandomCoords(yx, level->rooms.mode, level->rooms.Area[rm]);
+		int sy = yx[0];
+		int sx = yx[1];
+
+		if(sy < 1 || sy >= MAX_Y - 1 || sx < 1 || sx >= MAX_X - 1)
+		{
+			continue;
+		}
+
+		// Must be in undiscovered fog
+		if(level->discovered != NULL && level->discovered[sy][sx] != 0)
+		{
+			continue;
+		}
+		if(level->visible != NULL && level->visible[sy][sx] != 0)
+		{
+			continue;
+		}
+
+		// Must be walkable floor
+		if(level->map_backup[sy][sx] != '.')
+		{
+			continue;
+		}
+
+		// Distance check
+		if(abs(sy - py) + abs(sx - px) < 12)
+		{
+			continue;
+		}
+
+		// Entity collision check
+		if(GetMonsterAt(sy, sx, *level) != NULL)
+		{
+			continue;
+		}
+
+		// Spawn monster according to level difficulty
+		Entity *mon = SelMonster(level->lvl);
+		mon->Position.yPos = sy;
+		mon->Position.xPos = sx;
+		mon->Position.ch = '.';
+		mon->Position.c = '.';
+		mon->alive = YES;
+
+		level->monsters[level->mons] = mon;
+		level->mons++;
+		spawned = 1;
+
+		ClearMsg();
+		mvprintw(0, 0, "You hear menacing scuffling echoing in the dark depths...");
+		refresh();
+		break;
+	}
+
+	free(yx);
+	return spawned;
 }
 
 Entity *SelMonster(int lvl)

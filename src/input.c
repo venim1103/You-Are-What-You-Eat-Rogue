@@ -111,7 +111,7 @@ int HandleInput(Level *leveli, Level level, int *yx)
 
 		case '?':
 			getch();
-			PrintMap(MAX_Y,MAX_X,level.map);
+			RenderFOV(&level);
 			refresh();
 			getch();	
 			break;
@@ -131,7 +131,12 @@ int HandleInput(Level *leveli, Level level, int *yx)
 		}
 		else
 		{
-			chtype ch = mvinch(target_y, target_x) & A_CHARTEXT;
+			chtype ch = '.';
+			if(level.map_backup != NULL && target_y >= 0 && target_y < MAX_Y && target_x >= 0 && target_x < MAX_X)
+			{
+				ch = level.map_backup[target_y][target_x];
+			}
+
 			switch(ch)
 			{
 				case '.':
@@ -210,7 +215,6 @@ int HandleInput(Level *leveli, Level level, int *yx)
 	// If a turn was taken, monsters take their turn:
 	if(action_taken)
 	{
-		char chk[10] = {'.','#',':','@','s', 'g','x','T'};
 		for(int i=0; i<level.mons; i++)
 		{
 			if(level.monsters[i]->alive != YES)
@@ -222,12 +226,12 @@ int HandleInput(Level *leveli, Level level, int *yx)
 
 			if(level.monsters[i]->type==FOLLOW)
 			{
-				yx = PathFindFollow(yx, my, mx, level.player->Position.yPos, level.player->Position.xPos, chk);
+				yx = PathFindFollow(yx, my, mx, level.player->Position.yPos, level.player->Position.xPos, level.map_backup);
 			} else if(level.monsters[i]->mode==RANDOM_S)
 			{
-				yx = PathFindRandom(yx, my, mx, chk, RANDOM_S);
+				yx = PathFindRandom(yx, my, mx, level.map_backup, RANDOM_S);
 			} else {
-				yx = PathFindRandom(yx, my, mx, chk, RANDOM_X);
+				yx = PathFindRandom(yx, my, mx, level.map_backup, RANDOM_X);
 			}
 			
 			my = yx[0]; mx = yx[1];

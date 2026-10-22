@@ -29,6 +29,7 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 			}
 
 			level_in.lvl = lvl;
+			level_in.max_mons = 64;
 			level_in.monsters = AddMonsters(&level_in, level_in.rooms, lvl);
 			// Spawn 2-4 floor items (weapons & armor):
 			level_in.max_items = 32;
@@ -41,12 +42,28 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 			}
 			SpawnFloorItems(&level_in, level_in.rooms, lvl);
 
+			// Allocate discovered and visible arrays for Fog of War:
+			level_in.discovered = malloc(sizeof(char*) * Y_SCR);
+			level_in.visible = malloc(sizeof(char*) * Y_SCR);
+			for(int i = 0; i < Y_SCR; i++)
+			{
+				level_in.discovered[i] = malloc(sizeof(char) * X_SCR);
+				level_in.visible[i] = malloc(sizeof(char) * X_SCR);
+				for(int j = 0; j < X_SCR; j++)
+				{
+					level_in.discovered[i][j] = 0;
+					level_in.visible[i][j] = 0;
+				}
+			}
+
 			// Draw player symbol on initial tile (while keeping '>' in map_backup and Position.ch):
 			level_in.player->mode = YES;
 			PrintChar(level_in.player->Position.yPos, level_in.player->Position.xPos, leveli->player_symbol);
-			// Make sure the upstairs by updating map:
 			level_in.map = UpdateMap(level_in.map,Y_SCR,X_SCR);
 			move(level_in.player->Position.yPos,level_in.player->Position.xPos);
+
+			UpdateFOV(&level_in);
+			RenderFOV(&level_in);
 			refresh();
 
 			return level_in;
