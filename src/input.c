@@ -91,6 +91,43 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			action_taken = ActivateFormAbility(leveli, level, level.player);
 			break;
 
+		// Use Stairs / Golden Portal ('<', '>', 'r', 'R'):
+		case '<':
+		case '>':
+		case 'r':
+		case 'R':
+		{
+			char cur_tile = (level.map_backup != NULL) ? level.map_backup[orig_y][orig_x] : '.';
+			if(cur_tile == '<')
+			{
+				AskStairs(DSTAIRS, level.player);
+			}
+			else if(cur_tile == '>')
+			{
+				AskStairs(USTAIRS, level.player);
+			}
+			else if(cur_tile == '*')
+			{
+				ClearMsg();
+				mvprintw(0, 0, "Step through the Golden Portal (*) and claim VICTORY? (y/n)");
+				refresh();
+				int ans = getch();
+				ClearMsg();
+				if(ans == 'y' || ans == 'Y')
+				{
+					level.player->Position.type = VICTORY;
+				}
+			}
+			else
+			{
+				ClearMsg();
+				mvprintw(0, 0, "There are no stairs here. (Stand on '<' or '>' to use stairs)");
+				refresh();
+			}
+			action_taken = 0;
+			break;
+		}
+
 		// Rest / Wait a turn:
 		case '.':
 		case ' ':
@@ -154,6 +191,7 @@ int HandleInput(Level *leveli, Level level, int *yx)
 				case ':':
 				case '>':
 				case '<':
+				case '*':
 				case '%':
 				case ')':
 				case '[':
@@ -170,7 +208,24 @@ int HandleInput(Level *leveli, Level level, int *yx)
 					// Check dynamic entities at target tile:
 					Corpse *corp = GetCorpseAt(level, target_y, target_x);
 					Item *it = GetItemAt(level, target_y, target_x);
-					if(ch == '>')
+					if(ch == '*')
+					{
+						ClearMsg();
+						mvprintw(0, 0, "Step through the Golden Portal (*) and claim VICTORY? (y/n)");
+						refresh();
+						int ans = getch();
+						ClearMsg();
+						if(ans == 'y' || ans == 'Y')
+						{
+							level.player->Position.type = VICTORY;
+						}
+						else
+						{
+							mvprintw(0, 0, "You stand beside the shimmering Golden Portal (*). Press 'r' or '>' to escape.");
+							refresh();
+						}
+					}
+					else if(ch == '>')
 					{
 						AskStairs(USTAIRS, level.player);
 					}

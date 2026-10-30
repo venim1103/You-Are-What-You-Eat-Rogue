@@ -87,8 +87,13 @@ Level *Game(Level *level)
 	// HANDLE INPUT:
 		int action_taken = HandleInput(level,level[level->lvl], yx);
 
-		// IMMEDIATE STAIR TRANSITIONS:
-		if(c == 'r' || level[level->lvl].player->Position.type==DSTAIRS)
+		// IMMEDIATE STAIR & PORTAL TRANSITIONS:
+		if(level[level->lvl].player->Position.type==VICTORY)
+		{
+			level->killer = "VICTORY";
+			break;
+		}
+		if(level[level->lvl].player->Position.type==DSTAIRS)
 		{
 			level = Downstairs(level,level->lvl); 
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);	
@@ -167,10 +172,22 @@ Level *Game(Level *level)
 				mon->health -= 1;
 				if(mon->health <= 0)
 				{
+					int was_dragon = (mon->symbol == 'D');
 					mon->alive = DEAD;
+					level[level->lvl].player->xp += mon->attack;
 					DropCorpse(level, mon, mon->Position.yPos, mon->Position.xPos);
 					mon->Position.yPos = -1;
 					mon->Position.xPos = -1;
+					ClearMsg();
+					if(was_dragon)
+					{
+						mvprintw(0, 0, "The %s succumbs to venom! (+%d XP) A Golden Portal (*) appears!", mon->name, mon->attack);
+					}
+					else
+					{
+						mvprintw(0, 0, "The %s succumbs to lethal venom! (+%d XP)", mon->name, mon->attack);
+					}
+					refresh();
 				}
 			}
 		}
@@ -219,19 +236,53 @@ Level *Game(Level *level)
 			}
 		}
 
+		// BACKPACK CORPSE AGING & SPOILAGE (Half-speed: 1 age tick per 2 turns):
+		if((level->turn % 2) == 0)
+		{
+			Entity *pl = level[level->lvl].player;
+			for(int inv_i = 0; inv_i < pl->num_items; inv_i++)
+			{
+				if(pl->inventory[inv_i].item_type == ITEM_CORPSE)
+				{
+					pl->inventory[inv_i].corpse_data.age++;
+					if(pl->inventory[inv_i].corpse_data.age >= 220)
+					{
+						char *rotted_name = pl->inventory[inv_i].name;
+						if(pl->equipped_weapon > inv_i) pl->equipped_weapon--;
+						if(pl->equipped_armor > inv_i) pl->equipped_armor--;
+						for(int k = inv_i; k < pl->num_items - 1; k++)
+						{
+							pl->inventory[k] = pl->inventory[k + 1];
+						}
+						pl->num_items--;
+						inv_i--;
+						ClearMsg();
+						mvprintw(0, 0, "The %s corpse in your backpack rotted away into dust!", rotted_name);
+						refresh();
+					}
+				}
+			}
+		}
+
 		UpdateFOV(&level[level->lvl]);
 		RenderFOV(&level[level->lvl]);
 
-		// If the player is standing on a floor item or corpse and row 0 is empty (or has standing info), refresh it:
+		// If the player is standing on a floor item, corpse, stairs, or portal and row 0 is empty (or has standing info), refresh it:
 		{
 			int py = level[level->lvl].player->Position.yPos;
 			int px = level[level->lvl].player->Position.xPos;
 			Item *floor_it = GetItemAt(level[level->lvl], py, px);
 			Corpse *floor_corp = GetCorpseAt(level[level->lvl], py, px);
+			char under_tile = level[level->lvl].map_backup[py][px];
 			chtype msg_first = mvinch(0, 0) & A_CHARTEXT;
 			if(msg_first == ' ' || msg_first == 0 || msg_first == 'S')
 			{
-				if(floor_it != NULL && floor_it->active == YES)
+				if(under_tile == '*')
+				{
+					ClearMsg();
+					mvprintw(0, 0, "Standing on: Golden Portal (*). Press 'r' or '>' to ascend to victory!");
+				}
+				else if(floor_it != NULL && floor_it->active == YES)
 				{
 					ClearMsg();
 					if(floor_it->item_type == ITEM_WEAPON)
@@ -248,6 +299,16 @@ Level *Game(Level *level)
 					ClearMsg();
 					const char *st = GetCorpseStage(floor_corp->age);
 					mvprintw(0, 0, "Standing on: %s %s corpse (%d nut). Press 'e' to eat or 'g' to stow.", st, floor_corp->name, floor_corp->nutrition);
+				}
+				else if(under_tile == '<')
+				{
+					ClearMsg();
+					mvprintw(0, 0, "Standing on: Downstairs (<). Press '<' or 'r' to descend.");
+				}
+				else if(under_tile == '>')
+				{
+					ClearMsg();
+					mvprintw(0, 0, "Standing on: Upstairs (>). Press '>' or 'r' to ascend.");
 				}
 			}
 		}

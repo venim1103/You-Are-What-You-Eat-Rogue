@@ -23,6 +23,7 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 			case 'G': leveli[lvl].corpses[idx].nutrition = 120; break;
 			case 'g': leveli[lvl].corpses[idx].nutrition = 400; break;
 			case 'T': leveli[lvl].corpses[idx].nutrition = 700; break;
+			case 'D': leveli[lvl].corpses[idx].nutrition = 1000; break;
 			default:  leveli[lvl].corpses[idx].nutrition = 300; break;
 		}
 		leveli[lvl].corpses[idx].age = 0;
@@ -30,11 +31,40 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 	}
 
 	char cur_tile = leveli[lvl].map_backup[y][x];
-	if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+')
+	if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*')
 	{
 		leveli[lvl].map_backup[y][x] = '%';
 	}
 	PrintChar(y, x, '%');
+
+	// If the slain monster is the Ancient Dragon boss, spawn the Golden Portal (*) nearby:
+	if(monster->symbol == 'D')
+	{
+		int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
+		int dx[8] = {0, 0, -1, 1, -1, 1, -1, 1};
+		int port_y = y;
+		int port_x = x;
+		for(int d = 0; d < 8; d++)
+		{
+			int ny = y + dy[d];
+			int nx = x + dx[d];
+			if(ny > 0 && ny < MAX_Y - 1 && nx > 0 && nx < MAX_X - 1 &&
+			   leveli[lvl].map_backup[ny][nx] == '.' &&
+			   (leveli[lvl].player == NULL ||
+			    leveli[lvl].player->Position.yPos != ny ||
+			    leveli[lvl].player->Position.xPos != nx))
+			{
+				port_y = ny;
+				port_x = nx;
+				break;
+			}
+		}
+		leveli[lvl].map_backup[port_y][port_x] = '*';
+		if(leveli[lvl].discovered != NULL) leveli[lvl].discovered[port_y][port_x] = 1;
+		if(leveli[lvl].visible != NULL) leveli[lvl].visible[port_y][port_x] = 1;
+		PrintChar(port_y, port_x, '*');
+	}
+
 	return 1;
 }
 
@@ -305,9 +335,17 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 
 			if(monster->health <= 0)
 			{
+				int was_dragon = (monster->symbol == 'D');
 				monster->alive = DEAD;
 				player->xp += monster->attack;
-				snprintf(tmp, sizeof(tmp), "Killed %s (+%d XP)!", monster->name, monster->attack);
+				if(was_dragon)
+				{
+					snprintf(tmp, sizeof(tmp), "SLAIN %s (+%d XP)! A Golden Portal (*) appears!", monster->name, monster->attack);
+				}
+				else
+				{
+					snprintf(tmp, sizeof(tmp), "Killed %s (+%d XP)!", monster->name, monster->attack);
+				}
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 
 				DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
@@ -354,7 +392,8 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 							DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
 							monster->Position.yPos = -1;
 							monster->Position.xPos = -1;
-							strncat(log_buf, "(Dissolved by your acid!) ", sizeof(log_buf) - strlen(log_buf) - 1);
+							snprintf(tmp, sizeof(tmp), "(Dissolved! +%d XP) ", monster->attack);
+							strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 						}
 					}
 
@@ -402,7 +441,13 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 			{
 				int m_dmg = monster->attack;
 				int m_cleave = 0;
-				if(monster->cleave_chance > 0 && (rand() % 100) < monster->cleave_chance)
+				int m_fire = 0;
+				if(monster->symbol == 'D' && (rand() % 100) < 35)
+				{
+					m_dmg += 4;
+					m_fire = 1;
+				}
+				else if(monster->cleave_chance > 0 && (rand() % 100) < monster->cleave_chance)
 				{
 					m_dmg += 3;
 					m_cleave = 1;
@@ -412,7 +457,11 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				if(m_dmg < 1) m_dmg = 1;
 
 				player->health -= m_dmg;
-				if(m_cleave)
+				if(m_fire)
+				{
+					snprintf(tmp, sizeof(tmp), "%s breathes DRAGON FIRE for %d dmg! ", monster->name, m_dmg);
+				}
+				else if(m_cleave)
 				{
 					snprintf(tmp, sizeof(tmp), "%s CLEAVES you for %d dmg! ", monster->name, m_dmg);
 				}
@@ -422,11 +471,11 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				}
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 
-				// Player acid reflection if Slime
+				// Player acid/fire reflection if Slime or Dragon
 				if(player->acid_corrosion > 0)
 				{
 					monster->health -= 1;
-					strncat(log_buf, "(Acid reflects 1 dmg) ", sizeof(log_buf) - strlen(log_buf) - 1);
+					strncat(log_buf, "(Reflects 1 dmg) ", sizeof(log_buf) - strlen(log_buf) - 1);
 					if(monster->health <= 0)
 					{
 						monster->alive = DEAD;
@@ -434,7 +483,8 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 						DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
 						monster->Position.yPos = -1;
 						monster->Position.xPos = -1;
-						strncat(log_buf, "(Enemy dissolved!) ", sizeof(log_buf) - strlen(log_buf) - 1);
+						snprintf(tmp, sizeof(tmp), "(Enemy dissolved! +%d XP) ", monster->attack);
+						strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 					}
 				}
 
@@ -571,15 +621,21 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 			}
 			if(target != NULL)
 			{
-				target->health -= (player->attack + 2);
+				int dmg = player->attack + 2;
+				target->health -= dmg;
 				target->poison_turns += 4;
-				mvprintw(0,0,"You spit toxic venom at %s! (%d damage, 4t poison)", target->name, player->attack + 2);
 				if(target->health <= 0)
 				{
 					target->alive = DEAD;
+					player->xp += target->attack;
 					DropCorpse(leveli, target, target->Position.yPos, target->Position.xPos);
 					target->Position.yPos = -1;
 					target->Position.xPos = -1;
+					mvprintw(0,0,"You spit toxic venom at %s for %d dmg! Killed %s (+%d XP)!", target->name, dmg, target->name, target->attack);
+				}
+				else
+				{
+					mvprintw(0,0,"You spit toxic venom at %s! (%d damage, 4t poison) [%s: %d/%d HP]", target->name, dmg, target->name, target->health, target->maxhp);
 				}
 			}
 			else
@@ -596,6 +652,8 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 			int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
 			int dx[8] = {0, 0, -1, 1, 1, -1, 1, -1};
 			int blinded = 0;
+			int kills = 0;
+			int xp_gain = 0;
 			for(int i = 0; i < 8; i++)
 			{
 				Entity *mon = GetMonsterAt(py + dy[i], px + dx[i], level);
@@ -606,13 +664,23 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 					if(mon->health <= 0)
 					{
 						mon->alive = DEAD;
+						player->xp += mon->attack;
+						xp_gain += mon->attack;
+						kills++;
 						DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
 						mon->Position.yPos = -1;
 						mon->Position.xPos = -1;
 					}
 				}
 			}
-			mvprintw(0,0,"BANG! Tinkered flashbang detonates! Blinded %d nearby foes!", blinded);
+			if(kills > 0)
+			{
+				mvprintw(0,0,"BANG! Flashbang hits %d foes! (%d killed, +%d XP!)", blinded, kills, xp_gain);
+			}
+			else
+			{
+				mvprintw(0,0,"BANG! Tinkered flashbang detonates! Blinded %d nearby foes!", blinded);
+			}
 			used = 1;
 			break;
 		}
@@ -623,6 +691,8 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 			int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
 			int dx[8] = {0, 0, -1, 1, 1, -1, 1, -1};
 			int hit_count = 0;
+			int kills = 0;
+			int xp_gain = 0;
 			for(int i = 0; i < 8; i++)
 			{
 				Entity *mon = GetMonsterAt(py + dy[i], px + dx[i], level);
@@ -633,13 +703,23 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 					if(mon->health <= 0)
 					{
 						mon->alive = DEAD;
+						player->xp += mon->attack;
+						xp_gain += mon->attack;
+						kills++;
 						DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
 						mon->Position.yPos = -1;
 						mon->Position.xPos = -1;
 					}
 				}
 			}
-			mvprintw(0,0,"ROAR! GROUND SLAM! Tremor crushes %d surrounding enemies for 7 damage!", hit_count);
+			if(kills > 0)
+			{
+				mvprintw(0,0,"ROAR! GROUND SLAM crushes %d foes for 7 dmg! (%d killed, +%d XP!)", hit_count, kills, xp_gain);
+			}
+			else
+			{
+				mvprintw(0,0,"ROAR! GROUND SLAM! Tremor crushes %d surrounding enemies for 7 damage!", hit_count);
+			}
 			used = 1;
 			break;
 		}
@@ -647,26 +727,36 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 		case 'G': // Ghost: Shadow Blink
 		{
 			ClearMsg();
-			int ran_dir = rand() % 4;
+			int start_dir = rand() % 4;
 			int dy[4] = {-3, 3, 0, 0};
 			int dx[4] = {0, 0, -3, 3};
-			int ny = py + dy[ran_dir];
-			int nx = px + dx[ran_dir];
-			if(ny > 0 && ny < MAX_Y - 1 && nx > 0 && nx < MAX_X - 1)
+			int blinked = 0;
+			for(int attempt = 0; attempt < 4; attempt++)
 			{
-				PrintChar(py, px, level.map_backup[py][px]);
-				player->Position.yPos = ny;
-				player->Position.xPos = nx;
-				player->Position.ch = level.map_backup[ny][nx];
-				PrintChar(ny, nx, leveli->player_symbol);
-				move(ny, nx);
-				mvprintw(0,0,"You ethereal-warp across space through the shadows!");
-				used = 1;
+				int dir = (start_dir + attempt) % 4;
+				int ny = py + dy[dir];
+				int nx = px + dx[dir];
+				if(ny > 0 && ny < MAX_Y - 1 && nx > 0 && nx < MAX_X - 1 &&
+				   GetMonsterAt(ny, nx, level) == NULL)
+				{
+					PrintChar(py, px, level.map_backup[py][px]);
+					player->Position.yPos = ny;
+					player->Position.xPos = nx;
+					player->Position.ch = level.map_backup[ny][nx];
+					PrintChar(ny, nx, leveli->player_symbol);
+					UpdateFOV(&leveli[leveli->lvl]);
+					RenderFOV(&leveli[leveli->lvl]);
+					move(ny, nx);
+					mvprintw(0,0,"You ethereal-warp across space through the shadows!");
+					blinked = 1;
+					used = 1;
+					break;
+				}
 			}
-			else
+			if(!blinked)
 			{
-				mvprintw(0,0,"Ethereal warp dissipated against the void barrier.");
-				used = 1;
+				mvprintw(0,0,"Shadow Blink blocked in all directions! (No hunger or cooldown spent)");
+				used = 0;
 			}
 			break;
 		}
@@ -677,6 +767,8 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 			int dy[4] = {-1, 1, 0, 0};
 			int dx[4] = {0, 0, -1, 1};
 			int dissolved = 0;
+			int kills = 0;
+			int xp_gain = 0;
 			for(int step = 1; step <= 3; step++)
 			{
 				for(int d = 0; d < 4; d++)
@@ -693,6 +785,9 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 							if(mon->health <= 0)
 							{
 								mon->alive = DEAD;
+								player->xp += mon->attack;
+								xp_gain += mon->attack;
+								kills++;
 								DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
 								mon->Position.yPos = -1;
 								mon->Position.xPos = -1;
@@ -701,7 +796,55 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 					}
 				}
 			}
-			mvprintw(0,0,"SPLAT! Acid Jet dissolves %d targets with burning caustic spray!", dissolved);
+			if(kills > 0)
+			{
+				mvprintw(0,0,"SPLAT! Acid Jet dissolves %d targets! (%d killed, +%d XP!)", dissolved, kills, xp_gain);
+			}
+			else
+			{
+				mvprintw(0,0,"SPLAT! Acid Jet dissolves %d targets with burning caustic spray!", dissolved);
+			}
+			used = 1;
+			break;
+		}
+
+		case 'D': // Ancient Dragon: Dragon Breath
+		{
+			ClearMsg();
+			int scorched = 0;
+			int kills = 0;
+			int xp_gain = 0;
+			for(int m = 0; m < level.mons; m++)
+			{
+				Entity *mon = level.monsters[m];
+				if(mon != NULL && mon->alive == YES)
+				{
+					int dist = abs(mon->Position.yPos - py) + abs(mon->Position.xPos - px);
+					if(dist <= 3)
+					{
+						mon->health -= 12;
+						scorched++;
+						if(mon->health <= 0)
+						{
+							mon->alive = DEAD;
+							player->xp += mon->attack;
+							xp_gain += mon->attack;
+							kills++;
+							DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
+							mon->Position.yPos = -1;
+							mon->Position.xPos = -1;
+						}
+					}
+				}
+			}
+			if(kills > 0)
+			{
+				mvprintw(0,0,"INFERNO! Dragon Breath incinerates %d foes for 12 dmg! (%d killed, +%d XP!)", scorched, kills, xp_gain);
+			}
+			else
+			{
+				mvprintw(0,0,"INFERNO! You unleash Dragon Breath, scorching %d nearby foes for 12 dmg!", scorched);
+			}
 			used = 1;
 			break;
 		}

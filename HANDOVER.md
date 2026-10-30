@@ -74,43 +74,34 @@
 
 ---
 
-## 4. Next Sprint: Roadmap & Action Items
+## 4. Sprint 3 Completed Features (Latest Release)
 
 ### Priority 1: XP Awards on Ability & Poison Kills
-* **Status:** Designed and ready for commit.
-* **Scope:** Ensure `player->xp += target->attack` is credited whenever an enemy is slain via:
-  * Snake Venom Spit (`s`)
-  * Goblin Flashbang (`g`)
-  * Troll Ground Slam (`T`)
-  * Slime Acid Jet (`B`)
-  * Dragon Breath (`D`)
-  * End-of-turn poison damage ticks (`src/game.c:168`)
+* **Status:** Completed.
+* **Scope:** `player->xp += target->attack` is credited with `(+X XP)` combat log feedback whenever an enemy is slain via Snake Venom Spit (`s`), Goblin Flashbang (`g`), Troll Ground Slam (`T`), Slime Acid Jet (`B`), Dragon Breath (`D`), Acid/Fire shield reflection, or end-of-turn poison damage ticks (`src/game.c`).
 
 ### Priority 2: Ghost "Shadow Blink" Bounds & Collision Safety
-* **Status:** Designed and ready for commit.
-* **Scope:**
-  * Shuffle and test all cardinal jump vectors (`dy = {-3, 3, 0, 0}`, `dx = {0, 0, -3, 3}`) to guarantee the destination is free of monsters (`GetMonsterAt() == NULL`) and within dungeon boundaries.
-  * If fully obstructed, refund ability cooldown and hunger (`used = 0`).
+* **Status:** Completed.
+* **Scope:** Cycles through all 4 cardinal jump vectors (`dy = {-3, 3, 0, 0}`, `dx = {0, 0, -3, 3}`) to guarantee the destination is within bounds and free of monsters (`GetMonsterAt() == NULL`), immediately updating FOV on arrival or refunding ability cooldown and hunger (`used = 0`) if obstructed.
 
 ### Priority 3: Backpack Corpse Decay & Spoilage System
-* **Status:** Designed and ready for commit.
+* **Status:** Completed.
 * **Scope:**
-  * Eliminate the infinite preservation exploit by aging backpack corpses at 50% rate (1 age tick per 2 player turns).
-  * If a stored corpse reaches age 220, decompose it into dust and remove it from inventory with a notification.
-  * When dropping a corpse (`ShowInventory` / `QuickDrop`), retain its exact elapsed age on the ground.
+  * Backpack corpses age at 50% rate (1 age tick per 2 player turns) and decompose into dust at age 220 with an inventory alert.
+  * Dropping a corpse (`ShowInventory` / `QuickDrop`) retains its exact elapsed age and nutrition on the floor, and preserves underlying staircases (`<`, `>`), doors (`:`, `+`), and portals (`*`).
 
 ### Priority 4: Floor 10 Boss Encounter & Victory Condition
-* **Status:** Designed and ready for commit.
-* **Scope:**
-  * Spawn the Ancient Dragon (`D`, 45 HP, 8 ATK, Fire Breath) on Floor 10 with elite Troll bodyguards.
-  * Upon slaying the Dragon, spawn the Golden Portal (`*`) on an adjacent tile.
-  * Stepping onto `*` prompts the player to escape the dungeon and triggers the customized VICTORY screen (`ExitScreen()`).
+* **Status:** Completed.
+  * Floor 10 spawns the Ancient Dragon (`D`, 45 HP, 8 ATK, Dragon Fire Breath) alongside 3 elite Troll bodyguards.
+  * Slaying the Dragon spawns the shimmering Golden Portal (`*`) on an adjacent tile.
+  * Stepping onto `*` (or pressing `r`/`>`/`<` on it) prompts the player to escape the dungeon and triggers the customized `GLORIOUS VICTORY` screen in `ExitScreen()`.
+  * Devouring the Dragon corpse grants the "Apex Predator" form (`Dragon Breath` 12-dmg AoE active, 50% Cleave, 25% double-strike, fire/acid shield, regeneration).
 
 ### Priority 5: Staircase Interaction & Mobile Accessibility
-* **Status:** In progress.
+* **Status:** Completed.
 * **Scope:**
-  * Support pressing `<` / `>` or `r` while standing on a staircase to prompt for floor transition.
-  * Add a dedicated "Stairs" action button to the mobile web control panel.
+  * Pressing `<` / `>` or `r` while standing on a staircase or portal prompts for floor transition or victory escape.
+  * Added a dedicated `🪜 Stairs` button to the mobile 3x3 action grid in `web/index.html`.
 
 ---
 

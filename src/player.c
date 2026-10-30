@@ -123,6 +123,23 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->ability_cost = 30;
 			entity->trait_desc = "Flight (50% Evasion), Life Drain (+1 HP on hit), Fast Burn (2 hunger/t), No Hands";
 			break;
+		case 'D': // Ancient Dragon (Apex Predator)
+			entity->hunger_rate = 2;
+			entity->regen_rate = 2;
+			entity->can_open_doors = YES;
+			entity->extra_attack_chance = 25;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 50;
+			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 1;
+			entity->evasion_chance = 0;
+			entity->life_drain = 0;
+			entity->ability_name = "Dragon Breath";
+			entity->ability_max_cd = 6;
+			entity->ability_cost = 50;
+			entity->trait_desc = "Apex Predator (50% Cleave, 25% Double-Strike, Fire/Acid Shield, Regen)";
+			break;
 		case '@': // Human
 		default:
 			entity->hunger_rate = 1;

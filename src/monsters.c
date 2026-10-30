@@ -15,8 +15,23 @@ Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 
 	int k = 0;
 
+	// Floor 10 Boss Encounter: Ancient Dragon + Elite Troll Bodyguards
+	if(lvl == 10)
+	{
+		monsters[k] = CreateMon('D', 45, 8, DRAGON, FOLLOW, "Ancient Dragon");
+		yx = MonSetup(monsters[k], rooms, yx);
+		k++;
+
+		for(int b = 0; b < 3 && k < level->max_mons; b++)
+		{
+			monsters[k] = CreateMon('T', 15, 5, TROLL, FOLLOW, "Troll");
+			yx = MonSetup(monsters[k], rooms, yx);
+			k++;
+		}
+	}
+
 	// Count up to all the rooms
-	for(int i=0; i<makeamount; i++)
+	for(int i=0; i<makeamount && k < level->max_mons; i++)
 	{
 		if((rand()%2) == YES) // If every 50% say YES!
 		{
@@ -176,6 +191,10 @@ Entity *SelMonster(int lvl)
 		
 		case TROLL:
 			return CreateMon('T', 15, 5, TROLL, FOLLOW, "Troll");
+		break;
+
+		case DRAGON:
+			return CreateMon('D', 45, 8, DRAGON, FOLLOW, "Ancient Dragon");
 		break;
 
 		default:

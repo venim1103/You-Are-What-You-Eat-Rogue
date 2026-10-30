@@ -116,6 +116,7 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 			case '[':
 			case '<':
 			case '>':
+			case '*':
 				StepOn(leveli,MONSTER,y,x,ch,c,level,monster);
 				monster->Position.type=GROUND;
 			break;

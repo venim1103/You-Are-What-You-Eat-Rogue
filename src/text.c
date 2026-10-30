@@ -127,13 +127,26 @@ int PlayerInfoBar(Level *level)
 	int px = level[level->lvl].player->Position.xPos;
 	Item *floor_it = GetItemAt(level[level->lvl], py, px);
 	Corpse *floor_corp = GetCorpseAt(level[level->lvl], py, px);
-	if (floor_it != NULL && floor_it->active == YES)
+	char under_tile = (level[level->lvl].map_backup != NULL) ? level[level->lvl].map_backup[py][px] : '.';
+	if (under_tile == '*')
+	{
+		printw("  [Floor: Golden Portal (*)]");
+	}
+	else if (floor_it != NULL && floor_it->active == YES)
 	{
 		printw("  [Floor: %s]", floor_it->name);
 	}
 	else if (floor_corp != NULL && floor_corp->active == YES)
 	{
 		printw("  [Floor: %s Corpse]", floor_corp->name);
+	}
+	else if (under_tile == '<')
+	{
+		printw("  [Floor: Downstairs (<)]");
+	}
+	else if (under_tile == '>')
+	{
+		printw("  [Floor: Upstairs (>)]");
 	}
 	printw("      ");
 
@@ -450,6 +463,12 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 					dummy.maxhp = it.corpse_data.maxhp;
 					dummy.attack = it.corpse_data.attack;
 					DropCorpse(leveli, &dummy, py, px);
+					int c_idx = leveli[leveli->lvl].num_corpses - 1;
+					if (c_idx >= 0)
+					{
+						leveli[leveli->lvl].corpses[c_idx].age = it.corpse_data.age;
+						leveli[leveli->lvl].corpses[c_idx].nutrition = it.corpse_data.nutrition;
+					}
 				}
 				else
 				{
@@ -464,12 +483,12 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 						leveli[leveli->lvl].num_items++;
 					}
 					char cur_tile = leveli[leveli->lvl].map_backup[py][px];
-					if (cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+')
+					if (cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*')
 					{
 						leveli[leveli->lvl].map_backup[py][px] = it.symbol;
 					}
 				}
-				player->Position.ch = (it.item_type == ITEM_CORPSE) ? '%' : it.symbol;
+				player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 				snprintf(inv_msg, sizeof(inv_msg), "Dropped %s on the floor.", it.name);
 			}
 			else
@@ -650,6 +669,7 @@ int LookMode(Level *leveli, Level level, Entity *player)
 					case ':': snprintf(desc, sizeof(desc), "Open Doorway (:)%s - Press 'c' nearby to close", vis_tag); break;
 					case '<': snprintf(desc, sizeof(desc), "Downstairs (<)%s - Leads deeper into the dungeon", vis_tag); break;
 					case '>': snprintf(desc, sizeof(desc), "Upstairs (>)%s - Leads toward the surface", vis_tag); break;
+					case '*': snprintf(desc, sizeof(desc), "Shimmering Golden Portal (*)%s - Step here to escape & win!", vis_tag); break;
 					case '-':
 					case '|': snprintf(desc, sizeof(desc), "Solid Dungeon Wall (%c)%s", tile, vis_tag); break;
 					default:  snprintf(desc, sizeof(desc), "Empty Void%s", vis_tag); break;
@@ -791,7 +811,7 @@ int QuickDrop(Level *leveli, Level level, Entity *player)
 		}
 		player->num_items--;
 
-		// If corpse, drop as corpse
+		// If corpse, drop as corpse retaining elapsed age
 		if(it.item_type == ITEM_CORPSE)
 		{
 			Entity dummy;
@@ -800,8 +820,15 @@ int QuickDrop(Level *leveli, Level level, Entity *player)
 			dummy.maxhp = it.corpse_data.maxhp;
 			dummy.attack = it.corpse_data.attack;
 			DropCorpse(leveli, &dummy, py, px);
+			int c_idx = leveli[leveli->lvl].num_corpses - 1;
+			if(c_idx >= 0)
+			{
+				leveli[leveli->lvl].corpses[c_idx].age = it.corpse_data.age;
+				leveli[leveli->lvl].corpses[c_idx].nutrition = it.corpse_data.nutrition;
+			}
+			player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 			ClearMsg();
-			mvprintw(0, 0, "Dropped %s corpse on the floor.", it.name);
+			mvprintw(0, 0, "Dropped %s %s corpse on the floor.", GetCorpseStage(it.corpse_data.age), it.name);
 		}
 		else
 		{
@@ -816,7 +843,12 @@ int QuickDrop(Level *leveli, Level level, Entity *player)
 				leveli[leveli->lvl].items[lidx].equipped = NO;
 				leveli[leveli->lvl].num_items++;
 			}
-			leveli[leveli->lvl].map_backup[py][px] = it.symbol;
+			char cur_tile = leveli[leveli->lvl].map_backup[py][px];
+			if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*')
+			{
+				leveli[leveli->lvl].map_backup[py][px] = it.symbol;
+			}
+			player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 			ClearMsg();
 			mvprintw(0, 0, "Dropped %s on the floor.", it.name);
 		}
@@ -880,14 +912,36 @@ int EatFromInventory(Level *leveli, Level level, Entity *player)
 
 int ExitScreen(Level *level)
 {
-	char buf[8];
-	sprintf(buf,"%d",level[level->lvl].player->xp);
+	char buf[16];
+	sprintf(buf, "%d", level[level->lvl].player->xp);
 	clear();
 
-	mvprintw(25,0,"                                                               YOU WERE A %s KILLED BY A %s AND DIED WITH %s XP!",
-		level[level->lvl].player->name, level->killer, buf);
-	printw("\n\n\n\n\n                                                                                   GAME OVER!");
-	refresh(); getch();
+	if(level->killer != NULL && strcmp(level->killer, "VICTORY") == 0)
+	{
+		mvprintw(8, 10, "================================================================");
+		mvprintw(9, 10, "        * * *  GLORIOUS VICTORY - DUNGEON CONQUERED!  * * *     ");
+		mvprintw(10, 10, "================================================================");
+		mvprintw(12, 10, "You slew the Ancient Dragon of Floor 10 and stepped through");
+		mvprintw(13, 10, "the shimmering Golden Portal (*) back into the sunlight!");
+		mvprintw(15, 10, "Final Form:     %s (%c)", level[level->lvl].player->name, level->player_symbol);
+		mvprintw(16, 10, "Final Stats:    %d/%d HP | %d ATK | %d DEF",
+			level[level->lvl].player->health, level[level->lvl].player->maxhp,
+			GetPlayerAttack(level[level->lvl].player), GetPlayerDefense(level[level->lvl].player));
+		mvprintw(17, 10, "Deepest Floor:  Floor %d", level->maxlvl);
+		mvprintw(18, 10, "Turns Taken:    %d", level->turn);
+		mvprintw(19, 10, "Total XP:       %s XP", buf);
+		mvprintw(22, 10, ">> Press any key to conclude your legend <<");
+		refresh();
+		getch();
+	}
+	else
+	{
+		mvprintw(25,0,"                                                               YOU WERE A %s KILLED BY A %s AND DIED WITH %s XP!",
+			level[level->lvl].player->name, level->killer, buf);
+		printw("\n\n\n\n\n                                                                                   GAME OVER!");
+		refresh();
+		getch();
+	}
 	
 	clear();
 	mvprintw(27,76,"THANK YOU FOR PLAYING!");
