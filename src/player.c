@@ -161,6 +161,23 @@ void ApplyFormTraits(Entity *entity, char symbol)
 	}
 }
 
+int CheckXPUpgrade(Entity *player, int old_xp)
+{
+	if(player == NULL) return 0;
+	int old_rank = old_xp / 20;
+	int new_rank = player->xp / 20;
+	if(new_rank > old_rank)
+	{
+		int diff = new_rank - old_rank;
+		player->maxhp += 3 * diff;
+		player->health += 3 * diff;
+		if(player->health > player->maxhp) player->health = player->maxhp;
+		player->attack += 1 * diff;
+		return diff;
+	}
+	return 0;
+}
+
 void CopyPlayer(Entity *dest, Entity *src)
 {
 	dest->health = src->health;

@@ -173,8 +173,10 @@ Level *Game(Level *level)
 				if(mon->health <= 0)
 				{
 					int was_dragon = (mon->symbol == 'D');
+					int old_xp = level[level->lvl].player->xp;
 					mon->alive = DEAD;
 					level[level->lvl].player->xp += mon->attack;
+					CheckXPUpgrade(level[level->lvl].player, old_xp);
 					DropCorpse(level, mon, mon->Position.yPos, mon->Position.xPos);
 					mon->Position.yPos = -1;
 					mon->Position.xPos = -1;
@@ -393,7 +395,9 @@ Level *Downstairs(Level *level, int r)
 	if(r==level->maxlvl)
 	{
 		// WHEN ENTERING A NEW LVL GAIN XP!
+		int old_xp = level[r].player->xp;
 		level[r].player->xp += level->lvl;
+		CheckXPUpgrade(level[r].player, old_xp);
 
 		level[r].map=UpdateMap(level[r].map,MAX_Y,MAX_X);
 		level[r].map[level[r].player->Position.yPos][level[r].player->Position.xPos] = '<';

@@ -2,7 +2,7 @@
 
 **Repository:** `venim1103/You-Are-What-You-Eat-Rogue`  
 **Current Branch:** `master`  
-**Latest Production Commit:** `1915df7`  
+**Latest Production Commit:** `a7bb5d1`  
 **GitHub Pages Target:** `venim1103.github.io/You-Are-What-You-Eat-Rogue`  
 **Document Date:** October 2026  
 
@@ -69,43 +69,42 @@
 ## 3. Where We Left Off (Current State)
 
 * The repository build pipeline is verified and passing across both native GCC and Emscripten WebAssembly targets (`.github/workflows/ci.yml`).
-* Production commit `1915df7` is deployed and live on GitHub Pages.
-* Game state is stable regarding movement, combat flow, FOV rendering, web responsiveness, and inventory management.
+* Production commit `a7bb5d1` + Sprint 4 upgrades are deployed and live on GitHub Pages.
+* Game state is stable regarding movement, combat flow, FOV rendering, web responsiveness, inventory management, Floor 10 boss victory progression, and Metabolic Mastery XP scaling.
 
 ---
 
-## 4. Sprint 3 Completed Features (Latest Release)
+## 4. Sprint 3 & Sprint 4 Completed Features
 
-### Priority 1: XP Awards on Ability & Poison Kills
-* **Status:** Completed.
-* **Scope:** `player->xp += target->attack` is credited with `(+X XP)` combat log feedback whenever an enemy is slain via Snake Venom Spit (`s`), Goblin Flashbang (`g`), Troll Ground Slam (`T`), Slime Acid Jet (`B`), Dragon Breath (`D`), Acid/Fire shield reflection, or end-of-turn poison damage ticks (`src/game.c`).
+### Sprint 3: Core Loop & Endgame Boss
+* **XP Awards on Ability & Poison Kills (`src/combat.c`, `src/game.c`):** `player->xp += target->attack` credited with `(+X XP)` combat log feedback across all active form abilities, acid/fire shield reflections, and poison deaths.
+* **Ghost "Shadow Blink" Bounds & Collision Safety (`src/combat.c`):** Cycles through all 4 cardinal jump vectors (`dy = {-3, 3, 0, 0}`, `dx = {0, 0, -3, 3}`) to guarantee the destination is within bounds and free of monsters (`GetMonsterAt() == NULL`), immediately updating FOV or refunding cooldown/hunger if blocked.
+* **Backpack Corpse Decay & Spoilage System (`src/game.c`, `src/text.c`):** Backpack corpses age at 50% rate (1 tick per 2 turns), decompose into dust at age 220, and retain exact elapsed age/nutrition when dropped.
+* **Floor 10 Boss Encounter & Victory Condition (`src/monsters.c`, `src/combat.c`, `src/input.c`, `src/text.c`):** Ancient Dragon (`D`, 45 HP, 8 ATK, Fire Breath) + 3 Troll bodyguards on Floor 10; spawns Golden Portal (`*`) on death, triggering the `GLORIOUS VICTORY` screen and Apex Predator Dragon form upon devouring.
+* **Staircase Interaction & Mobile Accessibility (`src/input.c`, `web/index.html`):** `<`/`>`/`r` staircase & portal activation plus dedicated mobile `🪜 Stairs` button.
 
-### Priority 2: Ghost "Shadow Blink" Bounds & Collision Safety
-* **Status:** Completed.
-* **Scope:** Cycles through all 4 cardinal jump vectors (`dy = {-3, 3, 0, 0}`, `dx = {0, 0, -3, 3}`) to guarantee the destination is within bounds and free of monsters (`GetMonsterAt() == NULL`), immediately updating FOV on arrival or refunding ability cooldown and hunger (`used = 0`) if obstructed.
-
-### Priority 3: Backpack Corpse Decay & Spoilage System
-* **Status:** Completed.
-* **Scope:**
-  * Backpack corpses age at 50% rate (1 age tick per 2 player turns) and decompose into dust at age 220 with an inventory alert.
-  * Dropping a corpse (`ShowInventory` / `QuickDrop`) retains its exact elapsed age and nutrition on the floor, and preserves underlying staircases (`<`, `>`), doors (`:`, `+`), and portals (`*`).
-
-### Priority 4: Floor 10 Boss Encounter & Victory Condition
-* **Status:** Completed.
-  * Floor 10 spawns the Ancient Dragon (`D`, 45 HP, 8 ATK, Dragon Fire Breath) alongside 3 elite Troll bodyguards.
-  * Slaying the Dragon spawns the shimmering Golden Portal (`*`) on an adjacent tile.
-  * Stepping onto `*` (or pressing `r`/`>`/`<` on it) prompts the player to escape the dungeon and triggers the customized `GLORIOUS VICTORY` screen in `ExitScreen()`.
-  * Devouring the Dragon corpse grants the "Apex Predator" form (`Dragon Breath` 12-dmg AoE active, 50% Cleave, 25% double-strike, fire/acid shield, regeneration).
-
-### Priority 5: Staircase Interaction & Mobile Accessibility
-* **Status:** Completed.
-* **Scope:**
-  * Pressing `<` / `>` or `r` while standing on a staircase or portal prompts for floor transition or victory escape.
-  * Added a dedicated `🪜 Stairs` button to the mobile 3x3 action grid in `web/index.html`.
+### Sprint 4: Progression Scaling & Inventory Integrity (Latest Release)
+* **Priority 1 — Metabolic Mastery XP Level-Up System (`src/player.c`, `src/combat.c`, `src/game.c`, `src/text.c`):**
+  * **Status:** Completed.
+  * **Scope:** Every 20 XP earned advances the player's Mastery Rank (`Rk:X` on HUD), granting `+3 Max HP`, `+3 HP` heal, and `+1 ATK` via `CheckXPUpgrade()`. Rank bonuses persist across polymorph transformations in `EatCorpse()`.
+* **Priority 2 — Depth-Scaled Equipment Tiers & Mythic Gear (`src/text.c:SpawnFloorItems`):**
+  * **Status:** Completed.
+  * **Scope:** Floor loot tables now scale by dungeon depth (`lvl <= 2` early gear, `lvl 3-5` mid-tier gear, `lvl >= 6` endgame gear) and introduce `Runed Greatsword (+10 ATK)` and `Dragonscale Mail (+8 DEF)` on deeper floors.
+* **Priority 3 — Backpack Corpse Consumption Index & Floor Preservation Fix (`src/text.c`, `src/combat.c`):**
+  * **Status:** Completed.
+  * **Scope:** Eating a corpse from the backpack (`ShowInventory` / `EatFromInventory`) now properly decrements `equipped_weapon` and `equipped_armor` slot indices when lower slots shift, and `EatCorpse()` only clears floor `%` tiles when the consumed corpse is the active floor corpse underfoot.
 
 ---
 
-## 5. Codebase Directory Map
+## 5. Next Sprint Roadmap (Future Enhancements)
+
+* **Priority 1 — Monster Status Visuals & Web HUD Polish:** Highlight poisoned or ensnared monsters and display active buff/debuff indicators in the web UI.
+* **Priority 2 — Dungeon Special Rooms & Shrines:** Add rare metabolic altars or subterranean springs on mid-floors (`lvl 4-8`) to purify tainted corpses or restore hunger.
+* **Priority 3 — High Score / Run History Persistence:** Save top victory/death runs in browser `localStorage` for WebAssembly sessions.
+
+---
+
+## 6. Codebase Directory Map
 
 ```
 You-Are-What-You-Eat-Rogue/

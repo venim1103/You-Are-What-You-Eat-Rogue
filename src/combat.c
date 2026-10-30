@@ -131,11 +131,12 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 		nut = nut + (nut * player->scavenger_bonus / 100);
 	}
 
+	int rank_bonus = player->xp / 20;
 	player->name = corpse->name;
 	player->symbol = corpse->symbol;
 	leveli->player_symbol = corpse->symbol;
-	player->attack = corpse->attack;
-	player->maxhp = ((corpse->maxhp)*4)+6;
+	player->attack = corpse->attack + rank_bonus;
+	player->maxhp = ((corpse->maxhp)*4)+6 + (rank_bonus * 3);
 	player->health = player->maxhp;
 
 	player->hunger += nut;
@@ -187,14 +188,21 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 			stage, corpse->name, nut, corpse->name, player->trait_desc);
 	}
 
-	corpse->active = NO;
 	int py = player->Position.yPos;
 	int px = player->Position.xPos;
-	if(leveli[leveli->lvl].map_backup[py][px] == '%')
+	if(GetCorpseAt(leveli[leveli->lvl], py, px) == corpse)
 	{
-		leveli[leveli->lvl].map_backup[py][px] = '.';
+		corpse->active = NO;
+		if(leveli[leveli->lvl].map_backup[py][px] == '%')
+		{
+			leveli[leveli->lvl].map_backup[py][px] = '.';
+		}
+		player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 	}
-	player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
+	else
+	{
+		corpse->active = NO;
+	}
 
 	PrintChar(py, px, leveli->player_symbol);
 	move(py, px);
@@ -336,11 +344,17 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 			if(monster->health <= 0)
 			{
 				int was_dragon = (monster->symbol == 'D');
+				int old_xp = player->xp;
 				monster->alive = DEAD;
 				player->xp += monster->attack;
+				int ranked_up = CheckXPUpgrade(player, old_xp);
 				if(was_dragon)
 				{
 					snprintf(tmp, sizeof(tmp), "SLAIN %s (+%d XP)! A Golden Portal (*) appears!", monster->name, monster->attack);
+				}
+				else if(ranked_up > 0)
+				{
+					snprintf(tmp, sizeof(tmp), "Killed %s (+%d XP)! [RANK UP! +3 HP, +1 ATK]", monster->name, monster->attack);
 				}
 				else
 				{
@@ -387,8 +401,10 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 						monster->health -= 1;
 						if(monster->health <= 0)
 						{
+							int old_xp = player->xp;
 							monster->alive = DEAD;
 							player->xp += monster->attack;
+							CheckXPUpgrade(player, old_xp);
 							DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
 							monster->Position.yPos = -1;
 							monster->Position.xPos = -1;
@@ -478,8 +494,10 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					strncat(log_buf, "(Reflects 1 dmg) ", sizeof(log_buf) - strlen(log_buf) - 1);
 					if(monster->health <= 0)
 					{
+						int old_xp = player->xp;
 						monster->alive = DEAD;
 						player->xp += monster->attack;
+						CheckXPUpgrade(player, old_xp);
 						DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
 						monster->Position.yPos = -1;
 						monster->Position.xPos = -1;
@@ -626,8 +644,10 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 				target->poison_turns += 4;
 				if(target->health <= 0)
 				{
+					int old_xp = player->xp;
 					target->alive = DEAD;
 					player->xp += target->attack;
+					CheckXPUpgrade(player, old_xp);
 					DropCorpse(leveli, target, target->Position.yPos, target->Position.xPos);
 					target->Position.yPos = -1;
 					target->Position.xPos = -1;
@@ -663,8 +683,10 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 					blinded++;
 					if(mon->health <= 0)
 					{
+						int old_xp = player->xp;
 						mon->alive = DEAD;
 						player->xp += mon->attack;
+						CheckXPUpgrade(player, old_xp);
 						xp_gain += mon->attack;
 						kills++;
 						DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
@@ -702,8 +724,10 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 					hit_count++;
 					if(mon->health <= 0)
 					{
+						int old_xp = player->xp;
 						mon->alive = DEAD;
 						player->xp += mon->attack;
+						CheckXPUpgrade(player, old_xp);
 						xp_gain += mon->attack;
 						kills++;
 						DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
@@ -784,8 +808,10 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 							dissolved++;
 							if(mon->health <= 0)
 							{
+								int old_xp = player->xp;
 								mon->alive = DEAD;
 								player->xp += mon->attack;
+								CheckXPUpgrade(player, old_xp);
 								xp_gain += mon->attack;
 								kills++;
 								DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
@@ -826,8 +852,10 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 						scorched++;
 						if(mon->health <= 0)
 						{
+							int old_xp = player->xp;
 							mon->alive = DEAD;
 							player->xp += mon->attack;
+							CheckXPUpgrade(player, old_xp);
 							xp_gain += mon->attack;
 							kills++;
 							DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);

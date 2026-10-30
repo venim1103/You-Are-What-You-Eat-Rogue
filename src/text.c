@@ -121,7 +121,7 @@ int PlayerInfoBar(Level *level)
 		}
 	}
 	printw("    Inv: %d/10", level[level->lvl].player->num_items);
-	printw("    XP: %d", level[level->lvl].player->xp);
+	printw("    XP: %d (Rk:%d)", level[level->lvl].player->xp, (level[level->lvl].player->xp / 20) + 1);
 
 	int py = level[level->lvl].player->Position.yPos;
 	int px = level[level->lvl].player->Position.xPos;
@@ -182,7 +182,23 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 		level->items[idx].active = YES;
 		level->items[idx].equipped = NO;
 
-		int roll = rand() % 7;
+		int roll;
+		if(lvl <= 2)
+		{
+			int pool[4] = {0, 1, 4, 5};
+			roll = pool[rand() % 4];
+		}
+		else if(lvl <= 5)
+		{
+			int pool[6] = {1, 2, 3, 4, 5, 6};
+			roll = pool[rand() % 6];
+		}
+		else
+		{
+			int pool[6] = {2, 3, 5, 6, 7, 8};
+			roll = pool[rand() % 6];
+		}
+
 		if(roll == 0)
 		{
 			level->items[idx].symbol = ')';
@@ -231,12 +247,28 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 			level->items[idx].bonus_def = 4;
 			level->items[idx].item_type = ITEM_ARMOR;
 		}
-		else
+		else if(roll == 6)
 		{
 			level->items[idx].symbol = '[';
 			level->items[idx].name = "Steel Plate Armor";
 			level->items[idx].bonus_att = 0;
 			level->items[idx].bonus_def = 6;
+			level->items[idx].item_type = ITEM_ARMOR;
+		}
+		else if(roll == 7)
+		{
+			level->items[idx].symbol = ')';
+			level->items[idx].name = "Runed Greatsword";
+			level->items[idx].bonus_att = 10;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_WEAPON;
+		}
+		else
+		{
+			level->items[idx].symbol = '[';
+			level->items[idx].name = "Dragonscale Mail";
+			level->items[idx].bonus_att = 0;
+			level->items[idx].bonus_def = 8;
 			level->items[idx].item_type = ITEM_ARMOR;
 		}
 
@@ -557,6 +589,8 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 				else if (it->item_type == ITEM_CORPSE)
 				{
 					Corpse saved_corpse = it->corpse_data;
+					if (player->equipped_weapon > selected) player->equipped_weapon--;
+					if (player->equipped_armor > selected) player->equipped_armor--;
 					for (int k = selected; k < player->num_items - 1; k++)
 					{
 						player->inventory[k] = player->inventory[k + 1];
@@ -897,6 +931,8 @@ int EatFromInventory(Level *leveli, Level level, Entity *player)
 		if(player->inventory[idx].item_type == ITEM_CORPSE)
 		{
 			Corpse saved = player->inventory[idx].corpse_data;
+			if(player->equipped_weapon > idx) player->equipped_weapon--;
+			if(player->equipped_armor > idx) player->equipped_armor--;
 			for(int k = idx; k < player->num_items - 1; k++)
 			{
 				player->inventory[k] = player->inventory[k + 1];
