@@ -115,13 +115,22 @@
     * Removed the `can_open_doors == NO` restriction from player door opening (`OpenDoor`) and closing (`'c'` in `HandleInput`) so the player can always open and close doors in any polymorphed form without getting trapped.
     * Retained `can_open_doors` on `Entity` to govern equipment manipulation (beasts still cannot wield weapons or wear armor, updated trait descriptions from `No Hands` to `No Gear`) and enemy AI door rules (only monsters with `can_open_doors == YES` can open closed doors `+`, while beasts remain blocked by closed doors).
 
+### Sprint 6: Persistent Hall of Fame & Run History (Latest Release)
+* **Priority 1 — High Score / Run History Persistence (`include/web_curses.h`, `src/web_curses.c`, `src/text.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `web_record_run()` C-to-JS bridge in `src/web_curses.c` invoked from `ExitScreen()` (`src/text.c`) on victory, death, or quit.
+    * Upgraded both Victory and Game Over screens in `ExitScreen()` with unified summary blocks displaying Final Form, HP/ATK/DEF stats, Deepest Floor, Turns Taken, Mastery Rank, and calculated Final Score (`(XP * 10) + (Deepest Floor * 50) + (Victory ? 1000 : 0)`).
+    * Implemented `localStorage` persistence (`yawye_rogue_hall_of_fame_v1`) in `web/index.html` storing the top 25 runs sorted by score, victory status, and XP.
+    * Added a `🏆 Fame` toolbar button and interactive **Hall of Fame & Run History** modal (`#hof-modal`) featuring aggregate career stats (Saved Runs, Victories, High Score, Deepest Floor), detailed run cards with victory/death badges, keyboard dismissal (`Esc`/`h`), and history reset support.
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — High Score / Run History Persistence:** Save top victory/death runs in browser `localStorage` for WebAssembly sessions and display a Hall of Fame modal.
-* **Priority 2 — Extended Bestiary & Floor Hazards:** Introduce new mid-to-late dungeon creatures or environmental hazards (e.g., persistent spider webs or acid puddles on floor tiles).
-* **Priority 3 — Sound Effects & Web Audio Synthesizer:** Add optional procedural Web Audio API sound effects for combat hits, polymorphing, shrine activation, and boss encounters.
+* **Priority 1 — Extended Bestiary & Floor Hazards:** Introduce new mid-to-late dungeon creatures or environmental hazards (e.g., persistent spider webs or acid puddles on floor tiles).
+* **Priority 2 — Sound Effects & Web Audio Synthesizer:** Add optional procedural Web Audio API sound effects for combat hits, polymorphing, shrine activation, and boss encounters.
+* **Priority 3 — Daily Seed / Challenge Runs:** Allow players to enter or share a custom RNG seed from the web toolbar for competitive seeded dungeon runs.
 
 ---
 

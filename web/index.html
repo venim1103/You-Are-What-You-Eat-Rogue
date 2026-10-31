@@ -301,6 +301,197 @@
       color: #38ef7d;
       font-weight: 600;
     }
+
+    .fame-btn {
+      background: rgba(250, 204, 21, 0.16) !important;
+      border-color: #ca8a04 !important;
+      color: #fde047 !important;
+      font-weight: 700 !important;
+    }
+
+    /* Hall of Fame Modal */
+    #hof-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 12, 0.85);
+      backdrop-filter: blur(3px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    #hof-modal.open {
+      display: flex;
+    }
+    .hof-dialog {
+      background: #0f172a;
+      border: 1px solid #334155;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(250, 204, 21, 0.12);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 660px;
+      max-height: 86dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: #e2e8f0;
+    }
+    .hof-header {
+      padding: 10px 14px;
+      background: #162032;
+      border-bottom: 1px solid #2a3a52;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hof-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fde047;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hof-close {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      border-radius: 5px;
+      padding: 3px 9px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .hof-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 10px 14px;
+      background: #0b111e;
+      border-bottom: 1px solid #1e293b;
+      text-align: center;
+    }
+    .hof-stat-box {
+      background: #131c2e;
+      border: 1px solid #23314b;
+      border-radius: 6px;
+      padding: 6px 4px;
+    }
+    .hof-stat-val {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #38ef7d;
+    }
+    .hof-stat-lbl {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .hof-body {
+      padding: 10px 14px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .hof-empty {
+      text-align: center;
+      color: #64748b;
+      padding: 28px 10px;
+      font-size: 0.84rem;
+    }
+    .hof-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .hof-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #131c2e;
+      border: 1px solid #243452;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 0.76rem;
+      gap: 8px;
+    }
+    .hof-row.hof-win {
+      border-color: #ca8a04;
+      background: linear-gradient(90deg, rgba(202, 138, 4, 0.16), #131c2e);
+    }
+    .hof-rank {
+      font-weight: 800;
+      color: #94a3b8;
+      min-width: 24px;
+    }
+    .hof-row.hof-win .hof-rank {
+      color: #fde047;
+    }
+    .hof-main {
+      flex: 1;
+      overflow: hidden;
+    }
+    .hof-line1 {
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .hof-badge-win {
+      background: rgba(250, 204, 21, 0.2);
+      color: #fde047;
+      border: 1px solid #ca8a04;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.66rem;
+      font-weight: 800;
+    }
+    .hof-badge-rip {
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
+      border: 1px solid #991b1b;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.66rem;
+      font-weight: 700;
+    }
+    .hof-line2 {
+      color: #94a3b8;
+      font-size: 0.7rem;
+      margin-top: 2px;
+    }
+    .hof-score {
+      text-align: right;
+      font-weight: 800;
+      color: #38bdf8;
+      white-space: nowrap;
+    }
+    .hof-score-sub {
+      font-size: 0.65rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+    .hof-footer {
+      padding: 8px 14px;
+      background: #0b111e;
+      border-top: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: #64748b;
+    }
+    .hof-clear-btn {
+      background: #2a1215;
+      border: 1px solid #7f1d1d;
+      color: #fca5a5;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -310,6 +501,7 @@
       <span>🍽️</span> YAWYE Rogue
     </div>
     <div class="toolbar">
+      <button class="fame-btn" onclick="toggleHallOfFame()">🏆 Fame</button>
       <button class="look-btn" onpointerdown="handleKey('v', event)">👁️ Look</button>
       <button onclick="changeFontSize(-1)">A-</button>
       <button onclick="changeFontSize(1)">A+</button>
@@ -318,6 +510,23 @@
       <button onclick="location.reload()">🔄 Reset</button>
     </div>
   </header>
+
+  <div id="hof-modal" onclick="if(event.target===this)toggleHallOfFame(false)">
+    <div class="hof-dialog">
+      <div class="hof-header">
+        <div class="hof-title">🏆 Hall of Fame &amp; Run History</div>
+        <button class="hof-close" onclick="toggleHallOfFame(false)">✕ Close</button>
+      </div>
+      <div class="hof-summary" id="hof-summary"></div>
+      <div class="hof-body">
+        <div id="hof-content"></div>
+      </div>
+      <div class="hof-footer">
+        <span>Score = (XP × 10) + (Floor × 50) + (Victory +1000)</span>
+        <button class="hof-clear-btn" onclick="clearHallOfFame()">🗑️ Clear History</button>
+      </div>
+    </div>
+  </div>
 
   <div id="status-strip">
     <span class="hud-pill pill-form">🧬 Human (@)</span>
@@ -410,6 +619,146 @@
       ctrl.style.display = (ctrl.style.display === 'none') ? 'flex' : 'none';
     }
 
+    const HOF_STORAGE_KEY = 'yawye_rogue_hall_of_fame_v1';
+
+    function loadHallOfFame() {
+      try {
+        const raw = localStorage.getItem(HOF_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveHallOfFame(runs) {
+      try {
+        localStorage.setItem(HOF_STORAGE_KEY, JSON.stringify(runs));
+      } catch (e) {
+        console.warn('Could not save Hall of Fame to localStorage:', e);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    window.recordRogueRun = function(run) {
+      if (!run) return;
+      const xp = Number(run.xp) || 0;
+      const maxlvl = Number(run.maxlvl) || 0;
+      const victory = !!run.victory;
+      const score = (xp * 10) + (maxlvl * 50) + (victory ? 1000 : 0);
+      const entry = {
+        victory: victory,
+        form: run.form || 'Human',
+        symbol: run.symbol || '@',
+        killer: victory ? 'Conquered Floor 10' : (run.killer === 'NO ONE' ? 'Quit / Abandoned' : (run.killer || 'Unknown')),
+        xp: xp,
+        rank: Number(run.rank) || 1,
+        maxlvl: maxlvl,
+        turns: Number(run.turns) || 0,
+        hp: Number(run.hp) || 0,
+        maxhp: Number(run.maxhp) || 20,
+        att: Number(run.att) || 0,
+        def: Number(run.def) || 0,
+        score: score,
+        date: new Date().toISOString().slice(0, 10)
+      };
+
+      let runs = loadHallOfFame();
+      runs.push(entry);
+      runs.sort(function(a, b) {
+        if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+        if (b.victory !== a.victory) return b.victory ? 1 : -1;
+        return (b.xp || 0) - (a.xp || 0);
+      });
+      if (runs.length > 25) runs = runs.slice(0, 25);
+      saveHallOfFame(runs);
+      renderHallOfFame();
+    };
+
+    function renderHallOfFame() {
+      const summaryEl = document.getElementById('hof-summary');
+      const contentEl = document.getElementById('hof-content');
+      if (!summaryEl || !contentEl) return;
+
+      const runs = loadHallOfFame();
+      let totalRuns = runs.length;
+      let victories = 0;
+      let bestScore = 0;
+      let deepestFloor = 0;
+      for (let i = 0; i < runs.length; i++) {
+        if (runs[i].victory) victories++;
+        if ((runs[i].score || 0) > bestScore) bestScore = runs[i].score || 0;
+        if ((runs[i].maxlvl || 0) > deepestFloor) deepestFloor = runs[i].maxlvl || 0;
+      }
+
+      summaryEl.innerHTML =
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + totalRuns + '</div><div class="hof-stat-lbl">Saved Runs</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + victories + '</div><div class="hof-stat-lbl">Victories</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + bestScore + '</div><div class="hof-stat-lbl">High Score</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">Floor ' + deepestFloor + '</div><div class="hof-stat-lbl">Deepest Floor</div></div>';
+
+      if (runs.length === 0) {
+        contentEl.innerHTML = '<div class="hof-empty">No completed runs recorded yet.<br>Battle through the dungeon—your victories and deaths will be immortalized here!</div>';
+        return;
+      }
+
+      let rows = [];
+      for (let i = 0; i < runs.length; i++) {
+        const r = runs[i];
+        const winClass = r.victory ? ' hof-win' : '';
+        const badge = r.victory
+          ? '<span class="hof-badge-win">👑 VICTORY</span>'
+          : '<span class="hof-badge-rip">💀 ' + escapeHtml(r.killer) + '</span>';
+        rows.push(
+          '<div class="hof-row' + winClass + '">' +
+            '<div class="hof-rank">#' + (i + 1) + '</div>' +
+            '<div class="hof-main">' +
+              '<div class="hof-line1">' +
+                '<span>' + escapeHtml(r.form) + ' (' + escapeHtml(r.symbol) + ')</span>' +
+                badge +
+              '</div>' +
+              '<div class="hof-line2">' +
+                'Floor ' + (r.maxlvl || 0) + ' • Rk ' + (r.rank || 1) + ' (' + (r.xp || 0) + ' XP) • ' +
+                (r.att || 0) + ' ATK / ' + (r.def || 0) + ' DEF • ' + (r.turns || 0) + ' turns • ' + escapeHtml(r.date || '') +
+              '</div>' +
+            '</div>' +
+            '<div class="hof-score">' +
+              (r.score || 0) + ' pts' +
+              '<div class="hof-score-sub">' + (r.hp || 0) + '/' + (r.maxhp || 20) + ' HP</div>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+      contentEl.innerHTML = '<div class="hof-list">' + rows.join('') + '</div>';
+    }
+
+    function toggleHallOfFame(forceState) {
+      const modal = document.getElementById('hof-modal');
+      if (!modal) return;
+      const shouldOpen = (typeof forceState === 'boolean') ? forceState : !modal.classList.contains('open');
+      if (shouldOpen) {
+        renderHallOfFame();
+        modal.classList.add('open');
+      } else {
+        modal.classList.remove('open');
+      }
+    }
+
+    function clearHallOfFame() {
+      try {
+        localStorage.removeItem(HOF_STORAGE_KEY);
+      } catch (e) {}
+      renderHallOfFame();
+    }
+
     function centerOnPlayer() {
       if (!wrapEl || !termEl) return;
       if (lastPlayerX === 0 && lastPlayerY === 0) {
@@ -452,6 +801,15 @@
 
     window.addEventListener('keydown', function(e) {
       if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+      const hofModal = document.getElementById('hof-modal');
+      if (hofModal && hofModal.classList.contains('open')) {
+        if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') {
+          e.preventDefault();
+          toggleHallOfFame(false);
+        }
+        return;
+      }
 
       const keyMap = {
         'ArrowUp': 'w',

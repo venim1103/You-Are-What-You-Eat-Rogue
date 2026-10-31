@@ -64,6 +64,45 @@ EM_JS(int, js_getch_async, (), {
     });
 });
 
+EM_JS(void, js_record_run, (int victory, const char* form_name, int form_sym, const char* killer, int xp, int rank, int maxlvl, int turns, int hp, int maxhp, int att, int def), {
+    try {
+        var readStr = function(ptr) {
+            if (!ptr) return "";
+            if (typeof UTF8ToString !== 'undefined') return UTF8ToString(ptr);
+            if (typeof Module !== 'undefined' && Module.UTF8ToString) return Module.UTF8ToString(ptr);
+            if (typeof HEAPU8 !== 'undefined') {
+                var len = 0;
+                while (HEAPU8[ptr + len] !== 0) len++;
+                return new TextDecoder('utf-8').decode(new Uint8Array(HEAPU8.buffer, ptr, len));
+            }
+            return "";
+        };
+        if (window.recordRogueRun) {
+            window.recordRogueRun({
+                victory: !!victory,
+                form: readStr(form_name) || "Human",
+                symbol: String.fromCharCode(form_sym || 64),
+                killer: readStr(killer) || "Unknown",
+                xp: xp,
+                rank: rank,
+                maxlvl: maxlvl,
+                turns: turns,
+                hp: hp,
+                maxhp: maxhp,
+                att: att,
+                def: def
+            });
+        }
+    } catch (e) {
+        console.error("js_record_run error:", e);
+    }
+});
+
+void web_record_run(int victory, const char *form_name, char form_sym, const char *killer, int xp, int rank, int maxlvl, int turns, int hp, int maxhp, int att, int def)
+{
+    js_record_run(victory, form_name ? form_name : "Human", (int)(unsigned char)form_sym, killer ? killer : "Unknown", xp, rank, maxlvl, turns, hp, maxhp, att, def);
+}
+
 int initscr(void)
 {
     clear();

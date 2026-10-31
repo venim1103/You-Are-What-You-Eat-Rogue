@@ -1138,33 +1138,54 @@ int EatFromInventory(Level *leveli, Level level, Entity *player)
 
 int ExitScreen(Level *level)
 {
-	char buf[16];
-	sprintf(buf, "%d", level[level->lvl].player->xp);
+	Entity *pl = level[level->lvl].player;
+	int is_victory = (level->killer != NULL && strcmp(level->killer, "VICTORY") == 0);
+	int total_att = GetPlayerAttack(pl);
+	int total_def = GetPlayerDefense(pl);
+	int rank = (pl->xp / 20) + 1;
+	int score = pl->xp * 10 + level->maxlvl * 50 + (is_victory ? 1000 : 0);
+
+#ifdef __EMSCRIPTEN__
+	web_record_run(is_victory, pl->name, level->player_symbol,
+		level->killer ? level->killer : "Quit",
+		pl->xp, rank, level->maxlvl, level->turn,
+		pl->health, pl->maxhp, total_att, total_def);
+#endif
+
 	clear();
 
-	if(level->killer != NULL && strcmp(level->killer, "VICTORY") == 0)
+	if(is_victory)
 	{
-		mvprintw(8, 10, "================================================================");
-		mvprintw(9, 10, "        * * *  GLORIOUS VICTORY - DUNGEON CONQUERED!  * * *     ");
-		mvprintw(10, 10, "================================================================");
-		mvprintw(12, 10, "You slew the Ancient Dragon of Floor 10 and stepped through");
-		mvprintw(13, 10, "the shimmering Golden Portal (*) back into the sunlight!");
-		mvprintw(15, 10, "Final Form:     %s (%c)", level[level->lvl].player->name, level->player_symbol);
-		mvprintw(16, 10, "Final Stats:    %d/%d HP | %d ATK | %d DEF",
-			level[level->lvl].player->health, level[level->lvl].player->maxhp,
-			GetPlayerAttack(level[level->lvl].player), GetPlayerDefense(level[level->lvl].player));
-		mvprintw(17, 10, "Deepest Floor:  Floor %d", level->maxlvl);
-		mvprintw(18, 10, "Turns Taken:    %d", level->turn);
-		mvprintw(19, 10, "Total XP:       %s XP", buf);
-		mvprintw(22, 10, ">> Press any key to conclude your legend <<");
+		mvprintw(7, 10, "================================================================");
+		mvprintw(8, 10, "        * * *  GLORIOUS VICTORY - DUNGEON CONQUERED!  * * *     ");
+		mvprintw(9, 10, "================================================================");
+		mvprintw(11, 10, "You slew the Ancient Dragon of Floor 10 and stepped through");
+		mvprintw(12, 10, "the shimmering Golden Portal (*) back into the sunlight!");
+		mvprintw(14, 10, "Final Form:     %s (%c)", pl->name, level->player_symbol);
+		mvprintw(15, 10, "Final Stats:    %d/%d HP | %d ATK | %d DEF", pl->health, pl->maxhp, total_att, total_def);
+		mvprintw(16, 10, "Deepest Floor:  Floor %d", level->maxlvl);
+		mvprintw(17, 10, "Turns Taken:    %d", level->turn);
+		mvprintw(18, 10, "Mastery Rank:   Rank %d (%d XP)", rank, pl->xp);
+		mvprintw(19, 10, "Final Score:    %d pts", score);
+		mvprintw(21, 10, "[Run recorded to Hall of Fame! Click 'Fame' in top bar to view]");
+		mvprintw(23, 10, ">> Press any key to conclude your legend <<");
 		refresh();
 		getch();
 	}
 	else
 	{
-		mvprintw(25,0,"                                                               YOU WERE A %s KILLED BY A %s AND DIED WITH %s XP!",
-			level[level->lvl].player->name, level->killer, buf);
-		printw("\n\n\n\n\n                                                                                   GAME OVER!");
+		mvprintw(8, 10, "================================================================");
+		mvprintw(9, 10, "                     * * *  GAME OVER!  * * *                   ");
+		mvprintw(10, 10, "================================================================");
+		mvprintw(12, 10, "You perished as a %s (%c), slain by: %s",
+			pl->name, level->player_symbol, level->killer ? level->killer : "Unknown");
+		mvprintw(14, 10, "Final Stats:    %d/%d HP | %d ATK | %d DEF", pl->health, pl->maxhp, total_att, total_def);
+		mvprintw(15, 10, "Deepest Floor:  Floor %d", level->maxlvl);
+		mvprintw(16, 10, "Turns Taken:    %d", level->turn);
+		mvprintw(17, 10, "Mastery Rank:   Rank %d (%d XP)", rank, pl->xp);
+		mvprintw(18, 10, "Final Score:    %d pts", score);
+		mvprintw(20, 10, "[Run recorded to Hall of Fame! Click 'Fame' in top bar to view]");
+		mvprintw(22, 10, ">> Press any key to continue <<");
 		refresh();
 		getch();
 	}
