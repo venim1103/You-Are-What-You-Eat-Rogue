@@ -39,6 +39,8 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player);
 int GetPlayerAttack(Entity *player);
 int GetPlayerDefense(Entity *player);
 void SpawnFloorItems(Level *level, Entity rooms, int lvl);
+void SpawnFloorShrines(Level *level, Entity rooms, int lvl);
+int UseShrine(Level *leveli, Level level, Entity *player, int y, int x);
 Item *GetItemAt(Level level, int y, int x);
 int PickUpFloorItem(Level *leveli, Level level, Entity *player);
 int ShowInventory(Level *leveli, Level level, Entity *player);

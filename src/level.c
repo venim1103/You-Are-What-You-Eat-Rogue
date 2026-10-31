@@ -41,6 +41,7 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 				level_in.items[i].equipped = NO;
 			}
 			SpawnFloorItems(&level_in, level_in.rooms, lvl);
+			SpawnFloorShrines(&level_in, level_in.rooms, lvl);
 
 			// Allocate discovered and visible arrays for Fog of War:
 			level_in.discovered = malloc(sizeof(char*) * Y_SCR);

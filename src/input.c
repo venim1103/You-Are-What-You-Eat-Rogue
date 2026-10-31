@@ -118,10 +118,14 @@ int HandleInput(Level *leveli, Level level, int *yx)
 					level.player->Position.type = VICTORY;
 				}
 			}
+			else if(cur_tile == '_' || cur_tile == '~')
+			{
+				action_taken = UseShrine(leveli, level, level.player, orig_y, orig_x);
+			}
 			else
 			{
 				ClearMsg();
-				mvprintw(0, 0, "There are no stairs here. (Stand on '<' or '>' to use stairs)");
+				mvprintw(0, 0, "There are no stairs or shrines here. (Stand on '<', '>', '_', or '~')");
 				refresh();
 			}
 			action_taken = 0;
@@ -137,22 +141,13 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			action_taken = 1;
 			break;
 
-		// Close door:
+		// Close door (player can always operate doors regardless of form):
 		case 'c': 
-			if(level.player->can_open_doors == NO)
-			{
-				ClearMsg();
-				mvprintw(0,0,"You cannot operate doors as a %s! (You lack hands)", level.player->name);
-				refresh();
-			}
-			else
-			{
-				TurnNearby(orig_y, orig_x, ':', "+", level);
-				ClearMsg();
-				mvprintw(0,0,"You close the nearby doors.");
-				refresh();
-				action_taken = 1;
-			}
+			TurnNearby(orig_y, orig_x, ':', "+", level);
+			ClearMsg();
+			mvprintw(0,0,"You close the nearby doors.");
+			refresh();
+			action_taken = 1;
 			break;
 
 		case '?':
@@ -192,6 +187,8 @@ int HandleInput(Level *leveli, Level level, int *yx)
 				case '>':
 				case '<':
 				case '*':
+				case '_':
+				case '~':
 				case '%':
 				case ')':
 				case '[':
@@ -232,6 +229,10 @@ int HandleInput(Level *leveli, Level level, int *yx)
 					else if(ch == '<')
 					{
 						AskStairs(DSTAIRS, level.player);
+					}
+					else if(ch == '_' || ch == '~')
+					{
+						UseShrine(leveli, level, level.player, target_y, target_x);
 					}
 					else if(corp != NULL && corp->active == YES)
 					{
@@ -291,6 +292,18 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			int py = level.player->Position.yPos;
 			int px = level.player->Position.xPos;
 			int dist = abs(my - py) + abs(mx - px);
+
+			// Ensnared/stunned monsters cannot move, though they can still melee if adjacent:
+			if(level.monsters[i]->snare_turns > 0)
+			{
+				level.monsters[i]->snare_turns--;
+				if(abs(my - py) <= 1 && abs(mx - px) <= 1)
+				{
+					Combat(leveli, level, level.player, level.monsters[i], MONSTER);
+				}
+				continue;
+			}
+
 			int is_vis = (level.visible != NULL && my >= 0 && my < MAX_Y && mx >= 0 && mx < MAX_X) ? level.visible[my][mx] : 0;
 
 			if(level.monsters[i]->type==FOLLOW && (dist <= 14 || is_vis))

@@ -55,6 +55,7 @@ typedef struct Entity
 	int max_hunger;
 	int hunger_rate;
 	int poison_turns;
+	int snare_turns;
 	int regen_rate;
 	int can_open_doors;
 	int extra_attack_chance;

@@ -31,7 +31,7 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 	}
 
 	char cur_tile = leveli[lvl].map_backup[y][x];
-	if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*')
+	if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*' && cur_tile != '_' && cur_tile != '~')
 	{
 		leveli[lvl].map_backup[y][x] = '%';
 	}
@@ -428,7 +428,14 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 
 			if(monster->alive == YES)
 			{
-				snprintf(tmp, sizeof(tmp), "[%s: %d/%d HP]", monster->name, monster->health, monster->maxhp);
+				char status_tag[64] = "";
+				if(monster->poison_turns > 0 && monster->snare_turns > 0)
+					snprintf(status_tag, sizeof(status_tag), " [PSN:%dt, WEB:%dt]", monster->poison_turns, monster->snare_turns);
+				else if(monster->poison_turns > 0)
+					snprintf(status_tag, sizeof(status_tag), " [PSN:%dt]", monster->poison_turns);
+				else if(monster->snare_turns > 0)
+					snprintf(status_tag, sizeof(status_tag), " [WEB:%dt]", monster->snare_turns);
+				snprintf(tmp, sizeof(tmp), "[%s: %d/%d HP%s]", monster->name, monster->health, monster->maxhp, status_tag);
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 			}
 		}
@@ -529,7 +536,14 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 
 				if(monster->alive == YES)
 				{
-					snprintf(tmp, sizeof(tmp), "[%s: %d/%d HP]", monster->name, monster->health, monster->maxhp);
+					char status_tag[64] = "";
+					if(monster->poison_turns > 0 && monster->snare_turns > 0)
+						snprintf(status_tag, sizeof(status_tag), " [PSN:%dt, WEB:%dt]", monster->poison_turns, monster->snare_turns);
+					else if(monster->poison_turns > 0)
+						snprintf(status_tag, sizeof(status_tag), " [PSN:%dt]", monster->poison_turns);
+					else if(monster->snare_turns > 0)
+						snprintf(status_tag, sizeof(status_tag), " [WEB:%dt]", monster->snare_turns);
+					snprintf(tmp, sizeof(tmp), "[%s: %d/%d HP%s]", monster->name, monster->health, monster->maxhp, status_tag);
 					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 			}
@@ -594,21 +608,22 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 		case 'x': // Spider: Spin Web
 		{
 			ClearMsg();
-			int dy[4] = {-1, 1, 0, 0};
-			int dx[4] = {0, 0, -1, 1};
+			int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
+			int dx[8] = {0, 0, -1, 1, 1, -1, 1, -1};
 			int hits = 0;
-			for(int i = 0; i < 4; i++)
+			for(int i = 0; i < 8; i++)
 			{
 				Entity *mon = GetMonsterAt(py + dy[i], px + dx[i], level);
 				if(mon != NULL && mon->alive == YES)
 				{
+					mon->snare_turns += 3;
 					mon->poison_turns += 2;
 					hits++;
 				}
 			}
 			if(hits > 0)
 			{
-				mvprintw(0,0,"You shoot sticky webbing! Ensnared %d nearby enemies!", hits);
+				mvprintw(0,0,"You shoot sticky webbing! Ensnared & poisoned %d nearby enemies (3t web, 2t poison)!", hits);
 			}
 			else
 			{
@@ -680,6 +695,7 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 				if(mon != NULL && mon->alive == YES)
 				{
 					mon->health -= 2;
+					mon->snare_turns += 2;
 					blinded++;
 					if(mon->health <= 0)
 					{

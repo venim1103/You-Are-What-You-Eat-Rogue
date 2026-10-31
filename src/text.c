@@ -109,6 +109,30 @@ int PlayerInfoBar(Level *level)
 	{
 		printw(" [POISON:%d]", level[level->lvl].player->poison_turns);
 	}
+	if(level[level->lvl].player->regen_rate > 0)
+	{
+		printw(" [REGEN]");
+	}
+	if(level[level->lvl].player->can_phase_walls > 0)
+	{
+		printw(" [PHASE]");
+	}
+	if(level[level->lvl].player->acid_corrosion > 0)
+	{
+		printw(" [CAUSTIC]");
+	}
+	if(level[level->lvl].player->evasion_chance > 0)
+	{
+		printw(" [EVA:%d%%]", level[level->lvl].player->evasion_chance);
+	}
+	if(level[level->lvl].player->poison_attack > 0)
+	{
+		printw(" [VENOM]");
+	}
+	if(level[level->lvl].player->scavenger_bonus > 0)
+	{
+		printw(" [SCAV:+%d%%]", level[level->lvl].player->scavenger_bonus);
+	}
 	if(level[level->lvl].player->ability_name != NULL)
 	{
 		if(level[level->lvl].player->ability_cd > 0)
@@ -147,6 +171,14 @@ int PlayerInfoBar(Level *level)
 	else if (under_tile == '>')
 	{
 		printw("  [Floor: Upstairs (>)]");
+	}
+	else if (under_tile == '_')
+	{
+		printw("  [Floor: Metabolic Altar (_)]");
+	}
+	else if (under_tile == '~')
+	{
+		printw("  [Floor: Subterranean Spring (~)]");
 	}
 	printw("      ");
 
@@ -278,6 +310,155 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 	}
 
 	free(yx);
+}
+
+void SpawnFloorShrines(Level *level, Entity rooms, int lvl)
+{
+	// Spawn rare Metabolic Altars (_) and Subterranean Springs (~) on mid-floors (lvl 2-9, guaranteed 2 on lvl 4-8):
+	if(lvl < 2 || lvl > 9 || rooms.mode <= 0)
+	{
+		return;
+	}
+
+	int count = (lvl >= 4 && lvl <= 8) ? 2 : 1;
+	int *yx = malloc(sizeof(int) * 3);
+
+	for(int i = 0; i < count; i++)
+	{
+		char shrine_sym = ((lvl + i) % 2 == 0) ? '_' : '~';
+		for(int attempt = 0; attempt < 25; attempt++)
+		{
+			int random_room = rand() % rooms.mode;
+			yx = RandomCoords(yx, rooms.mode, rooms.Area[random_room]);
+			int y = yx[0];
+			int x = yx[1];
+
+			if(y > 1 && y < MAX_Y - 1 && x > 1 && x < MAX_X - 1 &&
+			   level->map_backup[y][x] == '.' &&
+			   (level->player == NULL || level->player->Position.yPos != y || level->player->Position.xPos != x) &&
+			   GetMonsterAt(y, x, *level) == NULL &&
+			   GetItemAt(*level, y, x) == NULL)
+			{
+				level->map_backup[y][x] = shrine_sym;
+				PrintChar(y, x, shrine_sym);
+				break;
+			}
+		}
+	}
+
+	free(yx);
+}
+
+int UseShrine(Level *leveli, Level level, Entity *player, int y, int x)
+{
+	char tile = (leveli[leveli->lvl].map_backup != NULL) ? leveli[leveli->lvl].map_backup[y][x] : '.';
+	if(tile == '_')
+	{
+		ClearMsg();
+		mvprintw(0, 0, "Metabolic Altar (_): Purify all corpses, cure poison, and empower (+10 XP, +5 HP)? (y/n)");
+		refresh();
+		int ans = getch();
+		ClearMsg();
+		if(ans == 'y' || ans == 'Y')
+		{
+			int purified = 0;
+			for(int i = 0; i < player->num_items; i++)
+			{
+				if(player->inventory[i].item_type == ITEM_CORPSE)
+				{
+					player->inventory[i].corpse_data.age = 0;
+					purified++;
+				}
+			}
+			for(int i = 0; i < leveli[leveli->lvl].num_corpses; i++)
+			{
+				if(leveli[leveli->lvl].corpses[i].active == YES)
+				{
+					int cy = leveli[leveli->lvl].corpses[i].Position.yPos;
+					int cx = leveli[leveli->lvl].corpses[i].Position.xPos;
+					if(abs(cy - y) <= 2 && abs(cx - x) <= 2)
+					{
+						leveli[leveli->lvl].corpses[i].age = 0;
+						purified++;
+					}
+				}
+			}
+			player->poison_turns = 0;
+			player->health += 5;
+			if(player->health > player->maxhp) player->health = player->maxhp;
+			player->hunger += 150;
+			if(player->hunger > player->max_hunger) player->hunger = player->max_hunger;
+
+			int old_xp = player->xp;
+			player->xp += 10;
+			int ranked_up = CheckXPUpgrade(player, old_xp);
+
+			leveli[leveli->lvl].map_backup[y][x] = '.';
+			player->Position.ch = '.';
+
+			if(ranked_up)
+			{
+				mvprintw(0, 0, "Altar invoked! Purified %d corpses, +5 HP, +150 hunger, +10 XP! [RANK UP! Rk:%d (+3 MaxHP, +1 ATK)]",
+					purified, (player->xp / 20) + 1);
+			}
+			else
+			{
+				mvprintw(0, 0, "Altar invoked! Purified %d corpses to Fresh, cured poison, +5 HP, +150 hunger, +10 XP!", purified);
+			}
+			PlayerInfoBar(leveli);
+			refresh();
+			return 1;
+		}
+		else
+		{
+			player->Position.ch = '_';
+			mvprintw(0, 0, "You leave the Metabolic Altar (_) untouched for now. (Press 'r' to invoke)");
+			refresh();
+			return 0;
+		}
+	}
+	else if(tile == '~')
+	{
+		ClearMsg();
+		mvprintw(0, 0, "Subterranean Spring (~): Drink to restore +450 hunger, +10 HP, and reset cooldown? (y/n)");
+		refresh();
+		int ans = getch();
+		ClearMsg();
+		if(ans == 'y' || ans == 'Y')
+		{
+			player->hunger += 450;
+			if(player->hunger > player->max_hunger) player->hunger = player->max_hunger;
+			player->health += 10;
+			if(player->health > player->maxhp) player->health = player->maxhp;
+			player->poison_turns = 0;
+			player->ability_cd = 0;
+
+			for(int i = 0; i < player->num_items; i++)
+			{
+				if(player->inventory[i].item_type == ITEM_CORPSE)
+				{
+					player->inventory[i].corpse_data.age -= 60;
+					if(player->inventory[i].corpse_data.age < 0) player->inventory[i].corpse_data.age = 0;
+				}
+			}
+
+			leveli[leveli->lvl].map_backup[y][x] = '.';
+			player->Position.ch = '.';
+
+			mvprintw(0, 0, "You drink from the Subterranean Spring! (+450 hunger, +10 HP, ability ready, pack cooled!)");
+			PlayerInfoBar(leveli);
+			refresh();
+			return 1;
+		}
+		else
+		{
+			player->Position.ch = '~';
+			mvprintw(0, 0, "You step past the Subterranean Spring (~). (Press 'r' to drink)");
+			refresh();
+			return 0;
+		}
+	}
+	return 0;
 }
 
 Item *GetItemAt(Level level, int y, int x)
@@ -515,7 +696,7 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 						leveli[leveli->lvl].num_items++;
 					}
 					char cur_tile = leveli[leveli->lvl].map_backup[py][px];
-					if (cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*')
+					if (cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*' && cur_tile != '_' && cur_tile != '~')
 					{
 						leveli[leveli->lvl].map_backup[py][px] = it.symbol;
 					}
@@ -669,8 +850,15 @@ int LookMode(Level *leveli, Level level, Entity *player)
 			if (mon != NULL && mon->alive == YES)
 			{
 				const char *beh = (mon->type == FOLLOW) ? "Aggressive" : "Wandering";
-				snprintf(desc, sizeof(desc), "Monster: %s (%c) | HP: %d/%d | ATK: %d | %s | Trait: %s",
-					mon->name, mon->symbol, mon->health, mon->maxhp, mon->attack, beh, mon->trait_desc);
+				char st_buf[64] = "";
+				if (mon->poison_turns > 0 && mon->snare_turns > 0)
+					snprintf(st_buf, sizeof(st_buf), " [POISONED:%dt, ENSNARED:%dt]", mon->poison_turns, mon->snare_turns);
+				else if (mon->poison_turns > 0)
+					snprintf(st_buf, sizeof(st_buf), " [POISONED:%dt]", mon->poison_turns);
+				else if (mon->snare_turns > 0)
+					snprintf(st_buf, sizeof(st_buf), " [ENSNARED:%dt]", mon->snare_turns);
+				snprintf(desc, sizeof(desc), "Monster: %s (%c)%s | HP: %d/%d | ATK: %d | %s | Trait: %s",
+					mon->name, mon->symbol, st_buf, mon->health, mon->maxhp, mon->attack, beh, mon->trait_desc);
 			}
 			else if (corp != NULL && corp->active == YES)
 			{
@@ -704,6 +892,8 @@ int LookMode(Level *leveli, Level level, Entity *player)
 					case '<': snprintf(desc, sizeof(desc), "Downstairs (<)%s - Leads deeper into the dungeon", vis_tag); break;
 					case '>': snprintf(desc, sizeof(desc), "Upstairs (>)%s - Leads toward the surface", vis_tag); break;
 					case '*': snprintf(desc, sizeof(desc), "Shimmering Golden Portal (*)%s - Step here to escape & win!", vis_tag); break;
+					case '_': snprintf(desc, sizeof(desc), "Metabolic Altar (_)%s - Purifies tainted corpses, heals +5 HP & grants +10 XP", vis_tag); break;
+					case '~': snprintf(desc, sizeof(desc), "Subterranean Spring (~)%s - Restores +450 hunger, +10 HP & resets ability CD", vis_tag); break;
 					case '-':
 					case '|': snprintf(desc, sizeof(desc), "Solid Dungeon Wall (%c)%s", tile, vis_tag); break;
 					default:  snprintf(desc, sizeof(desc), "Empty Void%s", vis_tag); break;
@@ -878,7 +1068,7 @@ int QuickDrop(Level *leveli, Level level, Entity *player)
 				leveli[leveli->lvl].num_items++;
 			}
 			char cur_tile = leveli[leveli->lvl].map_backup[py][px];
-			if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*')
+			if(cur_tile != '<' && cur_tile != '>' && cur_tile != ':' && cur_tile != '+' && cur_tile != '*' && cur_tile != '_' && cur_tile != '~')
 			{
 				leveli[leveli->lvl].map_backup[py][px] = it.symbol;
 			}
@@ -1063,15 +1253,6 @@ int AskStairs(int stairs, Entity *player)
 
 int OpenDoor(Level *leveli, Entity *player, int y, int x)
 {
-	if(player->can_open_doors == NO)
-	{
-		ClearMsg();
-		mvprintw(0,0,"You cannot open doors as a %s! (You lack hands)", player->name);
-		refresh();
-		move(player->Position.yPos, player->Position.xPos);
-		return 0;
-	}
-
 	ClearMsg();
 	mvprintw(0,0, "Do you want to open the door? y/n");
 	refresh();

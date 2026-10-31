@@ -10,9 +10,11 @@
 #define WEB_SCR_COLS 175
 
 static char screen_buf[WEB_SCR_ROWS][WEB_SCR_COLS];
+static unsigned char cell_flag_buf[WEB_SCR_ROWS][WEB_SCR_COLS];
 static int cur_y = 0;
 static int cur_x = 0;
 static char render_flat_buf[WEB_SCR_ROWS * (WEB_SCR_COLS + 1) + 1];
+static char flag_flat_buf[WEB_SCR_ROWS * (WEB_SCR_COLS + 1) + 1];
 
 // Bridge to JavaScript web UI
 EM_JS(void, js_init_screen, (), {
@@ -21,21 +23,28 @@ EM_JS(void, js_init_screen, (), {
     }
 });
 
-EM_JS(void, js_update_display, (const char* str, int py, int px), {
+EM_JS(void, js_update_display, (const char* str, const char* flags_str, int py, int px), {
     try {
         var text = "";
+        var flags = "";
         if (typeof UTF8ToString !== 'undefined') {
             text = UTF8ToString(str);
+            flags = UTF8ToString(flags_str);
         } else if (typeof Module !== 'undefined' && Module.UTF8ToString) {
             text = Module.UTF8ToString(str);
+            flags = Module.UTF8ToString(flags_str);
         } else if (typeof stringToUTF8 !== 'undefined' || typeof HEAPU8 !== 'undefined') {
             var len = 0;
             while (HEAPU8[str + len] !== 0) len++;
             var bytes = new Uint8Array(HEAPU8.buffer, str, len);
             text = new TextDecoder('utf-8').decode(bytes);
+            var flen = 0;
+            while (HEAPU8[flags_str + flen] !== 0) flen++;
+            var fbytes = new Uint8Array(HEAPU8.buffer, flags_str, flen);
+            flags = new TextDecoder('utf-8').decode(fbytes);
         }
         if (window.updateRogueDisplay) {
-            window.updateRogueDisplay(text, py, px);
+            window.updateRogueDisplay(text, py, px, flags);
         }
     } catch(err) {
         console.error("js_update_display error:", err);
@@ -77,11 +86,28 @@ int clear(void)
     for (int r = 0; r < WEB_SCR_ROWS; r++) {
         for (int c = 0; c < WEB_SCR_COLS; c++) {
             screen_buf[r][c] = ' ';
+            cell_flag_buf[r][c] = 0;
         }
     }
     cur_y = 0;
     cur_x = 0;
     return 0;
+}
+
+void web_clear_cell_flags(void)
+{
+    for (int r = 0; r < WEB_SCR_ROWS; r++) {
+        for (int c = 0; c < WEB_SCR_COLS; c++) {
+            cell_flag_buf[r][c] = 0;
+        }
+    }
+}
+
+void web_set_cell_flag(int y, int x, unsigned char flag)
+{
+    if (y >= 0 && y < WEB_SCR_ROWS && x >= 0 && x < WEB_SCR_COLS) {
+        cell_flag_buf[y][x] = flag;
+    }
 }
 
 int clrtoeol(void)
@@ -182,13 +208,18 @@ int refresh(void)
             }
         }
         for (int c = 0; c < cols_to_print; c++) {
-            render_flat_buf[ptr++] = screen_buf[r][c];
+            render_flat_buf[ptr] = screen_buf[r][c];
+            flag_flat_buf[ptr] = (char)('0' + (cell_flag_buf[r][c] & 0x07));
+            ptr++;
         }
-        render_flat_buf[ptr++] = '\n';
+        render_flat_buf[ptr] = '\n';
+        flag_flat_buf[ptr] = '\n';
+        ptr++;
     }
     render_flat_buf[ptr] = '\0';
+    flag_flat_buf[ptr] = '\0';
 
-    js_update_display(render_flat_buf, cur_y, cur_x);
+    js_update_display(render_flat_buf, flag_flat_buf, cur_y, cur_x);
     return 0;
 }
 

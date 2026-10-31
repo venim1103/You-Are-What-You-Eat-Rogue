@@ -192,6 +192,10 @@ void RenderFOV(Level *level)
 	int py = level->player->Position.yPos;
 	int px = level->player->Position.xPos;
 
+#ifdef __EMSCRIPTEN__
+	web_clear_cell_flags();
+#endif
+
 	for(int r = 1; r < MAX_Y; r++)
 	{
 		for(int c = 0; c < MAX_X; c++)
@@ -208,6 +212,12 @@ void RenderFOV(Level *level)
 					if (mon != NULL && mon->alive == YES)
 					{
 						PrintChar(r, c, mon->symbol);
+#ifdef __EMSCRIPTEN__
+						unsigned char mflag = 0;
+						if (mon->poison_turns > 0) mflag |= 1;
+						if (mon->snare_turns > 0) mflag |= 2;
+						if (mflag != 0) web_set_cell_flag(r, c, mflag);
+#endif
 					}
 					else
 					{

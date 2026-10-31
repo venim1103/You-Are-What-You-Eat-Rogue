@@ -98,7 +98,7 @@ int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map, int can
 			else
 			{
 				chtype ch = (map != NULL) ? map[ny][nx] : '.';
-				if(can_phase || ch == '.' || ch == '#' || ch == ':' || ch == '%' || ch == ')' || ch == '[' || ch == '<' || ch == '>')
+				if(can_phase || ch == '.' || ch == '#' || ch == ':' || ch == '+' || ch == '%' || ch == ')' || ch == '[' || ch == '<' || ch == '>' || ch == '*' || ch == '_' || ch == '~')
 				{
 					best_dist = d;
 					best_y = ny;

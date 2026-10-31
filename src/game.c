@@ -312,6 +312,16 @@ Level *Game(Level *level)
 					ClearMsg();
 					mvprintw(0, 0, "Standing on: Upstairs (>). Press '>' or 'r' to ascend.");
 				}
+				else if(under_tile == '_')
+				{
+					ClearMsg();
+					mvprintw(0, 0, "Standing on: Metabolic Altar (_). Press 'r' to purify corpses, heal & gain +10 XP!");
+				}
+				else if(under_tile == '~')
+				{
+					ClearMsg();
+					mvprintw(0, 0, "Standing on: Subterranean Spring (~). Press 'r' to drink (+450 hunger, +10 HP)!");
+				}
 			}
 		}
 

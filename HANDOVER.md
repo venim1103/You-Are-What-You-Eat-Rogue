@@ -2,7 +2,7 @@
 
 **Repository:** `venim1103/You-Are-What-You-Eat-Rogue`  
 **Current Branch:** `master`  
-**Latest Production Commit:** `a7bb5d1`  
+**Latest Production Commit:** `cfbc8bb`  
 **GitHub Pages Target:** `venim1103.github.io/You-Are-What-You-Eat-Rogue`  
 **Document Date:** October 2026  
 
@@ -13,7 +13,7 @@
 *You Are What You Eat - Rogue* is a turn-based dungeon crawler written in C99. The core gameplay loop revolves around **metabolic polymorphing**:
 * Killing creatures leaves dynamic corpses with real-time freshness decay (`Fresh` -> `Aging` -> `Tainted` -> `Rotten` -> decomposition).
 * Devouring a corpse transforms the player into that monster, altering attributes, attack power, health pools, metabolism rates, active abilities, and traits (e.g., Goblin scavengers, wall-phasing Ghosts, life-draining Bats, venomous Snakes, or crushing Trolls).
-* Humanoids have hands to wield weapons (`)`) and wear armor (`[`), whereas beasts gain natural abilities but cannot manipulate complex gear.
+* The player can always open and close doors (`+` / `:`) regardless of polymorphed form so dungeon navigation never soft-locks, while humanoid forms have hands to wield weapons (`)`) and wear armor (`[`) and non-humanoid beasts rely on natural abilities (`No Gear`). Enemy monsters only open doors if their species has `can_open_doors == YES` (or phase if `can_phase_walls == 1`).
 * The game compiles natively for Linux/Unix via GCC and Ncurses, and to WebAssembly via Emscripten (`emcc`) with a browser terminal interface and virtual controls.
 
 ---
@@ -94,13 +94,34 @@
   * **Status:** Completed.
   * **Scope:** Eating a corpse from the backpack (`ShowInventory` / `EatFromInventory`) now properly decrements `equipped_weapon` and `equipped_armor` slot indices when lower slots shift, and `EatCorpse()` only clears floor `%` tiles when the consumed corpse is the active floor corpse underfoot.
 
+### Sprint 5: Monster Status Visuals, Web HUD Polish, Dungeon Shrines & Universal Player Door Access (Latest Release)
+* **Priority 1 — Monster Status Visuals & Web HUD Polish (`include/structs.h`, `include/web_curses.h`, `src/web_curses.c`, `src/draw.c`, `src/combat.c`, `src/input.c`, `src/text.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `snare_turns` to `Entity` so Spider `Spin Web` (3 turns) and Goblin `Flashbang` (2 turns) immobilize nearby foes while allowing adjacent melee counterattacks.
+    * Added per-cell status flag buffer (`cell_flag_buf`) in `src/web_curses.c` populated during `RenderFOV()` (`1` = poisoned, `2` = ensnared, `3` = both) and passed to `web/index.html` (`colorizeDungeon`) to highlight afflicted monsters with toxic green (`.g-st-psn`) and web-bound (`.g-st-web` / `.g-st-both`) glow effects.
+    * Surfaced monster `[PSN:Xt]` and `[WEB:Xt]` status durations in combat logs and Look Mode (`'v'`).
+    * Added active form trait/buff badges (`[REGEN]`, `[PHASE]`, `[CAUSTIC]`, `[EVA:X%]`, `[VENOM]`, `[SCAV:+X%]`) to `PlayerInfoBar()` and built a live `#status-strip` pill bar in `web/index.html` displaying form, HP, Mastery Rank, hunger alerts, active buffs/debuffs, ability readiness, and visible afflicted enemy counts.
+* **Priority 2 — Dungeon Special Rooms & Shrines (`include/functions.h`, `src/level.c`, `src/check.c`, `src/input.c`, `src/route.c`, `src/combat.c`, `src/game.c`, `src/text.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `SpawnFloorShrines()` to generate single-use **Metabolic Altars (`_`)** and **Subterranean Springs (`~`)** on mid-floors (`lvl 2-9`, guaranteed 2 shrines on `lvl 4-8`).
+    * **Metabolic Altar (`_`):** Purifies all backpack and nearby floor corpses back to `Fresh` (`age = 0`), cures poison, restores `+5 HP` and `+150` hunger, and awards `+10 XP` (triggering `CheckXPUpgrade()`).
+    * **Subterranean Spring (`~`):** Restores `+450` hunger, heals `+10 HP`, cures poison, resets active ability cooldown (`ability_cd = 0`), and cools backpack corpses (`-60 age`).
+    * Integrated shrines into movement prompts, `'r'`/`'>'`/`'<'` interaction keys, Look Mode (`'v'`), underfoot HUD indicators, tile preservation rules, and glowing Web UI styles (`.g-altar`, `.g-spring`).
+* **Priority 3 — Universal Player Door Operation vs. Monster Door Rules (`src/text.c`, `src/input.c`, `src/check.c`, `src/route.c`, `src/player.c`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Removed the `can_open_doors == NO` restriction from player door opening (`OpenDoor`) and closing (`'c'` in `HandleInput`) so the player can always open and close doors in any polymorphed form without getting trapped.
+    * Retained `can_open_doors` on `Entity` to govern equipment manipulation (beasts still cannot wield weapons or wear armor, updated trait descriptions from `No Hands` to `No Gear`) and enemy AI door rules (only monsters with `can_open_doors == YES` can open closed doors `+`, while beasts remain blocked by closed doors).
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — Monster Status Visuals & Web HUD Polish:** Highlight poisoned or ensnared monsters and display active buff/debuff indicators in the web UI.
-* **Priority 2 — Dungeon Special Rooms & Shrines:** Add rare metabolic altars or subterranean springs on mid-floors (`lvl 4-8`) to purify tainted corpses or restore hunger.
-* **Priority 3 — High Score / Run History Persistence:** Save top victory/death runs in browser `localStorage` for WebAssembly sessions.
+* **Priority 1 — High Score / Run History Persistence:** Save top victory/death runs in browser `localStorage` for WebAssembly sessions and display a Hall of Fame modal.
+* **Priority 2 — Extended Bestiary & Floor Hazards:** Introduce new mid-to-late dungeon creatures or environmental hazards (e.g., persistent spider webs or acid puddles on floor tiles).
+* **Priority 3 — Sound Effects & Web Audio Synthesizer:** Add optional procedural Web Audio API sound effects for combat hits, polymorphing, shrine activation, and boss encounters.
 
 ---
 

@@ -72,6 +72,12 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 				level.player->Position.type=LOOT;
 				AskEatCorpse(leveli, level, level.player, y, x);
 			break;
+			case '_':
+			case '~':
+				StepOn(leveli,PLAYER,y,x,ch,c,level,monster);
+				level.player->Position.type=GROUND;
+				UseShrine(leveli, level, level.player, y, x);
+			break;
 			default:
 				move(level.player->Position.yPos,level.player->Position.xPos);
 				level.player->Position.type=UNKNOWN;
@@ -117,8 +123,25 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 			case '<':
 			case '>':
 			case '*':
+			case '_':
+			case '~':
 				StepOn(leveli,MONSTER,y,x,ch,c,level,monster);
 				monster->Position.type=GROUND;
+			break;
+			case '+':
+				if(monster->can_open_doors == YES)
+				{
+					if(level.map_backup != NULL)
+					{
+						level.map_backup[y][x] = ':';
+					}
+					StepOn(leveli,MONSTER,y,x,':',c,level,monster);
+					monster->Position.type=DOOR;
+				}
+				else
+				{
+					monster->Position.type=UNKNOWN;
+				}
 			break;
 			case ':':
 				StepOn(leveli,MONSTER,y,x,ch,c,level,monster);

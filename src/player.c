@@ -19,7 +19,7 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->ability_name = "Spin Web";
 			entity->ability_max_cd = 6;
 			entity->ability_cost = 40;
-			entity->trait_desc = "Skitter (40% 2nd hit), Fast Metabolism (2 hunger/t), No Hands";
+			entity->trait_desc = "Skitter (40% 2nd hit), Fast Metabolism (2 hunger/t), No Gear";
 			break;
 		case 's': // Snake
 			entity->hunger_rate = 1;
@@ -36,7 +36,7 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->ability_name = "Venom Spit";
 			entity->ability_max_cd = 5;
 			entity->ability_cost = 30;
-			entity->trait_desc = "Venomous Strike, Poison Immune, No Hands";
+			entity->trait_desc = "Venomous Strike, Poison Immune, No Gear";
 			break;
 		case 'g': // Goblin
 			entity->hunger_rate = 1;
@@ -87,7 +87,7 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->ability_name = "Shadow Blink";
 			entity->ability_max_cd = 7;
 			entity->ability_cost = 50;
-			entity->trait_desc = "Incorporeal (Phases through walls/doors), 25% Evasion, No Hands";
+			entity->trait_desc = "Incorporeal (Phases through walls/doors), 25% Evasion, No Gear";
 			break;
 		case 'B': // Slime / Acid Blob
 			entity->hunger_rate = 1;
@@ -104,7 +104,7 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->ability_name = "Acid Jet";
 			entity->ability_max_cd = 5;
 			entity->ability_cost = 45;
-			entity->trait_desc = "Caustic Body (Reflects acid dmg on hit/attacker), Poison Immune, No Hands";
+			entity->trait_desc = "Caustic Body (Reflects acid dmg on hit/attacker), Poison Immune, No Gear";
 			break;
 		case 'V': // Vampire Bat
 			entity->hunger_rate = 2;
@@ -121,7 +121,7 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->ability_name = "Echo Screech";
 			entity->ability_max_cd = 6;
 			entity->ability_cost = 30;
-			entity->trait_desc = "Flight (50% Evasion), Life Drain (+1 HP on hit), Fast Burn (2 hunger/t), No Hands";
+			entity->trait_desc = "Flight (50% Evasion), Life Drain (+1 HP on hit), Fast Burn (2 hunger/t), No Gear";
 			break;
 		case 'D': // Ancient Dragon (Apex Predator)
 			entity->hunger_rate = 2;
@@ -188,6 +188,7 @@ void CopyPlayer(Entity *dest, Entity *src)
 	dest->max_hunger = src->max_hunger;
 	dest->hunger_rate = src->hunger_rate;
 	dest->poison_turns = src->poison_turns;
+	dest->snare_turns = src->snare_turns;
 	dest->regen_rate = src->regen_rate;
 	dest->can_open_doors = src->can_open_doors;
 	dest->extra_attack_chance = src->extra_attack_chance;
@@ -245,6 +246,7 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->symbol = '@';
 	player->alive = YES;
 	player->poison_turns = 0;
+	player->snare_turns = 0;
 	player->ability_cd = 0;
 	player->num_items = 0;
 	player->equipped_weapon = -1;
