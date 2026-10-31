@@ -123,6 +123,23 @@ void ApplyFormTraits(Entity *entity, char symbol)
 			entity->ability_cost = 30;
 			entity->trait_desc = "Flight (50% Evasion), Life Drain (+1 HP on hit), Fast Burn (2 hunger/t), No Gear";
 			break;
+		case 'L': // Necromancer Lich
+			entity->hunger_rate = 1;
+			entity->regen_rate = 0;
+			entity->can_open_doors = YES;
+			entity->extra_attack_chance = 0;
+			entity->poison_attack = 0;
+			entity->cleave_chance = 0;
+			entity->scavenger_bonus = 0;
+			entity->can_phase_walls = 0;
+			entity->acid_corrosion = 0;
+			entity->evasion_chance = 15;
+			entity->life_drain = 2;
+			entity->ability_name = "Soul Harvest";
+			entity->ability_max_cd = 6;
+			entity->ability_cost = 40;
+			entity->trait_desc = "Soul Siphon (+2 HP drain), Poison Immune, Undead Mage (15% Evasion)";
+			break;
 		case 'D': // Ancient Dragon (Apex Predator)
 			entity->hunger_rate = 2;
 			entity->regen_rate = 2;

@@ -40,6 +40,8 @@ int GetPlayerAttack(Entity *player);
 int GetPlayerDefense(Entity *player);
 void SpawnFloorItems(Level *level, Entity rooms, int lvl);
 void SpawnFloorShrines(Level *level, Entity rooms, int lvl);
+void SpawnFloorHazards(Level *level, Entity rooms, int lvl);
+void TriggerFloorHazard(Level *leveli, Level level, Entity *entity, int is_player, int y, int x);
 int UseShrine(Level *leveli, Level level, Entity *player, int y, int x);
 Item *GetItemAt(Level level, int y, int x);
 int PickUpFloorItem(Level *leveli, Level level, Entity *player);

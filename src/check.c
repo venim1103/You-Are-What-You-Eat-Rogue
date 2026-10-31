@@ -78,6 +78,12 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 				level.player->Position.type=GROUND;
 				UseShrine(leveli, level, level.player, y, x);
 			break;
+			case '^':
+			case '=':
+				StepOn(leveli,PLAYER,y,x,ch,c,level,monster);
+				level.player->Position.type=GROUND;
+				TriggerFloorHazard(leveli, level, level.player, 1, y, x);
+			break;
 			default:
 				move(level.player->Position.yPos,level.player->Position.xPos);
 				level.player->Position.type=UNKNOWN;
@@ -127,6 +133,12 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 			case '~':
 				StepOn(leveli,MONSTER,y,x,ch,c,level,monster);
 				monster->Position.type=GROUND;
+			break;
+			case '^':
+			case '=':
+				StepOn(leveli,MONSTER,y,x,ch,c,level,monster);
+				monster->Position.type=GROUND;
+				TriggerFloorHazard(leveli, level, monster, 0, y, x);
 			break;
 			case '+':
 				if(monster->can_open_doors == YES)

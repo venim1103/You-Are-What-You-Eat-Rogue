@@ -98,7 +98,7 @@ int *PathFindFollow(int *yx, int y1, int x1, int y2, int x2, char **map, int can
 			else
 			{
 				chtype ch = (map != NULL) ? map[ny][nx] : '.';
-				if(can_phase || ch == '.' || ch == '#' || ch == ':' || ch == '+' || ch == '%' || ch == ')' || ch == '[' || ch == '<' || ch == '>' || ch == '*' || ch == '_' || ch == '~')
+				if(can_phase || ch == '.' || ch == '#' || ch == ':' || ch == '+' || ch == '%' || ch == ')' || ch == '[' || ch == '<' || ch == '>' || ch == '*' || ch == '_' || ch == '~' || ch == '^' || ch == '=')
 				{
 					best_dist = d;
 					best_y = ny;
@@ -143,7 +143,7 @@ int *PathFindRandom(int *yx, int y, int x, char **map, int mode)
 	if(ny >= 0 && ny < MAX_Y && nx >= 0 && nx < MAX_X)
 	{
 		chtype ch = (map != NULL) ? map[ny][nx] : '.';
-		if(ch == '.' || ch == '#' || ch == ':' || ch == '%')
+		if(ch == '.' || ch == '#' || ch == ':' || ch == '%' || ch == '^' || ch == '=')
 		{
 			y = ny;
 			x = nx;

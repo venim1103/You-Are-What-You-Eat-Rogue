@@ -15,16 +15,22 @@ Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 
 	int k = 0;
 
-	// Floor 10 Boss Encounter: Ancient Dragon + Elite Troll Bodyguards
+	// Floor 10 Boss Encounter: Ancient Dragon + Elite Bodyguards (2 Trolls + 1 Necromancer Lich)
 	if(lvl == 10)
 	{
 		monsters[k] = CreateMon('D', 45, 8, DRAGON, FOLLOW, "Ancient Dragon");
 		yx = MonSetup(monsters[k], rooms, yx);
 		k++;
 
-		for(int b = 0; b < 3 && k < level->max_mons; b++)
+		for(int b = 0; b < 2 && k < level->max_mons; b++)
 		{
 			monsters[k] = CreateMon('T', 15, 5, TROLL, FOLLOW, "Troll");
+			yx = MonSetup(monsters[k], rooms, yx);
+			k++;
+		}
+		if(k < level->max_mons)
+		{
+			monsters[k] = CreateMon('L', 12, 6, LICH, FOLLOW, "Necromancer Lich");
 			yx = MonSetup(monsters[k], rooms, yx);
 			k++;
 		}
@@ -136,29 +142,38 @@ Entity *SelMonster(int lvl)
 	}
 	else if(lvl <= 6)
 	{
-		// Floors 3-6: Bat, Snake, Goblin, Slime
-		int r = rand() % 4;
-		if(r == 0) mon = BAT;
-		else if(r == 1) mon = SNAKE;
-		else if(r == 2) mon = GOBLIN;
-		else mon = SLIME;
+		// Floors 3-6: Bat, Snake, Goblin, Slime (and Lich starting on Floor 5+)
+		if(lvl >= 5 && (rand() % 5) == 0)
+		{
+			mon = LICH;
+		}
+		else
+		{
+			int r = rand() % 4;
+			if(r == 0) mon = BAT;
+			else if(r == 1) mon = SNAKE;
+			else if(r == 2) mon = GOBLIN;
+			else mon = SLIME;
+		}
 	}
 	else if(lvl <= 12)
 	{
-		// Floors 7-12: Goblin, Slime, Ghost, Troll
-		int r = rand() % 4;
+		// Floors 7-12: Goblin, Slime, Ghost, Troll, Necromancer Lich
+		int r = rand() % 5;
 		if(r == 0) mon = GOBLIN;
 		else if(r == 1) mon = SLIME;
 		else if(r == 2) mon = GHOST;
-		else mon = TROLL;
+		else if(r == 3) mon = TROLL;
+		else mon = LICH;
 	}
 	else
 	{
-		// Floors 13+: High danger (Troll, Ghost, Slime, occasional Bat/Goblin)
+		// Floors 13+: High danger (Troll, Lich, Ghost, Slime, occasional Bat/Goblin)
 		int roll = rand() % 100;
-		if(roll < 40) mon = TROLL;
-		else if(roll < 65) mon = GHOST;
-		else if(roll < 85) mon = SLIME;
+		if(roll < 35) mon = TROLL;
+		else if(roll < 55) mon = LICH;
+		else if(roll < 75) mon = GHOST;
+		else if(roll < 90) mon = SLIME;
 		else if(roll < 95) mon = GOBLIN;
 		else mon = BAT;
 	}
@@ -191,6 +206,10 @@ Entity *SelMonster(int lvl)
 		
 		case TROLL:
 			return CreateMon('T', 15, 5, TROLL, FOLLOW, "Troll");
+		break;
+
+		case LICH:
+			return CreateMon('L', 12, 6, LICH, FOLLOW, "Necromancer Lich");
 		break;
 
 		case DRAGON:

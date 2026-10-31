@@ -133,6 +133,10 @@ int PlayerInfoBar(Level *level)
 	{
 		printw(" [SCAV:+%d%%]", level[level->lvl].player->scavenger_bonus);
 	}
+	if(level[level->lvl].player->life_drain > 0)
+	{
+		printw(" [DRAIN:+%d]", level[level->lvl].player->life_drain);
+	}
 	if(level[level->lvl].player->ability_name != NULL)
 	{
 		if(level[level->lvl].player->ability_cd > 0)
@@ -179,6 +183,14 @@ int PlayerInfoBar(Level *level)
 	else if (under_tile == '~')
 	{
 		printw("  [Floor: Subterranean Spring (~)]");
+	}
+	else if (under_tile == '^')
+	{
+		printw("  [Floor: Sticky Web (^)]");
+	}
+	else if (under_tile == '=')
+	{
+		printw("  [Floor: Acid Puddle (=)]");
 	}
 	printw("      ");
 
@@ -347,6 +359,180 @@ void SpawnFloorShrines(Level *level, Entity rooms, int lvl)
 	}
 
 	free(yx);
+}
+
+void SpawnFloorHazards(Level *level, Entity rooms, int lvl)
+{
+	// Spawn environmental hazards: Sticky Spider Webs (^) and Caustic Acid Puddles (=)
+	if(lvl < 1 || rooms.mode <= 0)
+	{
+		return;
+	}
+
+	int count = 2 + (lvl / 2);
+	if(count > 8) count = 8;
+	int *yx = malloc(sizeof(int) * 3);
+
+	for(int i = 0; i < count; i++)
+	{
+		char haz_sym = '^';
+		if(lvl <= 2)
+		{
+			haz_sym = ((rand() % 4) == 0) ? '=' : '^';
+		}
+		else
+		{
+			haz_sym = ((rand() % 2) == 0) ? '=' : '^';
+		}
+
+		for(int attempt = 0; attempt < 20; attempt++)
+		{
+			int random_room = rand() % rooms.mode;
+			yx = RandomCoords(yx, rooms.mode, rooms.Area[random_room]);
+			int y = yx[0];
+			int x = yx[1];
+
+			if(y > 1 && y < MAX_Y - 1 && x > 1 && x < MAX_X - 1 &&
+			   level->map_backup[y][x] == '.' &&
+			   (level->player == NULL || level->player->Position.yPos != y || level->player->Position.xPos != x) &&
+			   GetMonsterAt(y, x, *level) == NULL &&
+			   GetItemAt(*level, y, x) == NULL)
+			{
+				level->map_backup[y][x] = haz_sym;
+				PrintChar(y, x, haz_sym);
+				break;
+			}
+		}
+	}
+
+	free(yx);
+}
+
+void TriggerFloorHazard(Level *leveli, Level level, Entity *entity, int is_player, int y, int x)
+{
+	if(leveli == NULL || entity == NULL) return;
+	Level *cur = &leveli[leveli->lvl];
+	if(cur->map_backup == NULL || y < 0 || y >= MAX_Y || x < 0 || x >= MAX_X) return;
+
+	char tile = cur->map_backup[y][x];
+	if(is_player)
+	{
+		if(tile == '^')
+		{
+			if(entity->symbol == 'x' || entity->can_phase_walls > 0)
+			{
+				ClearMsg();
+				mvprintw(0, 0, "You skitter effortlessly across the Sticky Spider Web (^).");
+				refresh();
+			}
+			else
+			{
+				entity->hunger -= 20;
+				if(entity->hunger < 0) entity->hunger = 0;
+				cur->map_backup[y][x] = '.';
+				entity->Position.ch = '.';
+				ClearMsg();
+				mvprintw(0, 0, "You tear through a Sticky Spider Web (^), burning 20 hunger to break free!");
+				PlayerInfoBar(leveli);
+				refresh();
+			}
+		}
+		else if(tile == '=')
+		{
+			if(entity->symbol == 'B')
+			{
+				entity->health += 2;
+				if(entity->health > entity->maxhp) entity->health = entity->maxhp;
+				entity->hunger += 30;
+				if(entity->hunger > entity->max_hunger) entity->hunger = entity->max_hunger;
+				cur->map_backup[y][x] = '.';
+				entity->Position.ch = '.';
+				ClearMsg();
+				mvprintw(0, 0, "Your gelatinous body absorbs the Caustic Acid Puddle (=)! (+2 HP, +30 hunger)");
+				PlayerInfoBar(leveli);
+				refresh();
+			}
+			else if(entity->symbol == 'D' || entity->can_phase_walls > 0)
+			{
+				ClearMsg();
+				mvprintw(0, 0, "You pass unscathed over the Caustic Acid Puddle (=).");
+				refresh();
+			}
+			else
+			{
+				entity->health -= 2;
+				int psn = 0;
+				if(entity->symbol != 's' && entity->symbol != 'L')
+				{
+					entity->poison_turns += 2;
+					psn = 1;
+				}
+				cur->map_backup[y][x] = '.';
+				entity->Position.ch = '.';
+				ClearMsg();
+				mvprintw(0, 0, "SPLASH! Caustic Acid Puddle (=) burns you for 2 dmg!%s", psn ? " (Poisoned 2t!)" : "");
+				if(entity->health <= 0)
+				{
+					entity->alive = DEAD;
+					leveli->killer = "Caustic Acid Puddle";
+				}
+				PlayerInfoBar(leveli);
+				refresh();
+			}
+		}
+	}
+	else
+	{
+		int is_vis = (cur->visible != NULL && y >= 0 && y < MAX_Y && x >= 0 && x < MAX_X) ? cur->visible[y][x] : 0;
+		if(tile == '^')
+		{
+			if(entity->symbol != 'x' && entity->can_phase_walls == 0)
+			{
+				entity->snare_turns += 3;
+				cur->map_backup[y][x] = '.';
+				if(is_vis)
+				{
+					ClearMsg();
+					mvprintw(0, 0, "The %s gets entangled in a Sticky Web (^) for 3 turns!", entity->name);
+					refresh();
+				}
+			}
+		}
+		else if(tile == '=')
+		{
+			if(entity->symbol != 'B' && entity->symbol != 'D' && entity->can_phase_walls == 0)
+			{
+				entity->health -= 3;
+				if(entity->symbol != 's' && entity->symbol != 'L')
+				{
+					entity->poison_turns += 2;
+				}
+				cur->map_backup[y][x] = '.';
+				if(entity->health <= 0)
+				{
+					int old_xp = cur->player->xp;
+					entity->alive = DEAD;
+					cur->player->xp += entity->attack;
+					CheckXPUpgrade(cur->player, old_xp);
+					DropCorpse(leveli, entity, y, x);
+					entity->Position.yPos = -1;
+					entity->Position.xPos = -1;
+					if(is_vis)
+					{
+						ClearMsg();
+						mvprintw(0, 0, "The %s dissolves in a Caustic Acid Puddle (=)! (+%d XP)", entity->name, entity->attack);
+						refresh();
+					}
+				}
+				else if(is_vis)
+				{
+					ClearMsg();
+					mvprintw(0, 0, "The %s splashes into an Acid Puddle (=) for 3 acid dmg! [%d/%d HP]", entity->name, entity->health, entity->maxhp);
+					refresh();
+				}
+			}
+		}
+	}
 }
 
 int UseShrine(Level *leveli, Level level, Entity *player, int y, int x)
@@ -894,6 +1080,8 @@ int LookMode(Level *leveli, Level level, Entity *player)
 					case '*': snprintf(desc, sizeof(desc), "Shimmering Golden Portal (*)%s - Step here to escape & win!", vis_tag); break;
 					case '_': snprintf(desc, sizeof(desc), "Metabolic Altar (_)%s - Purifies tainted corpses, heals +5 HP & grants +10 XP", vis_tag); break;
 					case '~': snprintf(desc, sizeof(desc), "Subterranean Spring (~)%s - Restores +450 hunger, +10 HP & resets ability CD", vis_tag); break;
+					case '^': snprintf(desc, sizeof(desc), "Sticky Spider Web (^)%s - Ensnares foes for 3t or drains 20 player hunger (Spiders/Ghosts ignore)", vis_tag); break;
+					case '=': snprintf(desc, sizeof(desc), "Caustic Acid Puddle (=)%s - Burns for acid dmg & poison (Slimes absorb for +2 HP & +30 hunger)", vis_tag); break;
 					case '-':
 					case '|': snprintf(desc, sizeof(desc), "Solid Dungeon Wall (%c)%s", tile, vis_tag); break;
 					default:  snprintf(desc, sizeof(desc), "Empty Void%s", vis_tag); break;

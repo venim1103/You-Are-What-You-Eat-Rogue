@@ -22,6 +22,7 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 			case 'B': leveli[lvl].corpses[idx].nutrition = 320; break;
 			case 'G': leveli[lvl].corpses[idx].nutrition = 120; break;
 			case 'g': leveli[lvl].corpses[idx].nutrition = 400; break;
+			case 'L': leveli[lvl].corpses[idx].nutrition = 550; break;
 			case 'T': leveli[lvl].corpses[idx].nutrition = 700; break;
 			case 'D': leveli[lvl].corpses[idx].nutrition = 1000; break;
 			default:  leveli[lvl].corpses[idx].nutrition = 300; break;
@@ -104,8 +105,8 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 	else if(strcmp(stage, "Tainted") == 0)
 	{
 		nut = nut * 50 / 100;
-		// 50% chance of food poisoning unless player has scavenger bonus or acid/poison immunity
-		if(player->scavenger_bonus == 0 && player->symbol != 'B' && player->symbol != 's')
+		// 50% chance of food poisoning unless player has scavenger bonus or acid/poison/undead immunity
+		if(player->scavenger_bonus == 0 && player->symbol != 'B' && player->symbol != 's' && player->symbol != 'L')
 		{
 			if((rand() % 100) < 50)
 			{
@@ -117,7 +118,7 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 	{
 		nut = nut * 25 / 100;
 		// 85% chance of severe food poisoning / sickness
-		if(player->scavenger_bonus == 0 && player->symbol != 'B')
+		if(player->scavenger_bonus == 0 && player->symbol != 'B' && player->symbol != 'L')
 		{
 			if((rand() % 100) < 85)
 			{
@@ -305,11 +306,14 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				}
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 
-				// Bat Life Drain trait
+				// Bat / Lich Life Drain trait
 				if(player->life_drain > 0 && player->health < player->maxhp)
 				{
-					player->health += 1;
-					strncat(log_buf, "(+1 HP drain) ", sizeof(log_buf) - strlen(log_buf) - 1);
+					int dr = player->life_drain;
+					player->health += dr;
+					if(player->health > player->maxhp) player->health = player->maxhp;
+					snprintf(tmp, sizeof(tmp), "(+%d HP drain) ", dr);
+					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 				}
 
 				// Slime Acid Corrosion retaliation on hit
@@ -325,7 +329,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				}
 
 				// Snake Venomous Strike trait
-				if(player->poison_attack && monster->symbol != 's' && monster->symbol != 'B' && monster->health > 0)
+				if(player->poison_attack && monster->symbol != 's' && monster->symbol != 'B' && monster->symbol != 'L' && monster->health > 0)
 				{
 					monster->poison_turns = 3;
 					strncat(log_buf, "(Venom!) ", sizeof(log_buf) - strlen(log_buf) - 1);
@@ -415,10 +419,11 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 
 					if(monster->alive == YES && monster->life_drain > 0 && monster->health < monster->maxhp)
 					{
-						monster->health += 1;
+						monster->health += monster->life_drain;
+						if(monster->health > monster->maxhp) monster->health = monster->maxhp;
 					}
 
-					if(monster->alive == YES && monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->health > 0)
+					if(monster->alive == YES && monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->symbol != 'L' && player->health > 0)
 					{
 						player->poison_turns = 3;
 						strncat(log_buf, "(Poisoned!) ", sizeof(log_buf) - strlen(log_buf) - 1);
@@ -513,13 +518,14 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					}
 				}
 
-				// Bat monster life drain
+				// Bat / Lich monster life drain
 				if(monster->alive == YES && monster->life_drain > 0 && monster->health < monster->maxhp)
 				{
-					monster->health += 1;
+					monster->health += monster->life_drain;
+					if(monster->health > monster->maxhp) monster->health = monster->maxhp;
 				}
 
-				if(monster->alive == YES && monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->health > 0)
+				if(monster->alive == YES && monster->poison_attack && player->symbol != 's' && player->symbol != 'B' && player->symbol != 'L' && player->health > 0)
 				{
 					player->poison_turns = 3;
 					strncat(log_buf, "(Poisoned!) ", sizeof(log_buf) - strlen(log_buf) - 1);
@@ -611,23 +617,37 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 			int dy[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
 			int dx[8] = {0, 0, -1, 1, 1, -1, 1, -1};
 			int hits = 0;
+			int webs_placed = 0;
 			for(int i = 0; i < 8; i++)
 			{
-				Entity *mon = GetMonsterAt(py + dy[i], px + dx[i], level);
+				int ny = py + dy[i];
+				int nx = px + dx[i];
+				Entity *mon = GetMonsterAt(ny, nx, level);
 				if(mon != NULL && mon->alive == YES)
 				{
 					mon->snare_turns += 3;
 					mon->poison_turns += 2;
 					hits++;
 				}
+				else if(ny > 0 && ny < MAX_Y - 1 && nx > 0 && nx < MAX_X - 1 &&
+				        leveli[leveli->lvl].map_backup != NULL &&
+				        leveli[leveli->lvl].map_backup[ny][nx] == '.' &&
+				        GetCorpseAt(leveli[leveli->lvl], ny, nx) == NULL &&
+				        GetItemAt(leveli[leveli->lvl], ny, nx) == NULL &&
+				        webs_placed < 4)
+				{
+					leveli[leveli->lvl].map_backup[ny][nx] = '^';
+					PrintChar(ny, nx, '^');
+					webs_placed++;
+				}
 			}
 			if(hits > 0)
 			{
-				mvprintw(0,0,"You shoot sticky webbing! Ensnared & poisoned %d nearby enemies (3t web, 2t poison)!", hits);
+				mvprintw(0,0,"You shoot sticky webbing! Ensnared %d foes (3t web, 2t poison) & spun %d web traps (^)!", hits, webs_placed);
 			}
 			else
 			{
-				mvprintw(0,0,"You spin webs around you, setting a defensive perimeter!");
+				mvprintw(0,0,"You spin %d sticky web traps (^) around you, setting a snare perimeter!", webs_placed);
 			}
 			used = 1;
 			break;
@@ -809,6 +829,7 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 			int dissolved = 0;
 			int kills = 0;
 			int xp_gain = 0;
+			int pools = 0;
 			for(int step = 1; step <= 3; step++)
 			{
 				for(int d = 0; d < 4; d++)
@@ -835,16 +856,74 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 								mon->Position.xPos = -1;
 							}
 						}
+						else if(step == 1 && ny < MAX_Y - 1 && nx < MAX_X - 1 &&
+						        leveli[leveli->lvl].map_backup != NULL &&
+						        leveli[leveli->lvl].map_backup[ny][nx] == '.' &&
+						        GetCorpseAt(leveli[leveli->lvl], ny, nx) == NULL &&
+						        GetItemAt(leveli[leveli->lvl], ny, nx) == NULL)
+						{
+							leveli[leveli->lvl].map_backup[ny][nx] = '=';
+							PrintChar(ny, nx, '=');
+							pools++;
+						}
 					}
 				}
 			}
 			if(kills > 0)
 			{
-				mvprintw(0,0,"SPLAT! Acid Jet dissolves %d targets! (%d killed, +%d XP!)", dissolved, kills, xp_gain);
+				mvprintw(0,0,"SPLAT! Acid Jet dissolves %d targets (%d killed, +%d XP) & leaves %d acid pools (=)!", dissolved, kills, xp_gain, pools);
 			}
 			else
 			{
-				mvprintw(0,0,"SPLAT! Acid Jet dissolves %d targets with burning caustic spray!", dissolved);
+				mvprintw(0,0,"SPLAT! Acid Jet hits %d targets for 5 dmg & leaves %d caustic acid pools (=)!", dissolved, pools);
+			}
+			used = 1;
+			break;
+		}
+
+		case 'L': // Necromancer Lich: Soul Harvest
+		{
+			ClearMsg();
+			int drained = 0;
+			int kills = 0;
+			int xp_gain = 0;
+			int healed = 0;
+			for(int m = 0; m < level.mons; m++)
+			{
+				Entity *mon = level.monsters[m];
+				if(mon != NULL && mon->alive == YES)
+				{
+					int dist = abs(mon->Position.yPos - py) + abs(mon->Position.xPos - px);
+					if(dist <= 3)
+					{
+						mon->health -= 5;
+						drained++;
+						int prev_hp = player->health;
+						player->health += 3;
+						if(player->health > player->maxhp) player->health = player->maxhp;
+						healed += (player->health - prev_hp);
+						if(mon->health <= 0)
+						{
+							int old_xp = player->xp;
+							mon->alive = DEAD;
+							player->xp += mon->attack;
+							CheckXPUpgrade(player, old_xp);
+							xp_gain += mon->attack;
+							kills++;
+							DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
+							mon->Position.yPos = -1;
+							mon->Position.xPos = -1;
+						}
+					}
+				}
+			}
+			if(kills > 0)
+			{
+				mvprintw(0,0,"SOUL HARVEST! Siphoned %d foes for 5 dmg (+%d HP healed, %d slain, +%d XP)!", drained, healed, kills, xp_gain);
+			}
+			else
+			{
+				mvprintw(0,0,"SOUL HARVEST! Necrotic wave drains %d nearby foes for 5 dmg (+%d HP healed)!", drained, healed);
 			}
 			used = 1;
 			break;

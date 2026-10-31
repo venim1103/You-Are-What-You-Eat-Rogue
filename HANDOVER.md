@@ -115,7 +115,7 @@
     * Removed the `can_open_doors == NO` restriction from player door opening (`OpenDoor`) and closing (`'c'` in `HandleInput`) so the player can always open and close doors in any polymorphed form without getting trapped.
     * Retained `can_open_doors` on `Entity` to govern equipment manipulation (beasts still cannot wield weapons or wear armor, updated trait descriptions from `No Hands` to `No Gear`) and enemy AI door rules (only monsters with `can_open_doors == YES` can open closed doors `+`, while beasts remain blocked by closed doors).
 
-### Sprint 6: Persistent Hall of Fame & Run History (Latest Release)
+### Sprint 6: Persistent Hall of Fame & Run History
 * **Priority 1 — High Score / Run History Persistence (`include/web_curses.h`, `src/web_curses.c`, `src/text.c`, `web/index.html`):**
   * **Status:** Completed.
   * **Scope:**
@@ -124,13 +124,23 @@
     * Implemented `localStorage` persistence (`yawye_rogue_hall_of_fame_v1`) in `web/index.html` storing the top 25 runs sorted by score, victory status, and XP.
     * Added a `🏆 Fame` toolbar button and interactive **Hall of Fame & Run History** modal (`#hof-modal`) featuring aggregate career stats (Saved Runs, Victories, High Score, Deepest Floor), detailed run cards with victory/death badges, keyboard dismissal (`Esc`/`h`), and history reset support.
 
+### Sprint 7: Extended Bestiary & Environmental Floor Hazards (Latest Release)
+* **Priority 1 — Extended Bestiary (`Necromancer Lich`) & Floor Hazards (`^` Sticky Webs, `=` Acid Puddles) (`include/global.h`, `include/functions.h`, `src/level.c`, `src/monsters.c`, `src/player.c`, `src/combat.c`, `src/check.c`, `src/input.c`, `src/route.c`, `src/text.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added **Necromancer Lich (`L`)** to the mid-to-late dungeon bestiary (Floors 5+ and Floor 10 boss guard): 12 HP, 6 ATK, `FOLLOW` AI, 550 corpse nutrition, humanoid gear proficiency (`can_open_doors = YES`), 15% evasion, poison/rot immunity, `+2 HP` Soul Siphon melee life drain (`[DRAIN:+2]`), and the **Soul Harvest** active ability (drains 5 HP from all foes within 3 tiles and heals `+3 HP` per target hit).
+    * Added procedural & ability-spawned **Environmental Floor Hazards**: **Sticky Spider Webs (`^`)** and **Caustic Acid Puddles (`=`)** via `SpawnFloorHazards()` and `TriggerFloorHazard()`.
+    * **Sticky Spider Web (`^`):** Ensnares non-spider/non-phasing monsters for 3 turns (`snare_turns += 3`) or costs the player 20 hunger to tear free; Spiders (`x`) and Ghosts (`G`) traverse webs unimpeded, and Spider `Spin Web` (`'f'`) places up to 4 persistent `^` web traps on adjacent floor tiles.
+    * **Caustic Acid Puddle (`=`):** Burns non-immune monsters for 3 acid damage + 2t poison (awarding XP and dropping corpses on lethal dissolves) or burns the player for 2 HP + 2t poison; Acid Slimes (`B`) absorb puddles for `+2 HP` and `+30 hunger`, and Slime `Acid Jet` (`'f'`) leaves caustic `=` pools on adjacent cardinal floor tiles.
+    * Integrated `L`, `^`, and `=` into Look Mode (`'v'`), HUD underfoot badges, status strip pills, and Web UI syntax colorization (`.g-mon-L`, `.g-web`, `.g-acid`).
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — Extended Bestiary & Floor Hazards:** Introduce new mid-to-late dungeon creatures or environmental hazards (e.g., persistent spider webs or acid puddles on floor tiles).
-* **Priority 2 — Sound Effects & Web Audio Synthesizer:** Add optional procedural Web Audio API sound effects for combat hits, polymorphing, shrine activation, and boss encounters.
-* **Priority 3 — Daily Seed / Challenge Runs:** Allow players to enter or share a custom RNG seed from the web toolbar for competitive seeded dungeon runs.
+* **Priority 1 — Sound Effects & Web Audio Synthesizer:** Add optional procedural Web Audio API sound effects for combat hits, polymorphing, shrine activation, and boss encounters.
+* **Priority 2 — Daily Seed / Challenge Runs:** Allow players to enter or share a custom RNG seed from the web toolbar for competitive seeded dungeon runs.
+* **Priority 3 — Interactive Bestiary & Form Compendium Modal:** Add an in-browser compendium tracking discovered monster forms, traits, and active abilities across runs.
 
 ---
 

@@ -189,6 +189,8 @@ int HandleInput(Level *leveli, Level level, int *yx)
 				case '*':
 				case '_':
 				case '~':
+				case '^':
+				case '=':
 				case '%':
 				case ')':
 				case '[':
@@ -233,6 +235,10 @@ int HandleInput(Level *leveli, Level level, int *yx)
 					else if(ch == '_' || ch == '~')
 					{
 						UseShrine(leveli, level, level.player, target_y, target_x);
+					}
+					else if(ch == '^' || ch == '=')
+					{
+						TriggerFloorHazard(leveli, level, level.player, 1, target_y, target_x);
 					}
 					else if(corp != NULL && corp->active == YES)
 					{
