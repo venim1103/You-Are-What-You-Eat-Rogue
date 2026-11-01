@@ -103,6 +103,34 @@ void web_record_run(int victory, const char *form_name, char form_sym, const cha
     js_record_run(victory, form_name ? form_name : "Human", (int)(unsigned char)form_sym, killer ? killer : "Unknown", xp, rank, maxlvl, turns, hp, maxhp, att, def);
 }
 
+EM_JS(void, js_play_sfx, (const char* sfx_ptr), {
+    try {
+        if (!sfx_ptr || !window.playRogueSfx) return;
+        var sfx = "";
+        if (typeof UTF8ToString !== 'undefined') {
+            sfx = UTF8ToString(sfx_ptr);
+        } else if (typeof Module !== 'undefined' && Module.UTF8ToString) {
+            sfx = Module.UTF8ToString(sfx_ptr);
+        } else if (typeof HEAPU8 !== 'undefined') {
+            var len = 0;
+            while (HEAPU8[sfx_ptr + len] !== 0) len++;
+            sfx = new TextDecoder('utf-8').decode(new Uint8Array(HEAPU8.buffer, sfx_ptr, len));
+        }
+        if (sfx) {
+            window.playRogueSfx(sfx);
+        }
+    } catch (e) {
+        console.error("js_play_sfx error:", e);
+    }
+});
+
+void web_play_sfx(const char *sfx)
+{
+    if (sfx != NULL) {
+        js_play_sfx(sfx);
+    }
+}
+
 int initscr(void)
 {
     clear();
@@ -194,7 +222,7 @@ static void put_string_at(int y, int x, const char *str)
 
 int mvprintw(int y, int x, const char *fmt, ...)
 {
-    char buf[4096];
+    static char buf[1024];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buf, sizeof(buf), fmt, args);
@@ -205,7 +233,7 @@ int mvprintw(int y, int x, const char *fmt, ...)
 
 int printw(const char *fmt, ...)
 {
-    char buf[4096];
+    static char buf[1024];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buf, sizeof(buf), fmt, args);

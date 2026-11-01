@@ -66,6 +66,7 @@ int Route(Position *p1, Position *p2, int i, int j, char chk1, char chk2, char i
 int ConnectRooms(Position *doors1, Position *doors2, int d);
 int TurnNearby(int y, int x, int c, char *d, Level level); 
 void ClearMsg(void);
+void PlaySound(const char *sfx);
 int OpenDoor(Level *leveli, Entity *player, int y, int x);
 int PrintChar(int y, int x, char c); 
 int PrintNum(int num, char *c); 

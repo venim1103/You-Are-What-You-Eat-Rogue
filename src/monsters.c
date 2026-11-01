@@ -68,6 +68,7 @@ int SpawnFogMonster(Level *level)
 
 	for(int attempt = 0; attempt < 60; attempt++)
 	{
+		if(level->rooms.mode <= 0) break;
 		int rm = rand() % level->rooms.mode;
 		yx = RandomCoords(yx, level->rooms.mode, level->rooms.Area[rm]);
 		int sy = yx[0];
@@ -247,7 +248,8 @@ Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name)
 
 int *MonSetup(Entity *monster, Entity room, int *yx)
 {
-	int random = 0; random=(rand()%room.mode);
+	int safe_rooms = (room.mode > 0) ? room.mode : 1;
+	int random = (rand() % safe_rooms);
 	char buf[8];
 
 	Position test; test.width = NO; test.height = NO; test.type = NO;
@@ -256,8 +258,8 @@ int *MonSetup(Entity *monster, Entity room, int *yx)
 	{
 		if(test.type==NO)
 		{
-			random=(rand()%room.mode); 
-			yx=RandomCoords(yx,room.mode,room.Area[random]);
+			random=(rand() % safe_rooms); 
+			yx=RandomCoords(yx, safe_rooms, room.Area[random]);
 			test.yPos = yx[0]; test.xPos = yx[1];
 			test = CheckArea(test,'.');		 	
 		} else
@@ -265,6 +267,8 @@ int *MonSetup(Entity *monster, Entity room, int *yx)
 			break;
 		}
 	}
+	if(yx[0] < 1 || yx[0] >= MAX_Y - 1) yx[0] = 2;
+	if(yx[1] < 1 || yx[1] >= MAX_X - 1) yx[1] = 2;
 	monster->Position.yPos = yx[0]; 
 	monster->Position.xPos = yx[1]; 
 	// Save the initial character value!
@@ -283,6 +287,10 @@ Entity *MonsterMove(Level level, Entity *monster, char c1, char c2, int nexty, i
 {
 	int y,x = 0;
 	y = monster->Position.yPos; x = monster->Position.xPos;
+	if(y < 0 || y >= MAX_Y || x < 0 || x >= MAX_X || nexty < 0 || nexty >= MAX_Y || nextx < 0 || nextx >= MAX_X)
+	{
+		return monster;
+	}
 
 if(monster->alive==YES)
 {

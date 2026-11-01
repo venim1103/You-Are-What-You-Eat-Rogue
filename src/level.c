@@ -73,13 +73,22 @@ Level MakeLvl(Level level_in, int lvl, Level *leveli)
 
 int *RandomCoords(int *yx, int rm, Position room)
 {
+	int x = room.xPos + 1;
+	int y = room.yPos + 1;
 
-//	yx = malloc(sizeof(int)*3);
+	if(room.width > 1)
+	{
+		x = (room.xPos + 1) + (rand() % (room.width - 1));
+	}
+	if(room.height > 1)
+	{
+		y = (room.yPos + 1) + (rand() % (room.height - 1));
+	}
 
-	int x,y=3;
-
-	x = ((room.xPos+1)+(rand()%(room.width-1)));
-	y = ((room.yPos+1)+(rand()%(room.height-1)));
+	if(y < 1) y = 1;
+	if(y >= MAX_Y - 1) y = MAX_Y - 2;
+	if(x < 1) x = 1;
+	if(x >= MAX_X - 1) x = MAX_X - 2;
 
 	yx[0] = y; yx[1] = x; 
 	return yx; 

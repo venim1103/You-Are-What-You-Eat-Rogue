@@ -180,11 +180,13 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 	ClearMsg();
 	if(sick > 0)
 	{
+		PlaySound("sick");
 		mvprintw(0,0,"Ugh! You ate a %s %s corpse! SICKENED! (+%d hunger) Polymorphed into %s!", 
 			stage, corpse->name, nut, corpse->name);
 	}
 	else
 	{
+		PlaySound("polymorph");
 		mvprintw(0,0,"Devoured %s %s! (+%d hunger) Polymorphed into %s! [%s]", 
 			stage, corpse->name, nut, corpse->name, player->trait_desc);
 	}
@@ -280,6 +282,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 			// Check monster evasion (e.g. Bat, Ghost)
 			if(monster->evasion_chance > 0 && (rand() % 100) < monster->evasion_chance)
 			{
+				PlaySound("miss");
 				snprintf(tmp, sizeof(tmp), "The %s evades! ", monster->name);
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 			}
@@ -296,6 +299,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				}
 
 				monster->health -= dmg;
+				PlaySound(cleaved ? "cleave" : "hit");
 				if(cleaved)
 				{
 					snprintf(tmp, sizeof(tmp), "CLEAVE! Hit %s for %d dmg! ", monster->name, dmg);
@@ -354,6 +358,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				int ranked_up = CheckXPUpgrade(player, old_xp);
 				if(was_dragon)
 				{
+					PlaySound("boss_kill");
 					snprintf(tmp, sizeof(tmp), "SLAIN %s (+%d XP)! A Golden Portal (*) appears!", monster->name, monster->attack);
 				}
 				else if(ranked_up > 0)
@@ -362,6 +367,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				}
 				else
 				{
+					PlaySound("kill");
 					snprintf(tmp, sizeof(tmp), "Killed %s (+%d XP)!", monster->name, monster->attack);
 				}
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
@@ -462,6 +468,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 		{
 			if(player->evasion_chance > 0 && (rand() % 100) < player->evasion_chance)
 			{
+				PlaySound("miss");
 				snprintf(tmp, sizeof(tmp), "You evade the %s's attack! [%s: %d/%d HP]", monster->name, monster->name, monster->health, monster->maxhp);
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
 			}
@@ -485,6 +492,7 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 				if(m_dmg < 1) m_dmg = 1;
 
 				player->health -= m_dmg;
+				PlaySound(m_fire ? "fire" : (m_cleave ? "cleave" : "hurt"));
 				if(m_fire)
 				{
 					snprintf(tmp, sizeof(tmp), "%s breathes DRAGON FIRE for %d dmg! ", monster->name, m_dmg);
@@ -1011,6 +1019,7 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 
 	if(used)
 	{
+		PlaySound(player->symbol == 'D' ? "fire" : "ability");
 		player->hunger -= player->ability_cost;
 		if(player->hunger < 0) player->hunger = 0;
 		player->ability_cd = player->ability_max_cd;

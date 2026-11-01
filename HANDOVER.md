@@ -2,9 +2,9 @@
 
 **Repository:** `venim1103/You-Are-What-You-Eat-Rogue`  
 **Current Branch:** `master`  
-**Latest Production Commit:** `cfbc8bb`  
+**Latest Production Commit:** `5b992f2` + Sprint 8 Upgrades  
 **GitHub Pages Target:** `venim1103.github.io/You-Are-What-You-Eat-Rogue`  
-**Document Date:** October 2026  
+**Document Date:** November 2026  
 
 ---
 
@@ -124,7 +124,7 @@
     * Implemented `localStorage` persistence (`yawye_rogue_hall_of_fame_v1`) in `web/index.html` storing the top 25 runs sorted by score, victory status, and XP.
     * Added a `🏆 Fame` toolbar button and interactive **Hall of Fame & Run History** modal (`#hof-modal`) featuring aggregate career stats (Saved Runs, Victories, High Score, Deepest Floor), detailed run cards with victory/death badges, keyboard dismissal (`Esc`/`h`), and history reset support.
 
-### Sprint 7: Extended Bestiary & Environmental Floor Hazards (Latest Release)
+### Sprint 7: Extended Bestiary & Environmental Floor Hazards
 * **Priority 1 — Extended Bestiary (`Necromancer Lich`) & Floor Hazards (`^` Sticky Webs, `=` Acid Puddles) (`include/global.h`, `include/functions.h`, `src/level.c`, `src/monsters.c`, `src/player.c`, `src/combat.c`, `src/check.c`, `src/input.c`, `src/route.c`, `src/text.c`, `web/index.html`):**
   * **Status:** Completed.
   * **Scope:**
@@ -134,13 +134,26 @@
     * **Caustic Acid Puddle (`=`):** Burns non-immune monsters for 3 acid damage + 2t poison (awarding XP and dropping corpses on lethal dissolves) or burns the player for 2 HP + 2t poison; Acid Slimes (`B`) absorb puddles for `+2 HP` and `+30 hunger`, and Slime `Acid Jet` (`'f'`) leaves caustic `=` pools on adjacent cardinal floor tiles.
     * Integrated `L`, `^`, and `=` into Look Mode (`'v'`), HUD underfoot badges, status strip pills, and Web UI syntax colorization (`.g-mon-L`, `.g-web`, `.g-acid`).
 
+### Sprint 8: Web Audio Synthesizer & WASM Memory / Bounds Hardening (Latest Release)
+* **Priority 1 — Sound Effects & Procedural Web Audio Synthesizer (`include/web_curses.h`, `include/functions.h`, `src/web_curses.c`, `src/text.c`, `src/combat.c`, `src/player.c`, `src/game.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `PlaySound()` and `web_play_sfx()` C-to-JS bridge (`js_play_sfx`) connecting gameplay events to a zero-dependency Web Audio API synthesizer (`window.playRogueSfx`) in `web/index.html`.
+    * Synthesizes distinct procedural sound cues for melee hits (`hit`), crushing cleaves (`cleave`), player damage (`hurt`), evasion/misses (`miss`), monster kills (`kill`), boss kills (`boss_kill`), polymorphing (`polymorph`), rotten meat sickness (`sick`), active form abilities (`ability`), dragon fire (`fire`), shrine/spring invocations (`shrine`), Mastery Rank level-ups (`levelup`), item/corpse pickups (`pickup`), door opening (`door`), stair transitions (`stairs`), Floor 10 boss arrival (`boss`), victory (`victory`), and game over (`gameover`).
+    * Added a persistent `🔊 SFX` / `🔇 Mute` toggle button (`#sfx-btn`) in the web toolbar backed by `localStorage` (`yawye_rogue_sfx_enabled_v1`) with automatic `AudioContext` unlock on user input.
+* **Priority 2 — WebAssembly Stack / Asyncify & Bounds Safety Hardening (`Makefile`, `src/web_curses.c`, `src/level.c`, `src/player.c`, `src/monsters.c`, `src/check.c`, `src/input.c`, `src/draw.c`, `src/text.c`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Resolved the WebAssembly `RuntimeError: Out of bounds memory access` during movement by moving the 4 KB `buf` arrays in `mvprintw()` and `printw()` (`src/web_curses.c`) to `static` storage (eliminating 4 KB per-call stack pressure on Emscripten's Asyncify unwind buffer) and expanding `-sASYNCIFY_STACK_SIZE=262144` (256 KB) and `-sSTACK_SIZE=1048576` (1 MB) in `Makefile`.
+    * Hardened `RandomCoords()`, `PlayerSetup()`, `MonSetup()`, `SpawnFogMonster()`, `SpawnFloorItems()`, `CheckNextChar()`, `StepOn()`, `MonsterMove()`, `HandleInput()`, and `TurnNearby()` with strict coordinate clamping (`1 .. MAX_Y-2`, `1 .. MAX_X-2`), `room.mode > 0` guards, and bounds validation before indexing `map_backup`.
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — Sound Effects & Web Audio Synthesizer:** Add optional procedural Web Audio API sound effects for combat hits, polymorphing, shrine activation, and boss encounters.
-* **Priority 2 — Daily Seed / Challenge Runs:** Allow players to enter or share a custom RNG seed from the web toolbar for competitive seeded dungeon runs.
-* **Priority 3 — Interactive Bestiary & Form Compendium Modal:** Add an in-browser compendium tracking discovered monster forms, traits, and active abilities across runs.
+* **Priority 1 — Daily Seed / Challenge Runs:** Allow players to enter or share a custom RNG seed from the web toolbar for competitive seeded dungeon runs.
+* **Priority 2 — Interactive Bestiary & Form Compendium Modal:** Add an in-browser compendium tracking discovered monster forms, traits, and active abilities across runs.
+* **Priority 3 — Dungeon Mini-Bosses & Elite Variants:** Introduce floor mini-bosses with enhanced loot drops and visual indicators.
 
 ---
 

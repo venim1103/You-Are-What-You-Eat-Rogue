@@ -312,6 +312,18 @@
       font-weight: 700 !important;
     }
 
+    .sfx-btn {
+      background: rgba(56, 239, 125, 0.14) !important;
+      border-color: #16a34a !important;
+      color: #4ade80 !important;
+      font-weight: 700 !important;
+    }
+    .sfx-btn.muted {
+      background: rgba(100, 116, 139, 0.15) !important;
+      border-color: #475569 !important;
+      color: #94a3b8 !important;
+    }
+
     /* Hall of Fame Modal */
     #hof-modal {
       display: none;
@@ -504,6 +516,7 @@
       <span>🍽️</span> YAWYE Rogue
     </div>
     <div class="toolbar">
+      <button id="sfx-btn" class="sfx-btn" onclick="toggleSfx()">🔊 SFX</button>
       <button class="fame-btn" onclick="toggleHallOfFame()">🏆 Fame</button>
       <button class="look-btn" onpointerdown="handleKey('v', event)">👁️ Look</button>
       <button onclick="changeFontSize(-1)">A-</button>
@@ -623,6 +636,163 @@
     }
 
     const HOF_STORAGE_KEY = 'yawye_rogue_hall_of_fame_v1';
+    const SFX_STORAGE_KEY = 'yawye_rogue_sfx_enabled_v1';
+    let sfxEnabled = true;
+    let audioCtx = null;
+
+    (function initSfxPref() {
+      try {
+        const saved = localStorage.getItem(SFX_STORAGE_KEY);
+        if (saved !== null) {
+          sfxEnabled = (saved !== '0' && saved !== 'false');
+        }
+      } catch (e) {}
+      updateSfxButton();
+    })();
+
+    function updateSfxButton() {
+      const btn = document.getElementById('sfx-btn');
+      if (!btn) return;
+      if (sfxEnabled) {
+        btn.textContent = '🔊 SFX';
+        btn.classList.remove('muted');
+      } else {
+        btn.textContent = '🔇 Mute';
+        btn.classList.add('muted');
+      }
+    }
+
+    function ensureAudioCtx() {
+      if (!sfxEnabled) return null;
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      } catch (e) {}
+      return audioCtx;
+    }
+
+    function toggleSfx() {
+      sfxEnabled = !sfxEnabled;
+      try {
+        localStorage.setItem(SFX_STORAGE_KEY, sfxEnabled ? '1' : '0');
+      } catch (e) {}
+      updateSfxButton();
+      if (sfxEnabled) {
+        window.playRogueSfx('pickup');
+      }
+    }
+
+    function playTone(ctx, type, fStart, fEnd, startTime, duration, vol) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(Math.max(20, fStart), startTime);
+      if (fEnd && fEnd !== fStart) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, fEnd), startTime + duration);
+      }
+      gain.gain.setValueAtTime(Math.max(0.001, vol || 0.12), startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.01);
+    }
+
+    window.playRogueSfx = function(type) {
+      if (!sfxEnabled) return;
+      const ctx = ensureAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      switch (type) {
+        case 'hit':
+          playTone(ctx, 'triangle', 190, 75, now, 0.08, 0.16);
+          playTone(ctx, 'square', 120, 55, now, 0.06, 0.08);
+          break;
+        case 'cleave':
+          playTone(ctx, 'sawtooth', 260, 65, now, 0.14, 0.20);
+          playTone(ctx, 'square', 150, 45, now + 0.03, 0.12, 0.14);
+          break;
+        case 'hurt':
+          playTone(ctx, 'sawtooth', 140, 48, now, 0.12, 0.18);
+          break;
+        case 'miss':
+          playTone(ctx, 'sine', 340, 160, now, 0.06, 0.08);
+          break;
+        case 'kill':
+          playTone(ctx, 'triangle', 330, 440, now, 0.07, 0.14);
+          playTone(ctx, 'triangle', 523.25, 659.25, now + 0.06, 0.11, 0.15);
+          break;
+        case 'boss_kill':
+          playTone(ctx, 'sawtooth', 220, 440, now, 0.15, 0.18);
+          playTone(ctx, 'triangle', 440, 587.33, now + 0.14, 0.15, 0.18);
+          playTone(ctx, 'triangle', 587.33, 880, now + 0.28, 0.28, 0.20);
+          break;
+        case 'polymorph':
+          playTone(ctx, 'sine', 220, 520, now, 0.12, 0.15);
+          playTone(ctx, 'triangle', 310, 740, now + 0.08, 0.16, 0.15);
+          playTone(ctx, 'sine', 520, 880, now + 0.18, 0.14, 0.12);
+          break;
+        case 'sick':
+          playTone(ctx, 'sawtooth', 240, 130, now, 0.14, 0.15);
+          playTone(ctx, 'sawtooth', 160, 85, now + 0.12, 0.18, 0.15);
+          break;
+        case 'ability':
+          playTone(ctx, 'sine', 380, 760, now, 0.11, 0.15);
+          playTone(ctx, 'triangle', 540, 320, now + 0.07, 0.12, 0.13);
+          break;
+        case 'fire':
+          playTone(ctx, 'sawtooth', 180, 62, now, 0.22, 0.20);
+          playTone(ctx, 'triangle', 320, 95, now + 0.04, 0.20, 0.15);
+          break;
+        case 'shrine':
+          playTone(ctx, 'sine', 523.25, 523.25, now, 0.16, 0.12);
+          playTone(ctx, 'sine', 659.25, 659.25, now + 0.08, 0.18, 0.12);
+          playTone(ctx, 'triangle', 783.99, 1046.5, now + 0.16, 0.26, 0.14);
+          break;
+        case 'levelup':
+          playTone(ctx, 'triangle', 440, 440, now, 0.09, 0.16);
+          playTone(ctx, 'triangle', 554.37, 554.37, now + 0.08, 0.09, 0.16);
+          playTone(ctx, 'triangle', 659.25, 659.25, now + 0.16, 0.10, 0.16);
+          playTone(ctx, 'triangle', 880, 880, now + 0.25, 0.24, 0.18);
+          break;
+        case 'pickup':
+          playTone(ctx, 'sine', 587.33, 880, now, 0.08, 0.12);
+          break;
+        case 'door':
+          playTone(ctx, 'triangle', 140, 210, now, 0.07, 0.11);
+          break;
+        case 'stairs':
+          playTone(ctx, 'triangle', 260, 190, now, 0.08, 0.12);
+          playTone(ctx, 'triangle', 200, 140, now + 0.09, 0.10, 0.12);
+          break;
+        case 'boss':
+          playTone(ctx, 'sawtooth', 110, 65, now, 0.30, 0.20);
+          playTone(ctx, 'sawtooth', 164.81, 98, now + 0.10, 0.35, 0.18);
+          break;
+        case 'victory':
+          playTone(ctx, 'triangle', 523.25, 523.25, now, 0.12, 0.16);
+          playTone(ctx, 'triangle', 659.25, 659.25, now + 0.11, 0.12, 0.16);
+          playTone(ctx, 'triangle', 783.99, 783.99, now + 0.22, 0.14, 0.16);
+          playTone(ctx, 'triangle', 1046.5, 1046.5, now + 0.35, 0.35, 0.20);
+          break;
+        case 'gameover':
+          playTone(ctx, 'sawtooth', 329.63, 293.66, now, 0.18, 0.14);
+          playTone(ctx, 'sawtooth', 261.63, 220, now + 0.18, 0.20, 0.14);
+          playTone(ctx, 'sawtooth', 196, 130.81, now + 0.38, 0.35, 0.16);
+          break;
+        default:
+          playTone(ctx, 'sine', 440, 440, now, 0.06, 0.10);
+          break;
+      }
+    };
 
     function loadHallOfFame() {
       try {
@@ -782,6 +952,7 @@
     }
 
     function sendRogueKey(key) {
+      ensureAudioCtx();
       let code = (typeof key === 'string') ? key.charCodeAt(0) : key;
       if (window.rogueResolveKey) {
         let cb = window.rogueResolveKey;

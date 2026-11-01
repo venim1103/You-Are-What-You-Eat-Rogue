@@ -190,6 +190,7 @@ int CheckXPUpgrade(Entity *player, int old_xp)
 		player->health += 3 * diff;
 		if(player->health > player->maxhp) player->health = player->maxhp;
 		player->attack += 1 * diff;
+		PlaySound("levelup");
 		return diff;
 	}
 	return 0;
@@ -240,11 +241,12 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->Position.type = UNKNOWN;
 
 	// Take random room
-	int randomroom = 0; randomroom = (rand()%room.mode);
+	int safe_rooms = (room.mode > 0) ? room.mode : 1;
+	int randomroom = (rand() % safe_rooms);
 
 	// Put somewhere randomly
 	int *yx; int x,y=3; yx = malloc(sizeof(int)*3); // init random coords
-	yx = RandomCoords(yx,room.mode,room.Area[randomroom]);
+	yx = RandomCoords(yx, safe_rooms, room.Area[randomroom]);
 	y = yx[0]; x = yx[1];
 	
 	// FOR INITIAL MOVEMENT BUG:
@@ -291,15 +293,22 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	PrintChar(player->Position.yPos,player->Position.xPos,'>');
 	int room_old = randomroom;
 
-	randomroom = (rand()%room.mode); 
-	while(randomroom==room_old)
+	if(safe_rooms > 1)
 	{
-		randomroom = (rand()%room.mode); 
+		randomroom = (rand() % safe_rooms); 
+		while(randomroom == room_old)
+		{
+			randomroom = (rand() % safe_rooms); 
+		}
 	}
 
 	// Put somewhere random	
-	yx = RandomCoords(yx,room.mode,room.Area[randomroom]);
+	yx = RandomCoords(yx, safe_rooms, room.Area[randomroom]);
 	y = yx[0]; x = yx[1];
+	if(y == player->Position.yPos && x == player->Position.xPos && x + 1 < MAX_X - 1)
+	{
+		x++;
+	}
 	PrintChar(y,x,'<');		
 	
 	move(player->Position.yPos,player->Position.xPos);

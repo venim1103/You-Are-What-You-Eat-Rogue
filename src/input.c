@@ -164,6 +164,14 @@ int HandleInput(Level *leveli, Level level, int *yx)
 		// Clear previous turn's message when moving:
 		ClearMsg();
 
+		if(target_y < 1 || target_y >= MAX_Y || target_x < 0 || target_x >= MAX_X)
+		{
+			mvprintw(0, 0, "You bump into the dungeon boundary.");
+			refresh();
+			action_taken = 0;
+		}
+		else
+		{
 		// 1. Check if an active monster is at target tile:
 		Entity *target = GetMonsterAt(target_y, target_x, level);
 		if(target != NULL && target->alive == YES)
@@ -173,7 +181,7 @@ int HandleInput(Level *leveli, Level level, int *yx)
 		}
 		else
 		{
-			chtype ch = '.';
+			chtype ch = ' ';
 			if(level.map_backup != NULL && target_y >= 0 && target_y < MAX_Y && target_x >= 0 && target_x < MAX_X)
 			{
 				ch = level.map_backup[target_y][target_x];
@@ -282,6 +290,7 @@ int HandleInput(Level *leveli, Level level, int *yx)
 					break;
 			}
 		}
+		}
 	}
 
 	// If a turn was taken, monsters take their turn:
@@ -289,12 +298,16 @@ int HandleInput(Level *leveli, Level level, int *yx)
 	{
 		for(int i=0; i<level.mons; i++)
 		{
-			if(level.monsters[i]->alive != YES)
+			if(level.monsters[i] == NULL || level.monsters[i]->alive != YES)
 			{
 				continue;
 			}
 			int my = level.monsters[i]->Position.yPos;
 			int mx = level.monsters[i]->Position.xPos;
+			if(my < 1 || my >= MAX_Y - 1 || mx < 1 || mx >= MAX_X - 1)
+			{
+				continue;
+			}
 			int py = level.player->Position.yPos;
 			int px = level.player->Position.xPos;
 			int dist = abs(my - py) + abs(mx - px);

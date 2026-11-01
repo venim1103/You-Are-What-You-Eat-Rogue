@@ -43,6 +43,18 @@ void ClearMsg(void)
 	clrtoeol();
 }
 
+void PlaySound(const char *sfx)
+{
+#ifdef __EMSCRIPTEN__
+	if(sfx != NULL)
+	{
+		web_play_sfx(sfx);
+	}
+#else
+	(void)sfx;
+#endif
+}
+
 int WelcomeTxt()
 {
 	// WELCOME TEXT + INSTRUCTIONS:
@@ -201,6 +213,7 @@ int PlayerInfoBar(Level *level)
 
 void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 {
+	if(rooms.mode <= 0) return;
 	int spawn_count = (rand() % 3) + 2; // 2 to 4 items per level
 	int *yx = malloc(sizeof(int) * 3);
 
@@ -212,7 +225,8 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 		int x = yx[1];
 
 		// Only place on free floor (and never overwrite player/stairs/monsters/other items):
-		if(level->map_backup[y][x] != '.' ||
+		if(y < 1 || y >= MAX_Y - 1 || x < 1 || x >= MAX_X - 1 ||
+		   level->map_backup[y][x] != '.' ||
 		   (level->player != NULL && level->player->Position.yPos == y && level->player->Position.xPos == x) ||
 		   GetMonsterAt(y, x, *level) != NULL ||
 		   GetItemAt(*level, y, x) != NULL)
@@ -427,6 +441,7 @@ void TriggerFloorHazard(Level *leveli, Level level, Entity *entity, int is_playe
 			}
 			else
 			{
+				PlaySound("miss");
 				entity->hunger -= 20;
 				if(entity->hunger < 0) entity->hunger = 0;
 				cur->map_backup[y][x] = '.';
@@ -441,6 +456,7 @@ void TriggerFloorHazard(Level *leveli, Level level, Entity *entity, int is_playe
 		{
 			if(entity->symbol == 'B')
 			{
+				PlaySound("shrine");
 				entity->health += 2;
 				if(entity->health > entity->maxhp) entity->health = entity->maxhp;
 				entity->hunger += 30;
@@ -460,6 +476,7 @@ void TriggerFloorHazard(Level *leveli, Level level, Entity *entity, int is_playe
 			}
 			else
 			{
+				PlaySound("hurt");
 				entity->health -= 2;
 				int psn = 0;
 				if(entity->symbol != 's' && entity->symbol != 'L')
@@ -589,6 +606,7 @@ int UseShrine(Level *leveli, Level level, Entity *player, int y, int x)
 			}
 			else
 			{
+				PlaySound("shrine");
 				mvprintw(0, 0, "Altar invoked! Purified %d corpses to Fresh, cured poison, +5 HP, +150 hunger, +10 XP!", purified);
 			}
 			PlayerInfoBar(leveli);
@@ -631,6 +649,7 @@ int UseShrine(Level *leveli, Level level, Entity *player, int y, int x)
 			leveli[leveli->lvl].map_backup[y][x] = '.';
 			player->Position.ch = '.';
 
+			PlaySound("shrine");
 			mvprintw(0, 0, "You drink from the Subterranean Spring! (+450 hunger, +10 HP, ability ready, pack cooled!)");
 			PlayerInfoBar(leveli);
 			refresh();
@@ -692,6 +711,7 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 		player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 
 		ClearMsg();
+		PlaySound("pickup");
 		if(it->item_type == ITEM_WEAPON)
 		{
 			mvprintw(0, 0, "Picked up %s (+%d ATK)! Press 'i' for pack.", it->name, it->bonus_att);
@@ -728,6 +748,7 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 		player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 
 		ClearMsg();
+		PlaySound("pickup");
 		mvprintw(0, 0, "Stowed %s corpse into backpack! (Slot %d) Press 'E' or 'i' to eat anytime.", c->name, slot + 1);
 		PlayerInfoBar(leveli);
 		refresh();
@@ -1333,6 +1354,8 @@ int ExitScreen(Level *level)
 	int rank = (pl->xp / 20) + 1;
 	int score = pl->xp * 10 + level->maxlvl * 50 + (is_victory ? 1000 : 0);
 
+	PlaySound(is_victory ? "victory" : "gameover");
+
 #ifdef __EMSCRIPTEN__
 	web_record_run(is_victory, pl->name, level->player_symbol,
 		level->killer ? level->killer : "Quit",
@@ -1469,6 +1492,7 @@ int OpenDoor(Level *leveli, Entity *player, int y, int x)
 	ClearMsg();
 	if(player->input=='y' || player->input=='Y')
 	{
+		PlaySound("door");
 		mvprintw(0,0, "You opened the door! (close a door with 'c')");
 		if(leveli != NULL && leveli[leveli->lvl].map_backup != NULL)
 		{

@@ -78,7 +78,7 @@ int TurnNearby(int y, int x, int c, char *d, Level level)
 	{
 		int ny = y + dy[i];
 		int nx = x + dx[i];
-		if((mvinch(ny, nx) & A_CHARTEXT) == c)
+		if(ny >= 1 && ny < MAX_Y && nx >= 0 && nx < MAX_X && (mvinch(ny, nx) & A_CHARTEXT) == c)
 		{
 			mvprintw(ny, nx, "%s", d);
 			if(level.map_backup != NULL)

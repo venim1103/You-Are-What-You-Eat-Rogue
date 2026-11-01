@@ -96,6 +96,7 @@ Level *Game(Level *level)
 		if(level[level->lvl].player->Position.type==DSTAIRS)
 		{
 			level = Downstairs(level,level->lvl); 
+			PlaySound(level->lvl == 10 ? "boss" : "stairs");
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);	
 			level[level->lvl].player->Position.type = UNKNOWN;
 			UpdateFOV(&level[level->lvl]);
@@ -105,7 +106,9 @@ Level *Game(Level *level)
 		}
 		if(level[level->lvl].player->Position.type==USTAIRS)
 		{
+			int prev_lvl = level->lvl;
 			level = Upstairs(level,level->lvl);
+			if(level->lvl != prev_lvl) PlaySound("stairs");
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);
 			level[level->lvl].player->Position.type = UNKNOWN;
 			UpdateFOV(&level[level->lvl]);

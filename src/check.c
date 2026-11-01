@@ -95,6 +95,13 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 		{
 			return monster;
 		}
+		if(y < 1 || y >= MAX_Y - 1 || x < 1 || x >= MAX_X - 1 ||
+		   monster->Position.yPos < 1 || monster->Position.yPos >= MAX_Y - 1 ||
+		   monster->Position.xPos < 1 || monster->Position.xPos >= MAX_X - 1)
+		{
+			monster->Position.type = UNKNOWN;
+			return monster;
+		}
 
 		// 1. Check if stepping into player:
 		if(y == level.player->Position.yPos && x == level.player->Position.xPos)
@@ -205,7 +212,7 @@ int StepOn(Level *leveli, int type, int nexty, int nextx, char c, char symbol, L
 		{
 			restore_ch = ':';
 		}
-		else if(level.map_backup != NULL && level.map_backup[y][x] != '\0')
+		else if(level.map_backup != NULL && y >= 0 && y < MAX_Y && x >= 0 && x < MAX_X && level.map_backup[y][x] != '\0')
 		{
 			restore_ch = level.map_backup[y][x];
 		}
