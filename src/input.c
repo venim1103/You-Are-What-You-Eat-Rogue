@@ -60,6 +60,12 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			action_taken = 0; // Menu view doesn't waste a turn
 			break;
 
+		// Bestiary & Form Compendium ('B'):
+		case 'B':
+			ShowBestiary(leveli, level, level.player);
+			action_taken = 0; // Compendium view doesn't waste a turn
+			break;
+
 		// Look / Examine Mode ('v', 'V', ';', '/'):
 		case 'v':
 		case 'V':

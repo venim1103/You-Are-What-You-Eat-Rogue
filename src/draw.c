@@ -212,6 +212,7 @@ void RenderFOV(Level *level)
 					if (mon != NULL && mon->alive == YES)
 					{
 						PrintChar(r, c, mon->symbol);
+						RecordBestiaryEvent(mon->symbol, 0);
 #ifdef __EMSCRIPTEN__
 						unsigned char mflag = 0;
 						if (mon->poison_turns > 0) mflag |= 1;

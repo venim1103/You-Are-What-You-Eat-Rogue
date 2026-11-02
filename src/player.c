@@ -288,6 +288,7 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->equipped_weapon = 0;
 
 	ApplyFormTraits(player, '@');
+	RecordBestiaryEvent('@', 0);
 
 	// Print upstairs and downstairs + update the cursor
 	PrintChar(player->Position.yPos,player->Position.xPos,'>');

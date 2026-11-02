@@ -2,7 +2,7 @@
 
 **Repository:** `venim1103/You-Are-What-You-Eat-Rogue`  
 **Current Branch:** `master`  
-**Latest Production Commit:** `a296140` + Sprint 9 Upgrades  
+**Latest Production Commit:** `9dd5954` + Sprint 10 Upgrades  
 **GitHub Pages Target:** `venim1103.github.io/You-Are-What-You-Eat-Rogue`  
 **Document Date:** November 2026  
 
@@ -147,7 +147,7 @@
     * Resolved the WebAssembly `RuntimeError: Out of bounds memory access` during movement by moving the 4 KB `buf` arrays in `mvprintw()` and `printw()` (`src/web_curses.c`) to `static` storage (eliminating 4 KB per-call stack pressure on Emscripten's Asyncify unwind buffer) and expanding `-sASYNCIFY_STACK_SIZE=262144` (256 KB) and `-sSTACK_SIZE=1048576` (1 MB) in `Makefile`.
     * Hardened `RandomCoords()`, `PlayerSetup()`, `MonSetup()`, `SpawnFogMonster()`, `SpawnFloorItems()`, `CheckNextChar()`, `StepOn()`, `MonsterMove()`, `HandleInput()`, and `TurnNearby()` with strict coordinate clamping (`1 .. MAX_Y-2`, `1 .. MAX_X-2`), `room.mode > 0` guards, and bounds validation before indexing `map_backup`.
 
-### Sprint 9: Daily Seed & Competitive Challenge Runs (Latest Release)
+### Sprint 9: Daily Seed & Competitive Challenge Runs
 * **Priority 1 — Daily Seed / Challenge Runs (`include/global.h`, `include/web_curses.h`, `src/web_curses.c`, `src/main.c`, `src/game.c`, `src/text.c`, `web/index.html`):**
   * **Status:** Completed.
   * **Scope:**
@@ -155,13 +155,21 @@
     * Added a `🎲 Seed` / `📅 Daily` / `🧪 Seed` toolbar button (`#seed-btn`) and interactive **Daily Challenge & Custom Seed** modal (`#seed-modal`) in `web/index.html` supporting one-click Daily Challenge runs (`?seed=daily`, hashed by UTC date `YYYY-MM-DD`), custom alphanumeric/numeric seeds (`?seed=<custom>`), shareable URL clipboard copying, and seed replay.
     * Surfaced active seed badges across the Intro screen, bottom HUD bar (`[Seed:...]`), clickable `#status-strip` seed pill (`.pill-seed`), Victory/Game Over summary screens, and Hall of Fame run history cards (`.hof-badge-seed`).
 
+### Sprint 10: Interactive Bestiary & Form Compendium (Latest Release)
+* **Priority 1 — Interactive Bestiary & Form Compendium Modal & Terminal View (`include/web_curses.h`, `src/web_curses.c`, `include/functions.h`, `src/player.c`, `src/draw.c`, `src/combat.c`, `src/input.c`, `src/text.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `RecordBestiaryEvent()` and C-to-JS bridge functions `web_unlock_bestiary()` / `web_get_bestiary_stat()` (`js_unlock_bestiary`, `js_get_bestiary_stat`) that automatically record monster sightings during `RenderFOV()`, real monster kills in `DropCorpse()` (ignoring backpack corpse drops via `dummy.mode = 0`), and polymorph transformations in `EatCorpse()`.
+    * Added an in-terminal **Bestiary & Form Compendium (`ShowBestiary` via `'B'` key)** in `src/text.c` that works in both native CLI and WebAssembly builds without consuming a turn, displaying species habitat, enemy vs. polymorph stats (including live Mastery Rank scaling), corpse nutrition, metabolism burn rate, gear capability, passive traits, and active `'f'` ability details.
+    * Built a persistent `📖 Bestiary (X/9)` toolbar button (`#bestiary-btn`), clickable `#status-strip` Form pill (`.pill-form`), and interactive **Bestiary & Form Compendium** modal (`#bestiary-modal`) in `web/index.html` backed by `localStorage` (`yawye_rogue_bestiary_v1`), featuring summary counters (Forms Sighted, Beast Forms Devoured, Total Monsters Slain, Metamorphoses), species cards with status badges (`ORIGIN`, `DEVOURED`, `SIGHTED`, `UNDISCOVERED`, `ACTIVE FORM`), a `👁️ Reveal Unseen` spoiler toggle, and progress reset support.
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — Interactive Bestiary & Form Compendium Modal:** Add an in-browser compendium tracking discovered/devoured monster forms, traits, and active abilities across runs.
-* **Priority 2 — Dungeon Mini-Bosses & Elite Variants:** Introduce floor mini-bosses with enhanced loot drops and visual indicators.
-* **Priority 3 — Run Statistics & Achievement Badges:** Track lifetime milestones (e.g., Apex Predator victory, Daily Challenge conqueror, Master Polymorpher) in the Hall of Fame.
+* **Priority 1 — Dungeon Mini-Bosses & Elite Variants:** Introduce floor mini-bosses with enhanced loot drops and visual indicators.
+* **Priority 2 — Run Statistics & Achievement Badges:** Track lifetime milestones (e.g., Apex Predator victory, Daily Challenge conqueror, Master Polymorpher) in the Hall of Fame.
+* **Priority 3 — Consumable Dungeon Scroll / Potion Relics:** Add rare single-use tactical consumables or metabolic catalysts for deeper build variety.
 
 ---
 

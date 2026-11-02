@@ -23,5 +23,7 @@ void web_set_cell_flag(int y, int x, unsigned char flag);
 void web_record_run(int victory, const char *form_name, char form_sym, const char *killer, int xp, int rank, int maxlvl, int turns, int hp, int maxhp, int att, int def);
 void web_play_sfx(const char *sfx);
 unsigned int web_get_initial_seed(int *out_mode, char *out_label, int label_max);
+void web_unlock_bestiary(char sym, int event_type);
+int web_get_bestiary_stat(char sym, int stat_type);
 
 #endif

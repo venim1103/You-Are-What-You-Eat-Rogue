@@ -176,6 +176,35 @@ unsigned int web_get_initial_seed(int *out_mode, char *out_label, int label_max)
     return js_get_seed_value();
 }
 
+EM_JS(void, js_unlock_bestiary, (int sym, int event_type), {
+    try {
+        if (window.unlockRogueBestiary) {
+            window.unlockRogueBestiary(String.fromCharCode(sym || 64), event_type | 0);
+        }
+    } catch (e) {
+        console.error("js_unlock_bestiary error:", e);
+    }
+});
+
+void web_unlock_bestiary(char sym, int event_type)
+{
+    js_unlock_bestiary((int)(unsigned char)sym, event_type);
+}
+
+EM_JS(int, js_get_bestiary_stat, (int sym, int stat_type), {
+    try {
+        if (window.getRogueBestiaryStat) {
+            return window.getRogueBestiaryStat(String.fromCharCode(sym || 64), stat_type | 0) | 0;
+        }
+    } catch (e) {}
+    return 0;
+});
+
+int web_get_bestiary_stat(char sym, int stat_type)
+{
+    return js_get_bestiary_stat((int)(unsigned char)sym, stat_type);
+}
+
 int initscr(void)
 {
     clear();

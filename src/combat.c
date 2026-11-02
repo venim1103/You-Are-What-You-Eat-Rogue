@@ -2,6 +2,10 @@
 
 int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 {
+	if(monster != NULL && monster->mode != 0)
+	{
+		RecordBestiaryEvent(monster->symbol, 1);
+	}
 	int lvl = leveli->lvl;
 	int idx = leveli[lvl].num_corpses;
 	if(idx < leveli[lvl].max_corpses)
@@ -147,6 +151,7 @@ int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse)
 	}
 
 	ApplyFormTraits(player, corpse->symbol);
+	RecordBestiaryEvent(corpse->symbol, 2);
 
 	// If newly polymorphed form lacks hands, auto-sheathe weapons and armor:
 	if(player->can_open_doors == NO)

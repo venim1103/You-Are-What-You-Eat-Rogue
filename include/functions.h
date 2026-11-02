@@ -46,6 +46,8 @@ int UseShrine(Level *leveli, Level level, Entity *player, int y, int x);
 Item *GetItemAt(Level level, int y, int x);
 int PickUpFloorItem(Level *leveli, Level level, Entity *player);
 int ShowInventory(Level *leveli, Level level, Entity *player);
+int ShowBestiary(Level *leveli, Level level, Entity *player);
+void RecordBestiaryEvent(char symbol, int event_type);
 int LookMode(Level *leveli, Level level, Entity *player);
 int QuickWield(Level *leveli, Level level, Entity *player);
 int QuickDrop(Level *leveli, Level level, Entity *player);

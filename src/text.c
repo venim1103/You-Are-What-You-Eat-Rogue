@@ -17,8 +17,8 @@ int IntroScreen()
 	mvprintw(14, 4, "Move:    D-Pad / WASD / Numpad");
 	mvprintw(15, 4, "Ability: 'f' / [Abil] (Form active)");
 	mvprintw(16, 4, "Eat:     'e' or 'E' / [Eat]");
-	mvprintw(17, 4, "Wait:    '.' or Space / [Next]");
-	mvprintw(18, 4, "Close:   'c' / [Close] (doors)");
+	mvprintw(17, 4, "Bestiary:'B' / [Bestiary] (Form Compendium)");
+	mvprintw(18, 4, "Wait:    '.' or Space / [Next] | Close: 'c'");
 	mvprintw(19, 2, "Active Seed: %s (%s)",
 		GAME_SEED_LABEL,
 		GAME_SEED_MODE == 1 ? "DAILY CHALLENGE" : (GAME_SEED_MODE == 2 ? "CUSTOM SEED" : "RANDOM RUN"));
@@ -62,7 +62,7 @@ int WelcomeTxt()
 {
 	// WELCOME TEXT + INSTRUCTIONS:
 	ClearMsg();
-	mvprintw(0,0, "Move: wasd/qezx | Look: 'v' | Pack: 'i' | Pick: 'g' | Ability: 'f' | Eat: 'E' | Quit: 'Q'");
+	mvprintw(0,0, "Move: wasd/qezx | Look: 'v' | Pack: 'i' | Bestiary: 'B' | Pick: 'g' | Abil: 'f' | Eat: 'E'");
 	refresh(); getch();
 	ClearMsg();
 
@@ -893,6 +893,7 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 				if (it.item_type == ITEM_CORPSE)
 				{
 					Entity dummy;
+					dummy.mode = 0;
 					dummy.symbol = it.corpse_data.symbol;
 					dummy.name = it.corpse_data.name;
 					dummy.maxhp = it.corpse_data.maxhp;
@@ -1020,6 +1021,207 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 	PlayerInfoBar(leveli);
 	refresh();
 	return 1;
+}
+
+typedef struct {
+	char symbol;
+	const char *name;
+	const char *floors;
+	int base_hp;
+	int base_att;
+	int poly_hp;
+	int nutrition;
+	int hunger_rate;
+	int can_gear;
+	const char *ability_name;
+	int ability_cd;
+	int ability_cost;
+	const char *ability_desc;
+	const char *trait_desc;
+	int seen;
+	int kills;
+	int devoured;
+	int js_seen_synced;
+} BestiaryEntry;
+
+#define BESTIARY_COUNT 10
+
+static BestiaryEntry g_bestiary[BESTIARY_COUNT] = {
+	{ '@', "Human",            "Floor 0 (Start)", 20, 1,  20,    0, 1, 1, "Bandage",       10, 35, "Bind wounds to restore +6 HP.", "Balanced Human Form (Starts with Iron Dagger +2 ATK)", 1, 0, 1, 0 },
+	{ 'x', "Spider",           "Floors 0-2",       2, 1,  14,  150, 2, 0, "Spin Web",       6, 40, "Ensnares foes in 2 tiles (3t, 1 dmg) & places Sticky Webs (^).", "Skitter (40% 2nd hit), Fast Metabolism (2/t), Web Immune, No Gear", 0, 0, 0, 0 },
+	{ 's', "Snake",            "Floors 0-6",       3, 2,  18,  250, 1, 0, "Venom Spit",     5, 30, "Spits venom up to 4 tiles for ATK+2 dmg & 4t poison.", "Venomous Strike (3t poison), Poison & Tainted Meat Immune, No Gear", 0, 0, 0, 0 },
+	{ 'V', "Vampire Bat",      "Floors 0-6, 13+",  2, 2,  14,  100, 2, 0, "Echo Screech",   6, 30, "Ultrasonic pulse reveals all monsters & tiles across the floor.", "Flight (50% Evasion, FOV 12), Life Drain (+1 HP), Fast Burn (2/t), No Gear", 0, 0, 0, 0 },
+	{ 'g', "Goblin",           "Floors 3-13+",     5, 3,  26,  400, 1, 1, "Flashbang",      8, 35, "Blinds & ensnares foes within 2 tiles for 2t + 2 dmg.", "Scavenger (+50% corpse nutrition, immune to spoiled meat sickness)", 0, 0, 0, 0 },
+	{ 'B', "Acid Slime",       "Floors 3-13+",     8, 2,  38,  320, 1, 0, "Acid Jet",       5, 45, "Sprays acid in 2 tiles (4 dmg, 3t poison) & spawns Acid Puddles (=).", "Caustic Body (Reflects 1 dmg), Poison/Rot Immune, Absorbs '=', No Gear", 0, 0, 0, 0 },
+	{ 'G', "Ghost",            "Floors 7-13+",     4, 3,  22,  120, 2, 0, "Shadow Blink",   7, 50, "Teleports 3 tiles across walls or floor along a cardinal direction.", "Incorporeal (Phases walls/doors, sees through walls), 25% Evasion, No Gear", 0, 0, 0, 0 },
+	{ 'L', "Necromancer Lich", "Floors 5-13+",    12, 6,  54,  550, 1, 1, "Soul Harvest",   6, 40, "Drains 5 necrotic HP from all foes within 3 tiles (+3 HP heal/foe).", "Soul Siphon (+2 HP melee drain), Undead Mage (15% Eva, Poison/Rot Immune)", 0, 0, 0, 0 },
+	{ 'T', "Troll",            "Floors 7-13+",    15, 5,  66,  700, 3, 1, "Ground Slam",    8, 60, "Shockwave crushes all foes within 2 tiles for 7 damage.", "Regeneration (+1 HP/2t), Crushing Cleave (35% +3 dmg), Gluttony (3/t)", 0, 0, 0, 0 },
+	{ 'D', "Ancient Dragon",   "Floor 10 Boss",   45, 8, 186, 1000, 2, 1, "Dragon Breath",  6, 50, "Unleashes an inferno within 3 tiles for 12 fire dmg + 3t burn.", "Apex Predator (50% Cleave, 25% Double-Hit, Fire/Acid Shield, Regen)", 0, 0, 0, 0 }
+};
+
+void RecordBestiaryEvent(char symbol, int event_type)
+{
+	for (int i = 0; i < BESTIARY_COUNT; i++)
+	{
+		if (g_bestiary[i].symbol == symbol)
+		{
+			g_bestiary[i].seen = 1;
+			if (event_type == 1)
+			{
+				g_bestiary[i].kills++;
+			}
+			else if (event_type == 2)
+			{
+				g_bestiary[i].devoured++;
+			}
+#ifdef __EMSCRIPTEN__
+			if (event_type == 0)
+			{
+				if (!g_bestiary[i].js_seen_synced)
+				{
+					g_bestiary[i].js_seen_synced = 1;
+					web_unlock_bestiary(symbol, 0);
+				}
+			}
+			else
+			{
+				g_bestiary[i].js_seen_synced = 1;
+				web_unlock_bestiary(symbol, event_type);
+			}
+#endif
+			break;
+		}
+	}
+}
+
+int ShowBestiary(Level *leveli, Level level, Entity *player)
+{
+	int selected = 0;
+	for (int i = 0; i < BESTIARY_COUNT; i++)
+	{
+		if (player != NULL && g_bestiary[i].symbol == player->symbol)
+		{
+			selected = i;
+			break;
+		}
+	}
+
+	while (1)
+	{
+#ifdef __EMSCRIPTEN__
+		for (int i = 0; i < BESTIARY_COUNT; i++)
+		{
+			int s = web_get_bestiary_stat(g_bestiary[i].symbol, 0);
+			int k = web_get_bestiary_stat(g_bestiary[i].symbol, 1);
+			int d = web_get_bestiary_stat(g_bestiary[i].symbol, 2);
+			if (s > g_bestiary[i].seen) g_bestiary[i].seen = s;
+			if (k > g_bestiary[i].kills) g_bestiary[i].kills = k;
+			if (d > g_bestiary[i].devoured) g_bestiary[i].devoured = d;
+		}
+#endif
+		int total_seen = 0;
+		int total_devoured = 0;
+		int total_kills = 0;
+		for (int i = 0; i < BESTIARY_COUNT; i++)
+		{
+			if (g_bestiary[i].seen) total_seen++;
+			if (i > 0 && g_bestiary[i].devoured > 0) total_devoured++;
+			total_kills += g_bestiary[i].kills;
+		}
+
+		clear();
+		mvprintw(1, 2, "==========================================================================");
+		mvprintw(2, 2, "   BESTIARY & FORM COMPENDIUM  |  Sighted: %d/10  |  Forms Devoured: %d/9", total_seen, total_devoured);
+		mvprintw(3, 2, "==========================================================================");
+
+		for (int i = 0; i < BESTIARY_COUNT; i++)
+		{
+			BestiaryEntry *e = &g_bestiary[i];
+			char p1 = (i == selected) ? '-' : ' ';
+			char p2 = (i == selected) ? '>' : ' ';
+			const char *status_tag = "[UNSEEN]";
+			if (e->symbol == '@') status_tag = "[ORIGIN]";
+			else if (e->devoured > 0) status_tag = "[DEVOURED]";
+			else if (e->seen > 0) status_tag = "[SIGHTED]";
+
+			const char *cur_tag = (player != NULL && player->symbol == e->symbol) ? " <-- CURRENT FORM" : "";
+			if (e->seen || e->devoured > 0 || e->symbol == '@')
+			{
+				mvprintw(5 + i, 2, "%c%c [%d] (%c) %-17s %-11s | Slain: %-3d | Devoured: %-3d%s",
+					p1, p2, (i + 1) % 10, e->symbol, e->name, status_tag, e->kills, e->devoured, cur_tag);
+			}
+			else
+			{
+				mvprintw(5 + i, 2, "%c%c [%d] (%c) ??? Unknown Species %-11s | Habitat: %s",
+					p1, p2, (i + 1) % 10, e->symbol, status_tag, e->floors);
+			}
+		}
+
+		BestiaryEntry *sel = &g_bestiary[selected];
+		int rank_bonus = (player != NULL) ? (player->xp / 20) : 0;
+		mvprintw(16, 2, "--------------------------------------------------------------------------");
+		if (sel->seen || sel->devoured > 0 || sel->symbol == '@')
+		{
+			mvprintw(17, 2, "SPECIES: %s (%c)  |  Habitat: %s  |  Gear/Hands: %s",
+				sel->name, sel->symbol, sel->floors, sel->can_gear ? "YES (Wields Weapons/Armor)" : "NO (Natural Beast)");
+			if (sel->symbol == '@')
+			{
+				mvprintw(18, 2, "STATS:   Base 20 HP, 1 ATK (With Your Rk %d: %d Max HP, %d Base ATK) | Burn: 1 hunger/t",
+					rank_bonus + 1, sel->poly_hp + (rank_bonus * 3), sel->base_att + rank_bonus);
+			}
+			else
+			{
+				mvprintw(18, 2, "ENEMY:   %d HP, %d ATK  |  POLYMORPH FORM: %d Max HP (%d w/Rk), %d ATK (%d w/Rk)",
+					sel->base_hp, sel->base_att, sel->poly_hp, sel->poly_hp + (rank_bonus * 3),
+					sel->base_att, sel->base_att + rank_bonus);
+				mvprintw(19, 2, "CORPSE:  %d Base Nutrition  |  Metabolism Burn: %d hunger/turn",
+					sel->nutrition, sel->hunger_rate);
+			}
+			mvprintw(20, 2, "TRAITS:  %s", sel->trait_desc);
+			mvprintw(21, 2, "ABILITY: [%s] ('f' key | CD: %dt | Cost: %d hunger) -> %s",
+				sel->ability_name, sel->ability_cd, sel->ability_cost, sel->ability_desc);
+		}
+		else
+		{
+			mvprintw(17, 2, "SPECIES: ??? (%c) [UNDISCOVERED]  |  Habitat: %s", sel->symbol, sel->floors);
+			mvprintw(18, 2, "Encounter this creature in the dungeon (or devour its corpse) to record its");
+			mvprintw(19, 2, "metabolic attributes, polymorph stats, passive traits, and active ability.");
+		}
+		mvprintw(23, 2, "Controls: [Up/Down / w/s / 1-0]: Select Species  |  ['B' / 'q' / Esc]: Return to Game");
+		refresh();
+
+		int ch = getch();
+		if (ch == 'B' || ch == 'b' || ch == 'q' || ch == 'Q' || ch == 'c' || ch == 'C' || ch == 'i' || ch == 'I' || ch == 27 || ch == ' ' || ch == 10 || ch == 13)
+		{
+			break;
+		}
+		else if (ch == 'w' || ch == 'W' || ch == 'k' || ch == 'K' || ch == '8')
+		{
+			selected--;
+			if (selected < 0) selected = BESTIARY_COUNT - 1;
+		}
+		else if (ch == 's' || ch == 'S' || ch == 'j' || ch == 'J' || ch == '2')
+		{
+			selected++;
+			if (selected >= BESTIARY_COUNT) selected = 0;
+		}
+		else if (ch >= '1' && ch <= '9')
+		{
+			selected = ch - '1';
+		}
+		else if (ch == '0')
+		{
+			selected = 9;
+		}
+	}
+
+	ClearMsg();
+	UpdateFOV(&leveli[leveli->lvl]);
+	RenderFOV(&leveli[leveli->lvl]);
+	PlayerInfoBar(leveli);
+	move(player->Position.yPos, player->Position.xPos);
+	refresh();
+	return 0;
 }
 
 int LookMode(Level *leveli, Level level, Entity *player)
@@ -1263,6 +1465,7 @@ int QuickDrop(Level *leveli, Level level, Entity *player)
 		if(it.item_type == ITEM_CORPSE)
 		{
 			Entity dummy;
+			dummy.mode = 0;
 			dummy.symbol = it.corpse_data.symbol;
 			dummy.name = it.corpse_data.name;
 			dummy.maxhp = it.corpse_data.maxhp;

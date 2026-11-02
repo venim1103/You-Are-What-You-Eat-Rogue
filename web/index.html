@@ -208,7 +208,7 @@
       border: 1px solid #2a3a52;
       color: #e2e8f0;
     }
-    .hud-pill.pill-form { color: #38bdf8; border-color: #0284c7; background: rgba(2, 132, 199, 0.15); }
+    .hud-pill.pill-form { color: #38bdf8; border-color: #0284c7; background: rgba(2, 132, 199, 0.15); cursor: pointer; }
     .hud-pill.pill-hp   { color: #4ade80; border-color: #16a34a; background: rgba(22, 163, 74, 0.15); }
     .hud-pill.pill-hp.low-hp { color: #f87171; border-color: #dc2626; background: rgba(220, 38, 38, 0.25); }
     .hud-pill.pill-buff { color: #a78bfa; border-color: #7c3aed; background: rgba(124, 58, 237, 0.18); }
@@ -311,6 +311,145 @@
       border-color: #ca8a04 !important;
       color: #fde047 !important;
       font-weight: 700 !important;
+    }
+
+    .bestiary-btn {
+      background: rgba(168, 85, 247, 0.18) !important;
+      border-color: #9333ea !important;
+      color: #e9d5ff !important;
+      font-weight: 700 !important;
+    }
+
+    /* Bestiary & Form Compendium Modal */
+    #bestiary-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 12, 0.85);
+      backdrop-filter: blur(3px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    #bestiary-modal.open {
+      display: flex;
+    }
+    .bestiary-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bestiary-card {
+      background: #131c2e;
+      border: 1px solid #243452;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.76rem;
+      transition: border-color 0.15s;
+    }
+    .bestiary-card.bst-mastered {
+      border-color: #16a34a;
+      background: linear-gradient(90deg, rgba(22, 163, 74, 0.12), #131c2e);
+    }
+    .bestiary-card.bst-current {
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    }
+    .bestiary-card.bst-locked {
+      opacity: 0.72;
+      border-style: dashed;
+    }
+    .bestiary-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 5px;
+    }
+    .bestiary-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .bestiary-glyph {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      background: #090e17;
+      border: 1px solid #2a3a52;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.95rem;
+      font-weight: 900;
+    }
+    .bestiary-title {
+      font-weight: 800;
+      font-size: 0.84rem;
+      color: #f8fafc;
+    }
+    .bestiary-floors {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      background: #0b111e;
+      border: 1px solid #1e293b;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .bst-badge {
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 800;
+    }
+    .bst-badge.mastered {
+      background: rgba(22, 163, 74, 0.22);
+      color: #4ade80;
+      border: 1px solid #16a34a;
+    }
+    .bst-badge.sighted {
+      background: rgba(234, 179, 8, 0.2);
+      color: #fde047;
+      border: 1px solid #ca8a04;
+    }
+    .bst-badge.locked {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border: 1px solid #475569;
+    }
+    .bst-badge.active-form {
+      background: rgba(2, 132, 199, 0.28);
+      color: #7dd3fc;
+      border: 1px solid #0284c7;
+    }
+    .bestiary-stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 5px;
+      color: #cbd5e1;
+      font-size: 0.72rem;
+    }
+    .bst-chip {
+      background: #0b111e;
+      border: 1px solid #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .bestiary-desc {
+      color: #94a3b8;
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+    .bestiary-abil {
+      margin-top: 4px;
+      color: #fde047;
+      font-size: 0.72rem;
+      line-height: 1.35;
     }
 
     .sfx-btn {
@@ -614,6 +753,7 @@
     <div class="toolbar">
       <button id="seed-btn" class="seed-btn" onclick="toggleSeedModal()">🎲 Seed</button>
       <button id="sfx-btn" class="sfx-btn" onclick="toggleSfx()">🔊 SFX</button>
+      <button id="bestiary-btn" class="bestiary-btn" onclick="toggleBestiaryModal()">📖 Bestiary</button>
       <button class="fame-btn" onclick="toggleHallOfFame()">🏆 Fame</button>
       <button class="look-btn" onpointerdown="handleKey('v', event)">👁️ Look</button>
       <button onclick="changeFontSize(-1)">A-</button>
@@ -695,8 +835,28 @@
     </div>
   </div>
 
+  <div id="bestiary-modal" onclick="if(event.target===this)toggleBestiaryModal(false)">
+    <div class="hof-dialog" style="max-width: 720px;">
+      <div class="hof-header">
+        <div class="hof-title" style="color: #e9d5ff;">📖 Bestiary &amp; Form Compendium</div>
+        <button class="hof-close" onclick="toggleBestiaryModal(false)">✕ Close</button>
+      </div>
+      <div class="hof-summary" id="bestiary-summary"></div>
+      <div class="hof-body">
+        <div id="bestiary-content" class="bestiary-grid"></div>
+      </div>
+      <div class="hof-footer">
+        <span>Tip: Press <code>B</code> in-game or click your Form pill to inspect species anytime.</span>
+        <div style="display:flex; gap:6px;">
+          <button id="bestiary-spoiler-btn" class="seed-action-btn" onclick="toggleBestiarySpoilers()">👁️ Reveal Unseen</button>
+          <button class="hof-clear-btn" onclick="clearBestiaryProgress()">🗑️ Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="status-strip">
-    <span class="hud-pill pill-form">🧬 Human (@)</span>
+    <span class="hud-pill pill-form" onclick="toggleBestiaryModal(true)" title="Click to open Bestiary &amp; Form Compendium">🧬 Human (@)</span>
     <span class="hud-pill pill-hp">❤️ 20/20 HP</span>
     <span class="hud-pill pill-abil">⚡ Bandage: READY</span>
   </div>
@@ -790,8 +950,11 @@
     const SFX_STORAGE_KEY = 'yawye_rogue_sfx_enabled_v1';
     const SEED_MODE_KEY = 'yawye_rogue_seed_mode_v1';
     const SEED_CUSTOM_KEY = 'yawye_rogue_seed_custom_v1';
+    const BESTIARY_STORAGE_KEY = 'yawye_rogue_bestiary_v1';
     let sfxEnabled = true;
     let audioCtx = null;
+    let showBestiarySpoilers = false;
+    let currentActiveFormSym = '@';
 
     function fnv1aHash(str) {
       let h = 2166136261 >>> 0;
@@ -1284,6 +1447,376 @@
       renderHallOfFame();
     }
 
+    const BESTIARY_CATALOG = [
+      {
+        sym: '@',
+        name: 'Human',
+        cls: 'g-at',
+        floors: 'Floor 0 (Origin)',
+        baseHp: 20,
+        baseAtk: 1,
+        polyHp: 20,
+        nutrition: 0,
+        hungerRate: 1,
+        hands: true,
+        traits: 'Balanced Human Form • Starts with Iron Dagger (+2 ATK) • Can wield all weapons & armor',
+        abilityName: 'Bandage',
+        abilityCd: 10,
+        abilityCost: 35,
+        abilityDesc: 'Bind wounds to restore +6 HP.'
+      },
+      {
+        sym: 'x',
+        name: 'Spider',
+        cls: 'g-mon-x',
+        floors: 'Floors 0–2',
+        baseHp: 2,
+        baseAtk: 1,
+        polyHp: 14,
+        nutrition: 150,
+        hungerRate: 2,
+        hands: false,
+        traits: 'Skitter (40% 2nd melee hit) • Fast Metabolism (2 hunger/t) • Traverses Sticky Webs (^) freely • No Gear',
+        abilityName: 'Spin Web',
+        abilityCd: 6,
+        abilityCost: 40,
+        abilityDesc: 'Ensnares all foes within 2 tiles for 3 turns (1 dmg) and spins persistent Sticky Webs (^) on adjacent tiles.'
+      },
+      {
+        sym: 's',
+        name: 'Snake',
+        cls: 'g-mon-s',
+        floors: 'Floors 0–6',
+        baseHp: 3,
+        baseAtk: 2,
+        polyHp: 18,
+        nutrition: 250,
+        hungerRate: 1,
+        hands: false,
+        traits: 'Venomous Strike (inflicts 3t poison on melee hit) • Poison Immune • Tainted Meat Immune • No Gear',
+        abilityName: 'Venom Spit',
+        abilityCd: 5,
+        abilityCost: 30,
+        abilityDesc: 'Spits toxic venom at the nearest visible foe within 4 tiles for (ATK + 2) damage and 4 turns of poison.'
+      },
+      {
+        sym: 'V',
+        name: 'Vampire Bat',
+        cls: 'g-mon-V',
+        floors: 'Floors 0–6, 13+',
+        baseHp: 2,
+        baseAtk: 2,
+        polyHp: 14,
+        nutrition: 100,
+        hungerRate: 2,
+        hands: false,
+        traits: 'Flight (50% Evasion) • Life Drain (+1 HP on hit) • Echolocation Sight (Radius 12 FOV) • Fast Burn (2/t) • No Gear',
+        abilityName: 'Echo Screech',
+        abilityCd: 6,
+        abilityCost: 30,
+        abilityDesc: 'Emits an ultrasonic pulse revealing all living monsters and their 3×3 surroundings across the entire dungeon floor.'
+      },
+      {
+        sym: 'g',
+        name: 'Goblin',
+        cls: 'g-mon-g',
+        floors: 'Floors 3–13+',
+        baseHp: 5,
+        baseAtk: 3,
+        polyHp: 26,
+        nutrition: 400,
+        hungerRate: 1,
+        hands: true,
+        traits: 'Scavenger (+50% corpse nutrition • Immune to Tainted & Rotten corpse sickness) • Wields Weapons & Armor',
+        abilityName: 'Flashbang',
+        abilityCd: 8,
+        abilityCost: 35,
+        abilityDesc: 'Detonates a blinding powder charge that ensnares foes within 2 tiles for 2 turns and deals 2 damage.'
+      },
+      {
+        sym: 'B',
+        name: 'Acid Slime',
+        cls: 'g-mon-B',
+        floors: 'Floors 3–13+',
+        baseHp: 8,
+        baseAtk: 2,
+        polyHp: 38,
+        nutrition: 320,
+        hungerRate: 1,
+        hands: false,
+        traits: 'Caustic Body (Reflects 1 acid dmg on melee hit/attacker) • Poison & Rotten Meat Immune • Absorbs Acid Puddles (=) for +2 HP & +30 hunger • No Gear',
+        abilityName: 'Acid Jet',
+        abilityCd: 5,
+        abilityCost: 45,
+        abilityDesc: 'Sprays corrosive acid within 2 tiles for 4 damage + 3t poison and leaves Caustic Acid Puddles (=) on cardinal tiles.'
+      },
+      {
+        sym: 'G',
+        name: 'Ghost',
+        cls: 'g-mon-G',
+        floors: 'Floors 7–13+',
+        baseHp: 4,
+        baseAtk: 3,
+        polyHp: 22,
+        nutrition: 120,
+        hungerRate: 2,
+        hands: false,
+        traits: 'Incorporeal (Phases through walls & closed doors • Raycast FOV sees through walls • Ignores Webs/Acid) • 25% Evasion • No Gear',
+        abilityName: 'Shadow Blink',
+        abilityCd: 7,
+        abilityCost: 50,
+        abilityDesc: 'Teleports 3 tiles across walls or open floor along a cardinal direction.'
+      },
+      {
+        sym: 'L',
+        name: 'Necromancer Lich',
+        cls: 'g-mon-L',
+        floors: 'Floors 5–13+ & Floor 10 Guard',
+        baseHp: 12,
+        baseAtk: 6,
+        polyHp: 54,
+        nutrition: 550,
+        hungerRate: 1,
+        hands: true,
+        traits: 'Soul Siphon (+2 HP melee life drain) • Undead Mage (15% Evasion • Poison & Rotten Meat Immune) • Wields Weapons & Armor',
+        abilityName: 'Soul Harvest',
+        abilityCd: 6,
+        abilityCost: 40,
+        abilityDesc: 'Drains 5 necrotic HP from all living foes within 3 tiles and heals you for +3 HP per target hit.'
+      },
+      {
+        sym: 'T',
+        name: 'Troll',
+        cls: 'g-mon-T',
+        floors: 'Floors 7–13+ & Floor 10 Guard',
+        baseHp: 15,
+        baseAtk: 5,
+        polyHp: 66,
+        nutrition: 700,
+        hungerRate: 3,
+        hands: true,
+        traits: 'Trollish Regeneration (+1 HP every 2 turns) • Crushing Cleave (35% chance for +3 bonus dmg) • Gluttony (3 hunger/t) • Wields Gear',
+        abilityName: 'Ground Slam',
+        abilityCd: 8,
+        abilityCost: 60,
+        abilityDesc: 'Smashes the dungeon floor, crushing all foes within 2 tiles for 7 damage.'
+      },
+      {
+        sym: 'D',
+        name: 'Ancient Dragon',
+        cls: 'g-mon-D',
+        floors: 'Floor 10 Boss',
+        baseHp: 45,
+        baseAtk: 8,
+        polyHp: 186,
+        nutrition: 1000,
+        hungerRate: 2,
+        hands: true,
+        traits: 'Apex Predator (50% Cleave • 25% Double-Strike • Fire/Acid Shield reflects 1 dmg • Regen +1 HP/2t • Acid Immune) • Wields Gear',
+        abilityName: 'Dragon Breath',
+        abilityCd: 6,
+        abilityCost: 50,
+        abilityDesc: 'Unleashes a searing inferno within 3 tiles for 12 fire damage and 3 turns of burn.'
+      }
+    ];
+
+    function loadBestiaryState() {
+      let state = { '@': { seen: true, kills: 0, devoured: 1 } };
+      try {
+        const raw = localStorage.getItem(BESTIARY_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            state = Object.assign(state, parsed);
+          }
+        }
+      } catch (e) {}
+      if (!state['@']) state['@'] = { seen: true, kills: 0, devoured: 1 };
+      state['@'].seen = true;
+      return state;
+    }
+
+    function saveBestiaryState(state) {
+      try {
+        localStorage.setItem(BESTIARY_STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    window.unlockRogueBestiary = function(sym, eventType) {
+      if (!sym) return;
+      const state = loadBestiaryState();
+      if (!state[sym]) {
+        state[sym] = { seen: false, kills: 0, devoured: 0 };
+      }
+      state[sym].seen = true;
+      if (eventType === 1) {
+        state[sym].kills = (Number(state[sym].kills) || 0) + 1;
+      } else if (eventType === 2) {
+        state[sym].devoured = (Number(state[sym].devoured) || 0) + 1;
+        currentActiveFormSym = sym;
+      }
+      saveBestiaryState(state);
+      updateBestiaryButtonBadge(state);
+    };
+
+    window.getRogueBestiaryStat = function(sym, statType) {
+      const state = loadBestiaryState();
+      const entry = state[sym];
+      if (!entry) return 0;
+      if (statType === 0) return entry.seen ? 1 : 0;
+      if (statType === 1) return Number(entry.kills) || 0;
+      if (statType === 2) return Number(entry.devoured) || 0;
+      return 0;
+    };
+
+    function updateBestiaryButtonBadge(stateObj) {
+      const btn = document.getElementById('bestiary-btn');
+      if (!btn) return;
+      const st = stateObj || loadBestiaryState();
+      let devouredCount = 0;
+      for (let i = 1; i < BESTIARY_CATALOG.length; i++) {
+        const sym = BESTIARY_CATALOG[i].sym;
+        if (st[sym] && Number(st[sym].devoured) > 0) devouredCount++;
+      }
+      btn.textContent = '📖 Bestiary (' + devouredCount + '/9)';
+    }
+
+    function renderBestiaryModal() {
+      const summaryEl = document.getElementById('bestiary-summary');
+      const contentEl = document.getElementById('bestiary-content');
+      const spoilerBtn = document.getElementById('bestiary-spoiler-btn');
+      if (!summaryEl || !contentEl) return;
+
+      const state = loadBestiaryState();
+      let seenCount = 0;
+      let devouredSpecies = 0;
+      let totalKills = 0;
+      let totalMorphs = 0;
+
+      for (let i = 0; i < BESTIARY_CATALOG.length; i++) {
+        const sym = BESTIARY_CATALOG[i].sym;
+        const rec = state[sym] || { seen: false, kills: 0, devoured: 0 };
+        if (rec.seen || sym === '@') seenCount++;
+        if (i > 0 && Number(rec.devoured) > 0) devouredSpecies++;
+        totalKills += Number(rec.kills) || 0;
+        if (i > 0) totalMorphs += Number(rec.devoured) || 0;
+      }
+
+      summaryEl.innerHTML =
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + seenCount + ' / 10</div><div class="hof-stat-lbl">Forms Sighted</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + devouredSpecies + ' / 9</div><div class="hof-stat-lbl">Beast Forms Devoured</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + totalKills + '</div><div class="hof-stat-lbl">Total Monsters Slain</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + totalMorphs + '</div><div class="hof-stat-lbl">Metamorphoses</div></div>';
+
+      if (spoilerBtn) {
+        spoilerBtn.textContent = showBestiarySpoilers ? '🙈 Hide Unseen' : '👁️ Reveal Unseen';
+      }
+
+      let cards = [];
+      for (let i = 0; i < BESTIARY_CATALOG.length; i++) {
+        const c = BESTIARY_CATALOG[i];
+        const rec = state[c.sym] || { seen: false, kills: 0, devoured: 0 };
+        const isUnlocked = !!(rec.seen || rec.devoured > 0 || c.sym === '@');
+        const isMastered = !!(c.sym === '@' || Number(rec.devoured) > 0);
+        const isCurrent = (currentActiveFormSym === c.sym);
+        const showFull = isUnlocked || showBestiarySpoilers;
+
+        let cardCls = 'bestiary-card';
+        if (isCurrent) cardCls += ' bst-current';
+        else if (isMastered) cardCls += ' bst-mastered';
+        else if (!isUnlocked) cardCls += ' bst-locked';
+
+        let statusBadge = '';
+        if (c.sym === '@') {
+          statusBadge = '<span class="bst-badge mastered">🧬 ORIGIN FORM</span>';
+        } else if (Number(rec.devoured) > 0) {
+          statusBadge = '<span class="bst-badge mastered">✓ DEVOURED (' + rec.devoured + '×)</span>';
+        } else if (rec.seen) {
+          statusBadge = '<span class="bst-badge sighted">👁️ SIGHTED</span>';
+        } else {
+          statusBadge = '<span class="bst-badge locked">🔒 UNDISCOVERED</span>';
+        }
+
+        const currentBadge = isCurrent ? '<span class="bst-badge active-form">⚡ ACTIVE FORM</span>' : '';
+
+        if (showFull) {
+          const statsChips = (c.sym === '@')
+            ? '<span class="bst-chip">❤️ Start HP: <strong>20</strong></span>' +
+              '<span class="bst-chip">⚔️ Base ATK: <strong>1 (+2 Dagger)</strong></span>' +
+              '<span class="bst-chip">🔥 Burn: <strong>1/turn</strong></span>' +
+              '<span class="bst-chip">🧤 Gear: <strong>Yes</strong></span>'
+            : '<span class="bst-chip">👾 Enemy: <strong>' + c.baseHp + ' HP / ' + c.baseAtk + ' ATK</strong></span>' +
+              '<span class="bst-chip">🧬 Polymorph HP: <strong>' + c.polyHp + '</strong></span>' +
+              '<span class="bst-chip">🍖 Corpse: <strong>+' + c.nutrition + ' nut</strong></span>' +
+              '<span class="bst-chip">🔥 Burn: <strong>' + c.hungerRate + '/turn</strong></span>' +
+              '<span class="bst-chip">🧤 Gear: <strong>' + (c.hands ? 'Yes' : 'No (Beast)') + '</strong></span>' +
+              '<span class="bst-chip">💀 Slain: <strong>' + (rec.kills || 0) + '</strong></span>';
+
+          cards.push(
+            '<div class="' + cardCls + '">' +
+              '<div class="bestiary-top">' +
+                '<div class="bestiary-name-wrap">' +
+                  '<span class="bestiary-glyph"><span class="' + c.cls + '">' + escapeHtml(c.sym) + '</span></span>' +
+                  '<span class="bestiary-title">' + escapeHtml(c.name) + '</span>' +
+                  '<span class="bestiary-floors">' + escapeHtml(c.floors) + '</span>' +
+                '</div>' +
+                '<div class="bestiary-name-wrap">' +
+                  currentBadge +
+                  statusBadge +
+                '</div>' +
+              '</div>' +
+              '<div class="bestiary-stats-row">' + statsChips + '</div>' +
+              '<div class="bestiary-desc"><strong>Traits:</strong> ' + escapeHtml(c.traits) + '</div>' +
+              '<div class="bestiary-abil"><strong>⚡ Active Ability (<code>f</code>): ' + escapeHtml(c.abilityName) + '</strong> (CD: ' + c.abilityCd + 't • Cost: ' + c.abilityCost + ' hunger) — ' + escapeHtml(c.abilityDesc) + '</div>' +
+            '</div>'
+          );
+        } else {
+          cards.push(
+            '<div class="' + cardCls + '">' +
+              '<div class="bestiary-top">' +
+                '<div class="bestiary-name-wrap">' +
+                  '<span class="bestiary-glyph"><span class="' + c.cls + '">' + escapeHtml(c.sym) + '</span></span>' +
+                  '<span class="bestiary-title">??? Unknown Species (' + escapeHtml(c.sym) + ')</span>' +
+                  '<span class="bestiary-floors">' + escapeHtml(c.floors) + '</span>' +
+                '</div>' +
+                '<div class="bestiary-name-wrap">' + statusBadge + '</div>' +
+              '</div>' +
+              '<div class="bestiary-desc">Encounter this creature in the dungeon (or click <em>Reveal Unseen</em> below) to inspect its polymorph stats, corpse nutrition, traits, and active ability.</div>' +
+            '</div>'
+          );
+        }
+      }
+
+      contentEl.innerHTML = cards.join('');
+    }
+
+    function toggleBestiaryModal(forceState) {
+      const modal = document.getElementById('bestiary-modal');
+      if (!modal) return;
+      const shouldOpen = (typeof forceState === 'boolean') ? forceState : !modal.classList.contains('open');
+      if (shouldOpen) {
+        renderBestiaryModal();
+        modal.classList.add('open');
+      } else {
+        modal.classList.remove('open');
+      }
+    }
+
+    function toggleBestiarySpoilers() {
+      showBestiarySpoilers = !showBestiarySpoilers;
+      renderBestiaryModal();
+    }
+
+    function clearBestiaryProgress() {
+      try {
+        localStorage.removeItem(BESTIARY_STORAGE_KEY);
+      } catch (e) {}
+      updateBestiaryButtonBadge();
+      renderBestiaryModal();
+    }
+
+    updateBestiaryButtonBadge();
+
     function centerOnPlayer() {
       if (!wrapEl || !termEl) return;
       if (lastPlayerX === 0 && lastPlayerY === 0) {
@@ -1345,6 +1878,15 @@
         }
         return;
       }
+
+      const bestiaryModal = document.getElementById('bestiary-modal');
+      if (bestiaryModal && bestiaryModal.classList.contains('open')) {
+        if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') {
+          e.preventDefault();
+          toggleBestiaryModal(false);
+        }
+        return;
+      }
       if (document.activeElement && document.activeElement.tagName === 'INPUT') {
         return;
       }
@@ -1386,7 +1928,7 @@
       }
 
       // Check if we are on the intro/exit/inventory modal screen
-      if (rawText.indexOf("YOU ARE WHAT YOU EAT") !== -1 || rawText.indexOf("PRESS A KEY") !== -1 || rawText.indexOf("GAME OVER!") !== -1 || rawText.indexOf("GLORIOUS VICTORY") !== -1 || rawText.indexOf("THANK YOU FOR PLAYING!") !== -1 || rawText.indexOf("BACKPACK & INVENTORY") !== -1) {
+      if (rawText.indexOf("YOU ARE WHAT YOU EAT") !== -1 || rawText.indexOf("PRESS A KEY") !== -1 || rawText.indexOf("GAME OVER!") !== -1 || rawText.indexOf("GLORIOUS VICTORY") !== -1 || rawText.indexOf("THANK YOU FOR PLAYING!") !== -1 || rawText.indexOf("BACKPACK & INVENTORY") !== -1 || rawText.indexOf("BESTIARY & FORM COMPENDIUM") !== -1) {
         lastPlayerX = 0;
         lastPlayerY = 0;
         return '<span class="g-hud">' + rawText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>';
@@ -1471,7 +2013,8 @@
       let pills = [];
       const pMatch = hudLine.match(/Player:\s*([^\(]+)\((.)\)/);
       if (pMatch) {
-        pills.push('<span class="hud-pill pill-form">🧬 ' + pMatch[1].trim() + ' (' + pMatch[2] + ')</span>');
+        currentActiveFormSym = pMatch[2];
+        pills.push('<span class="hud-pill pill-form" onclick="toggleBestiaryModal(true)" title="Click to open Bestiary &amp; Form Compendium">🧬 ' + pMatch[1].trim() + ' (' + pMatch[2] + ')</span>');
       }
       const hpMatch = hudLine.match(/Hp:\s*(\d+)\/(\d+)/);
       if (hpMatch) {
