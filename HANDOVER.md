@@ -2,7 +2,7 @@
 
 **Repository:** `venim1103/You-Are-What-You-Eat-Rogue`  
 **Current Branch:** `master`  
-**Latest Production Commit:** `5b992f2` + Sprint 8 Upgrades  
+**Latest Production Commit:** `a296140` + Sprint 9 Upgrades  
 **GitHub Pages Target:** `venim1103.github.io/You-Are-What-You-Eat-Rogue`  
 **Document Date:** November 2026  
 
@@ -134,7 +134,7 @@
     * **Caustic Acid Puddle (`=`):** Burns non-immune monsters for 3 acid damage + 2t poison (awarding XP and dropping corpses on lethal dissolves) or burns the player for 2 HP + 2t poison; Acid Slimes (`B`) absorb puddles for `+2 HP` and `+30 hunger`, and Slime `Acid Jet` (`'f'`) leaves caustic `=` pools on adjacent cardinal floor tiles.
     * Integrated `L`, `^`, and `=` into Look Mode (`'v'`), HUD underfoot badges, status strip pills, and Web UI syntax colorization (`.g-mon-L`, `.g-web`, `.g-acid`).
 
-### Sprint 8: Web Audio Synthesizer & WASM Memory / Bounds Hardening (Latest Release)
+### Sprint 8: Web Audio Synthesizer & WASM Memory / Bounds Hardening
 * **Priority 1 — Sound Effects & Procedural Web Audio Synthesizer (`include/web_curses.h`, `include/functions.h`, `src/web_curses.c`, `src/text.c`, `src/combat.c`, `src/player.c`, `src/game.c`, `web/index.html`):**
   * **Status:** Completed.
   * **Scope:**
@@ -147,13 +147,21 @@
     * Resolved the WebAssembly `RuntimeError: Out of bounds memory access` during movement by moving the 4 KB `buf` arrays in `mvprintw()` and `printw()` (`src/web_curses.c`) to `static` storage (eliminating 4 KB per-call stack pressure on Emscripten's Asyncify unwind buffer) and expanding `-sASYNCIFY_STACK_SIZE=262144` (256 KB) and `-sSTACK_SIZE=1048576` (1 MB) in `Makefile`.
     * Hardened `RandomCoords()`, `PlayerSetup()`, `MonSetup()`, `SpawnFogMonster()`, `SpawnFloorItems()`, `CheckNextChar()`, `StepOn()`, `MonsterMove()`, `HandleInput()`, and `TurnNearby()` with strict coordinate clamping (`1 .. MAX_Y-2`, `1 .. MAX_X-2`), `room.mode > 0` guards, and bounds validation before indexing `map_backup`.
 
+### Sprint 9: Daily Seed & Competitive Challenge Runs (Latest Release)
+* **Priority 1 — Daily Seed / Challenge Runs (`include/global.h`, `include/web_curses.h`, `src/web_curses.c`, `src/main.c`, `src/game.c`, `src/text.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `GAME_SEED`, `GAME_SEED_MODE` (`0` = Random, `1` = Daily Challenge, `2` = Custom Seed), and `GAME_SEED_LABEL` globals in C, initialized via `web_get_initial_seed()` (`js_get_seed_value` / `js_get_seed_mode` / `js_get_seed_label` bridge in `src/web_curses.c`) on Emscripten or the `ROGUE_SEED` environment variable on native CLI builds (with deterministic 32-bit FNV-1a string hashing).
+    * Added a `🎲 Seed` / `📅 Daily` / `🧪 Seed` toolbar button (`#seed-btn`) and interactive **Daily Challenge & Custom Seed** modal (`#seed-modal`) in `web/index.html` supporting one-click Daily Challenge runs (`?seed=daily`, hashed by UTC date `YYYY-MM-DD`), custom alphanumeric/numeric seeds (`?seed=<custom>`), shareable URL clipboard copying, and seed replay.
+    * Surfaced active seed badges across the Intro screen, bottom HUD bar (`[Seed:...]`), clickable `#status-strip` seed pill (`.pill-seed`), Victory/Game Over summary screens, and Hall of Fame run history cards (`.hof-badge-seed`).
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — Daily Seed / Challenge Runs:** Allow players to enter or share a custom RNG seed from the web toolbar for competitive seeded dungeon runs.
-* **Priority 2 — Interactive Bestiary & Form Compendium Modal:** Add an in-browser compendium tracking discovered monster forms, traits, and active abilities across runs.
-* **Priority 3 — Dungeon Mini-Bosses & Elite Variants:** Introduce floor mini-bosses with enhanced loot drops and visual indicators.
+* **Priority 1 — Interactive Bestiary & Form Compendium Modal:** Add an in-browser compendium tracking discovered/devoured monster forms, traits, and active abilities across runs.
+* **Priority 2 — Dungeon Mini-Bosses & Elite Variants:** Introduce floor mini-bosses with enhanced loot drops and visual indicators.
+* **Priority 3 — Run Statistics & Achievement Badges:** Track lifetime milestones (e.g., Apex Predator victory, Daily Challenge conqueror, Master Polymorpher) in the Hall of Fame.
 
 ---
 

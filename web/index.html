@@ -215,6 +215,7 @@
     .hud-pill.pill-debuff { color: #fecaca; border-color: #ef4444; background: rgba(220, 38, 38, 0.35); }
     .hud-pill.pill-abil { color: #fde047; border-color: #ca8a04; background: rgba(202, 138, 4, 0.18); }
     .hud-pill.pill-floor { color: #fbbf24; border-color: #d97706; background: rgba(217, 119, 6, 0.18); }
+    .hud-pill.pill-seed { color: #67e8f9; border-color: #0891b2; background: rgba(8, 145, 178, 0.18); cursor: pointer; }
 
     .look-btn.active-look {
       background: #fde047 !important;
@@ -322,6 +323,101 @@
       background: rgba(100, 116, 139, 0.15) !important;
       border-color: #475569 !important;
       color: #94a3b8 !important;
+    }
+
+    .seed-btn {
+      background: rgba(56, 189, 248, 0.15) !important;
+      border-color: #0284c7 !important;
+      color: #7dd3fc !important;
+      font-weight: 700 !important;
+    }
+    .seed-btn.daily-active {
+      background: rgba(250, 204, 21, 0.2) !important;
+      border-color: #eab308 !important;
+      color: #fde047 !important;
+    }
+    .seed-btn.custom-active {
+      background: rgba(168, 85, 247, 0.22) !important;
+      border-color: #9333ea !important;
+      color: #e9d5ff !important;
+    }
+
+    /* Seed / Daily Challenge Modal */
+    #seed-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 12, 0.85);
+      backdrop-filter: blur(3px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    #seed-modal.open {
+      display: flex;
+    }
+    .seed-card {
+      background: #131c2e;
+      border: 1px solid #243452;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 0.78rem;
+    }
+    .seed-card-title {
+      font-weight: 800;
+      color: #7dd3fc;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .seed-input-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .seed-input {
+      flex: 1;
+      background: #0b111e;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .seed-action-btn {
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      color: #7dd3fc;
+      border-radius: 5px;
+      padding: 6px 11px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .seed-action-btn.primary {
+      background: rgba(2, 132, 199, 0.28);
+      color: #e0f2fe;
+    }
+    .seed-action-btn.gold {
+      background: rgba(202, 138, 4, 0.25);
+      border-color: #eab308;
+      color: #fde047;
+    }
+    .hof-badge-seed {
+      background: rgba(8, 145, 178, 0.2);
+      color: #67e8f9;
+      border: 1px solid #0891b2;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.64rem;
+      font-weight: 700;
     }
 
     /* Hall of Fame Modal */
@@ -516,6 +612,7 @@
       <span>🍽️</span> YAWYE Rogue
     </div>
     <div class="toolbar">
+      <button id="seed-btn" class="seed-btn" onclick="toggleSeedModal()">🎲 Seed</button>
       <button id="sfx-btn" class="sfx-btn" onclick="toggleSfx()">🔊 SFX</button>
       <button class="fame-btn" onclick="toggleHallOfFame()">🏆 Fame</button>
       <button class="look-btn" onpointerdown="handleKey('v', event)">👁️ Look</button>
@@ -540,6 +637,60 @@
       <div class="hof-footer">
         <span>Score = (XP × 10) + (Floor × 50) + (Victory +1000)</span>
         <button class="hof-clear-btn" onclick="clearHallOfFame()">🗑️ Clear History</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="seed-modal" onclick="if(event.target===this)toggleSeedModal(false)">
+    <div class="hof-dialog" style="max-width: 520px;">
+      <div class="hof-header">
+        <div class="hof-title">🎲 Daily Challenge &amp; Custom Seed</div>
+        <button class="hof-close" onclick="toggleSeedModal(false)">✕ Close</button>
+      </div>
+      <div class="hof-body">
+        <div class="seed-card">
+          <div class="seed-card-title">
+            <span>📍 Current Active Run Seed</span>
+            <span id="seed-active-badge" class="hof-badge-seed">Random</span>
+          </div>
+          <div style="color:#cbd5e1; margin-bottom:6px;">
+            Seed: <strong id="seed-active-label" style="color:#fff;">-</strong>
+            <span id="seed-active-num" style="color:#64748b; font-size:0.7rem; margin-left:6px;"></span>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="seed-action-btn" onclick="copyShareSeedLink()">🔗 Copy Share URL</button>
+            <button class="seed-action-btn" onclick="replayCurrentSeed()">🔁 Replay This Seed</button>
+          </div>
+          <div id="seed-copy-msg" style="color:#4ade80; font-size:0.7rem; margin-top:5px; display:none;"></div>
+        </div>
+
+        <div class="seed-card">
+          <div class="seed-card-title">
+            <span>📅 Today's Daily Challenge</span>
+            <span id="seed-daily-date" style="color:#fde047; font-size:0.72rem;"></span>
+          </div>
+          <div style="color:#94a3b8; margin-bottom:8px;">
+            Everyone playing today's Daily Seed explores the exact same dungeon layout, monster spawns, shrines, and loot rolls.
+          </div>
+          <button class="seed-action-btn gold" onclick="startDailySeedRun()">⚔️ Start Daily Challenge Run</button>
+        </div>
+
+        <div class="seed-card" style="margin-bottom:0;">
+          <div class="seed-card-title">
+            <span>🧪 Custom Seed / Competitive Run</span>
+          </div>
+          <div style="color:#94a3b8;">
+            Enter any word, phrase, or number (e.g. <code>DRAGON77</code> or <code>4201337</code>) to generate a deterministic dungeon:
+          </div>
+          <div class="seed-input-row">
+            <input id="custom-seed-input" class="seed-input" type="text" maxlength="24" placeholder="Enter custom seed..." onkeydown="e=event;if(e.key==='Enter'){e.preventDefault();startCustomSeedRun();}" />
+            <button class="seed-action-btn primary" onclick="startCustomSeedRun()">🚀 Launch Seed</button>
+          </div>
+        </div>
+      </div>
+      <div class="hof-footer">
+        <span>Switch back to unseeded procedural runs anytime:</span>
+        <button class="seed-action-btn" onclick="startRandomSeedRun()">🎲 New Random Run</button>
       </div>
     </div>
   </div>
@@ -637,8 +788,203 @@
 
     const HOF_STORAGE_KEY = 'yawye_rogue_hall_of_fame_v1';
     const SFX_STORAGE_KEY = 'yawye_rogue_sfx_enabled_v1';
+    const SEED_MODE_KEY = 'yawye_rogue_seed_mode_v1';
+    const SEED_CUSTOM_KEY = 'yawye_rogue_seed_custom_v1';
     let sfxEnabled = true;
     let audioCtx = null;
+
+    function fnv1aHash(str) {
+      let h = 2166136261 >>> 0;
+      const s = String(str || '');
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619) >>> 0;
+      }
+      return (h >>> 0) || 1;
+    }
+
+    function getTodayDateString() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    let activeSeedMode = 0; // 0 = Random, 1 = Daily, 2 = Custom
+    let activeSeedLabel = '';
+    let activeSeedValue = 0;
+
+    (function initSeedConfig() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlSeed = (params.get('seed') || '').trim();
+        if (urlSeed) {
+          if (urlSeed.toLowerCase() === 'daily') {
+            activeSeedMode = 1;
+          } else if (urlSeed.toLowerCase() === 'random') {
+            activeSeedMode = 0;
+          } else {
+            activeSeedMode = 2;
+            activeSeedLabel = urlSeed.slice(0, 24);
+          }
+        } else {
+          const savedMode = localStorage.getItem(SEED_MODE_KEY);
+          const savedCustom = localStorage.getItem(SEED_CUSTOM_KEY) || '';
+          if (savedMode === '1') {
+            activeSeedMode = 1;
+          } else if (savedMode === '2' && savedCustom.trim()) {
+            activeSeedMode = 2;
+            activeSeedLabel = savedCustom.trim().slice(0, 24);
+          } else {
+            activeSeedMode = 0;
+          }
+        }
+      } catch (e) {
+        activeSeedMode = 0;
+      }
+
+      if (activeSeedMode === 1) {
+        activeSeedLabel = getTodayDateString();
+        activeSeedValue = fnv1aHash('YAWYE-DAILY-' + activeSeedLabel);
+      } else if (activeSeedMode === 2 && activeSeedLabel) {
+        if (/^\d+$/.test(activeSeedLabel)) {
+          activeSeedValue = (parseInt(activeSeedLabel, 10) >>> 0) || fnv1aHash(activeSeedLabel);
+        } else {
+          activeSeedValue = fnv1aHash(activeSeedLabel);
+        }
+      } else {
+        activeSeedMode = 0;
+        activeSeedValue = ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0) || 1;
+        activeSeedLabel = String(activeSeedValue % 1000000);
+      }
+      updateSeedButton();
+    })();
+
+    window.getRogueSeedValue = function() {
+      return activeSeedValue >>> 0;
+    };
+    window.getRogueSeedMode = function() {
+      return activeSeedMode | 0;
+    };
+    window.getRogueSeedLabel = function() {
+      return activeSeedLabel || String(activeSeedValue);
+    };
+
+    function updateSeedButton() {
+      const btn = document.getElementById('seed-btn');
+      if (!btn) return;
+      btn.classList.remove('daily-active', 'custom-active');
+      if (activeSeedMode === 1) {
+        btn.textContent = '📅 Daily';
+        btn.classList.add('daily-active');
+      } else if (activeSeedMode === 2) {
+        btn.textContent = '🧪 Seed: ' + activeSeedLabel.slice(0, 8);
+        btn.classList.add('custom-active');
+      } else {
+        btn.textContent = '🎲 Seed';
+      }
+    }
+
+    function toggleSeedModal(forceState) {
+      const modal = document.getElementById('seed-modal');
+      if (!modal) return;
+      const shouldOpen = (typeof forceState === 'boolean') ? forceState : !modal.classList.contains('open');
+      if (shouldOpen) {
+        const badgeEl = document.getElementById('seed-active-badge');
+        const lblEl = document.getElementById('seed-active-label');
+        const numEl = document.getElementById('seed-active-num');
+        const dailyDateEl = document.getElementById('seed-daily-date');
+        const inputEl = document.getElementById('custom-seed-input');
+        const msgEl = document.getElementById('seed-copy-msg');
+        if (msgEl) msgEl.style.display = 'none';
+        if (badgeEl) {
+          badgeEl.textContent = activeSeedMode === 1 ? '📅 Daily Challenge' : (activeSeedMode === 2 ? '🧪 Custom Seed' : '🎲 Random Run');
+        }
+        if (lblEl) {
+          lblEl.textContent = activeSeedMode === 1 ? ('DAILY-' + activeSeedLabel) : activeSeedLabel;
+        }
+        if (numEl) {
+          numEl.textContent = '(RNG #' + (activeSeedValue >>> 0) + ')';
+        }
+        if (dailyDateEl) {
+          dailyDateEl.textContent = getTodayDateString();
+        }
+        if (inputEl && activeSeedMode === 2) {
+          inputEl.value = activeSeedLabel;
+        }
+        modal.classList.add('open');
+      } else {
+        modal.classList.remove('open');
+      }
+    }
+
+    function applySeedAndReload(mode, customText) {
+      try {
+        localStorage.setItem(SEED_MODE_KEY, String(mode));
+        if (mode === 2 && customText) {
+          localStorage.setItem(SEED_CUSTOM_KEY, customText);
+        }
+      } catch (e) {}
+      const url = new URL(window.location.href);
+      if (mode === 1) {
+        url.searchParams.set('seed', 'daily');
+      } else if (mode === 2 && customText) {
+        url.searchParams.set('seed', customText);
+      } else {
+        url.searchParams.delete('seed');
+      }
+      window.location.href = url.toString();
+    }
+
+    function startDailySeedRun() {
+      applySeedAndReload(1, '');
+    }
+
+    function startCustomSeedRun() {
+      const inputEl = document.getElementById('custom-seed-input');
+      const val = inputEl ? inputEl.value.trim().slice(0, 24) : '';
+      if (!val) {
+        startRandomSeedRun();
+        return;
+      }
+      applySeedAndReload(2, val);
+    }
+
+    function startRandomSeedRun() {
+      applySeedAndReload(0, '');
+    }
+
+    function replayCurrentSeed() {
+      if (activeSeedMode === 1) {
+        startDailySeedRun();
+      } else {
+        applySeedAndReload(2, activeSeedLabel || String(activeSeedValue));
+      }
+    }
+
+    function copyShareSeedLink() {
+      const url = new URL(window.location.href);
+      if (activeSeedMode === 1) {
+        url.searchParams.set('seed', 'daily');
+      } else {
+        url.searchParams.set('seed', activeSeedLabel || String(activeSeedValue));
+      }
+      const shareStr = url.toString();
+      const msgEl = document.getElementById('seed-copy-msg');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareStr).then(function() {
+          if (msgEl) {
+            msgEl.textContent = '✓ Copied shareable seed link to clipboard!';
+            msgEl.style.display = 'block';
+          }
+        }).catch(function() {
+          if (msgEl) {
+            msgEl.textContent = 'Share URL: ' + shareStr;
+            msgEl.style.display = 'block';
+          }
+        });
+      } else if (msgEl) {
+        msgEl.textContent = 'Share URL: ' + shareStr;
+        msgEl.style.display = 'block';
+      }
+    }
 
     (function initSfxPref() {
       try {
@@ -841,6 +1187,8 @@
         att: Number(run.att) || 0,
         def: Number(run.def) || 0,
         score: score,
+        seed: activeSeedMode === 1 ? ('DAILY-' + activeSeedLabel) : (activeSeedLabel || String(activeSeedValue)),
+        seedMode: activeSeedMode,
         date: new Date().toISOString().slice(0, 10)
       };
 
@@ -890,6 +1238,9 @@
         const badge = r.victory
           ? '<span class="hof-badge-win">👑 VICTORY</span>'
           : '<span class="hof-badge-rip">💀 ' + escapeHtml(r.killer) + '</span>';
+        const seedBadge = r.seed
+          ? '<span class="hof-badge-seed">🎲 ' + escapeHtml(r.seed) + '</span>'
+          : '';
         rows.push(
           '<div class="hof-row' + winClass + '">' +
             '<div class="hof-rank">#' + (i + 1) + '</div>' +
@@ -897,6 +1248,7 @@
               '<div class="hof-line1">' +
                 '<span>' + escapeHtml(r.form) + ' (' + escapeHtml(r.symbol) + ')</span>' +
                 badge +
+                seedBadge +
               '</div>' +
               '<div class="hof-line2">' +
                 'Floor ' + (r.maxlvl || 0) + ' • Rk ' + (r.rank || 1) + ' (' + (r.xp || 0) + ' XP) • ' +
@@ -982,6 +1334,18 @@
           e.preventDefault();
           toggleHallOfFame(false);
         }
+        return;
+      }
+
+      const seedModal = document.getElementById('seed-modal');
+      if (seedModal && seedModal.classList.contains('open')) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          toggleSeedModal(false);
+        }
+        return;
+      }
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') {
         return;
       }
 
@@ -1138,6 +1502,8 @@
           pills.push('<span class="hud-pill pill-buff">✨ ' + tag + '</span>');
         } else if (tag.indexOf("Floor:") === 0) {
           pills.push('<span class="hud-pill pill-floor">📍 ' + tag + '</span>');
+        } else if (tag.indexOf("Seed:") === 0) {
+          pills.push('<span class="hud-pill pill-seed" onclick="toggleSeedModal(true)" title="Click to configure or share seed">🎲 ' + escapeHtml(tag) + '</span>');
         } else if (tag.indexOf(":READY") !== -1 || tag.indexOf(":") !== -1) {
           pills.push('<span class="hud-pill pill-abil">⚡ ' + tag + '</span>');
         }

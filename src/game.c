@@ -1,6 +1,9 @@
 #include "global.h"
 
 int MAX_X; int MAX_Y; int X_SCR; int Y_SCR; int LVLS; int ROOMS;
+unsigned int GAME_SEED = 0;
+int GAME_SEED_MODE = 0;
+char GAME_SEED_LABEL[32] = "Random";
 
 int ScreenInit()
 {
