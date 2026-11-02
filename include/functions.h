@@ -18,6 +18,7 @@ void ApplyFormTraits(Entity *entity, char symbol);
 int CheckXPUpgrade(Entity *player, int old_xp);
 void CopyPlayer(Entity *dest, Entity *src);
 Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name);
+Entity *PromoteToElite(Entity *mon, int lvl);
 Entity *SelMonster(int lvl);
 Entity *GetMonsterAt(int MonY, int MonX, Level level);
 Entity *MonsterMove(Level level, Entity *monster, char c1, char c2, int nexty, int nextx, int mode);
@@ -30,6 +31,8 @@ Position *DrawRoom(Position pos, int d);
 
 int Eat(Level *leveli, Level level, Entity *player, Entity *monster);
 int DropCorpse(Level *leveli, Entity *monster, int y, int x);
+const char *SpawnEliteLootDrop(Level *leveli, Entity *monster, int y, int x);
+const char *PopLastLootDrop(void);
 Corpse *GetCorpseAt(Level level, int y, int x);
 const char *GetCorpseStage(int age);
 int AskEatCorpse(Level *leveli, Level level, Entity *player, int y, int x);

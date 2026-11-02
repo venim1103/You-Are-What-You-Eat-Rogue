@@ -2,7 +2,7 @@
 
 **Repository:** `venim1103/You-Are-What-You-Eat-Rogue`  
 **Current Branch:** `master`  
-**Latest Production Commit:** `9dd5954` + Sprint 10 Upgrades  
+**Latest Production Commit:** `dd766e9` + Sprints 11 & 12 Upgrades  
 **GitHub Pages Target:** `venim1103.github.io/You-Are-What-You-Eat-Rogue`  
 **Document Date:** November 2026  
 
@@ -155,7 +155,7 @@
     * Added a `🎲 Seed` / `📅 Daily` / `🧪 Seed` toolbar button (`#seed-btn`) and interactive **Daily Challenge & Custom Seed** modal (`#seed-modal`) in `web/index.html` supporting one-click Daily Challenge runs (`?seed=daily`, hashed by UTC date `YYYY-MM-DD`), custom alphanumeric/numeric seeds (`?seed=<custom>`), shareable URL clipboard copying, and seed replay.
     * Surfaced active seed badges across the Intro screen, bottom HUD bar (`[Seed:...]`), clickable `#status-strip` seed pill (`.pill-seed`), Victory/Game Over summary screens, and Hall of Fame run history cards (`.hof-badge-seed`).
 
-### Sprint 10: Interactive Bestiary & Form Compendium (Latest Release)
+### Sprint 10: Interactive Bestiary & Form Compendium
 * **Priority 1 — Interactive Bestiary & Form Compendium Modal & Terminal View (`include/web_curses.h`, `src/web_curses.c`, `include/functions.h`, `src/player.c`, `src/draw.c`, `src/combat.c`, `src/input.c`, `src/text.c`, `web/index.html`):**
   * **Status:** Completed.
   * **Scope:**
@@ -163,13 +163,31 @@
     * Added an in-terminal **Bestiary & Form Compendium (`ShowBestiary` via `'B'` key)** in `src/text.c` that works in both native CLI and WebAssembly builds without consuming a turn, displaying species habitat, enemy vs. polymorph stats (including live Mastery Rank scaling), corpse nutrition, metabolism burn rate, gear capability, passive traits, and active `'f'` ability details.
     * Built a persistent `📖 Bestiary (X/9)` toolbar button (`#bestiary-btn`), clickable `#status-strip` Form pill (`.pill-form`), and interactive **Bestiary & Form Compendium** modal (`#bestiary-modal`) in `web/index.html` backed by `localStorage` (`yawye_rogue_bestiary_v1`), featuring summary counters (Forms Sighted, Beast Forms Devoured, Total Monsters Slain, Metamorphoses), species cards with status badges (`ORIGIN`, `DEVOURED`, `SIGHTED`, `UNDISCOVERED`, `ACTIVE FORM`), a `👁️ Reveal Unseen` spoiler toggle, and progress reset support.
 
+### Sprint 11: Dungeon Mini-Bosses & Elite Variants
+* **Priority 1 — Floor Mini-Bosses, Elite Variants, Relic Loot Drops & Visual Aura (`include/structs.h`, `include/functions.h`, `src/monsters.c`, `src/combat.c`, `src/draw.c`, `src/game.c`, `src/player.c`, `src/text.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `is_elite` (`0` = Normal, `1` = Elite Variant, `2` = Floor Mini-Boss / Boss) to `Entity` and `Corpse`.
+    * Added guaranteed **Floor Mini-Bosses** on milestone floors: **Broodmother Arachne (`x`, Floor 3)**, **Goblin Warlord (`g`, Floor 6)**, **Arch-Lich Malakor (`L`, Floor 8)**, and **Elder Behemoth (`T`, odd Floors 11+)** with arrival warnings on stair descent.
+    * Added `PromoteToElite()` in `src/monsters.c` so regular floor spawns (12%–32% scaling by depth) and ambient fog spawns (20% on Floor 2+) can promote into named **Elite Variants** (`Elite Venomweaver`, `Elite Pit Viper`, `Elite Bloodwing Bat`, `Elite Goblin Raider`, `Elite Caustic Ooze`, `Elite Phantom`, `Elite War Troll`, `Elite Lich Acolyte`) with boosted HP, `+2 ATK`, `FOLLOW` aggro, and enhanced traits.
+    * Added `SpawnEliteLootDrop()` in `src/combat.c`: Mini-Bosses (`is_elite == 2`) guarantee a signature Relic weapon or armor drop (`Venomfang Sabre +6 ATK`, `Arachnid Carapace +5 DEF`, `Warlord's Cleaver +9 ATK`, `Warlord's Plate +7 DEF`, `Soulreaver Scythe +11 ATK`, `Arch-Lich Robes +9 DEF`), while Elite Variants (`is_elite == 1`) have a 55% chance to drop depth-scaled equipment, alongside `+50%` (Elite) and `+100%` (Mini-Boss) corpse nutrition bonuses.
+    * Encoded bit `4` in `cell_flag_buf` (`src/draw.c`) to render a golden pulsing aura (`.g-st-elite`) around visible Elite and Boss monsters in `web/index.html`, added a `👑 Elite/Boss Sighted: X` pill to `#status-strip`, and surfaced `[ELITE]`, `[MINI-BOSS]`, and `[FLOOR BOSS]` tags in Look Mode (`'v'`).
+
+### Sprint 12: Run Statistics & Lifetime Achievement Badges (Latest Release)
+* **Priority 1 — Lifetime Career Statistics & Achievement Badges in Hall of Fame (`web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added persistent career tracking (`yawye_rogue_career_stats_v1` in `localStorage`) cross-referenced with Hall of Fame run history and Bestiary progression (`totalKills`, `totalMorphs`, `devouredSpecies`, `dragonDevoured`, `dailyVictories`, `highestRank`, `deepestFloor`).
+    * Added 8 unlockable **Lifetime Achievement Badges** in the Hall of Fame modal (`#hof-achievements`): **First Taste (`🍖`)**, **Deep Delver (`🕯️`)**, **Metabolic Master (`⭐`)**, **Monster Hunter (`⚔️`)**, **Dungeon Conqueror (`👑`)**, **Apex Predator (`🐉`)**, **Daily Conqueror (`📅`)**, and **Master Polymorpher (`🧬`)**.
+    * Upgraded the toolbar button to display live badge progress (`🏆 Fame (X/8)`) and added lifetime kill/metamorphosis counters to the Hall of Fame header.
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — Dungeon Mini-Bosses & Elite Variants:** Introduce floor mini-bosses with enhanced loot drops and visual indicators.
-* **Priority 2 — Run Statistics & Achievement Badges:** Track lifetime milestones (e.g., Apex Predator victory, Daily Challenge conqueror, Master Polymorpher) in the Hall of Fame.
-* **Priority 3 — Consumable Dungeon Scroll / Potion Relics:** Add rare single-use tactical consumables or metabolic catalysts for deeper build variety.
+* **Priority 1 — Consumable Dungeon Scroll / Potion Relics:** Add rare single-use tactical consumables or metabolic catalysts for deeper build variety.
+* **Priority 2 — Monster Infighting & Faction Rivalries:** Allow rival dungeon species or frenzied monsters to clash when provoked or lured.
+* **Priority 3 — Extended Endgame Depth Modifiers (Floors 11+ Endless Abyss):** Add scaling environmental modifiers and abyssal hazards beyond Floor 10 for endless high-score chasers.
 
 ---
 

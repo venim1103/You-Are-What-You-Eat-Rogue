@@ -1274,6 +1274,7 @@ int LookMode(Level *leveli, Level level, Entity *player)
 			if (mon != NULL && mon->alive == YES)
 			{
 				const char *beh = (mon->type == FOLLOW) ? "Aggressive" : "Wandering";
+				const char *tier_tag = (mon->symbol == 'D') ? " [FLOOR BOSS]" : (mon->is_elite == 2 ? " [MINI-BOSS]" : (mon->is_elite == 1 ? " [ELITE]" : ""));
 				char st_buf[64] = "";
 				if (mon->poison_turns > 0 && mon->snare_turns > 0)
 					snprintf(st_buf, sizeof(st_buf), " [POISONED:%dt, ENSNARED:%dt]", mon->poison_turns, mon->snare_turns);
@@ -1281,14 +1282,15 @@ int LookMode(Level *leveli, Level level, Entity *player)
 					snprintf(st_buf, sizeof(st_buf), " [POISONED:%dt]", mon->poison_turns);
 				else if (mon->snare_turns > 0)
 					snprintf(st_buf, sizeof(st_buf), " [ENSNARED:%dt]", mon->snare_turns);
-				snprintf(desc, sizeof(desc), "Monster: %s (%c)%s | HP: %d/%d | ATK: %d | %s | Trait: %s",
-					mon->name, mon->symbol, st_buf, mon->health, mon->maxhp, mon->attack, beh, mon->trait_desc);
+				snprintf(desc, sizeof(desc), "Monster: %s (%c)%s%s | HP: %d/%d | ATK: %d | %s | Trait: %s",
+					mon->name, mon->symbol, tier_tag, st_buf, mon->health, mon->maxhp, mon->attack, beh, mon->trait_desc);
 			}
 			else if (corp != NULL && corp->active == YES)
 			{
 				const char *st = GetCorpseStage(corp->age);
-				snprintf(desc, sizeof(desc), "Corpse: %s %s (%%) | Nutrition: %d | Polymorphs into: %s (HP:%d, ATK:%d)",
-					st, corp->name, corp->nutrition, corp->name, (corp->maxhp * 4) + 6, corp->attack);
+				const char *ctier = (corp->is_elite == 2) ? " [MINI-BOSS]" : (corp->is_elite == 1 ? " [ELITE]" : "");
+				snprintf(desc, sizeof(desc), "Corpse: %s %s (%%)%s | Nutrition: %d | Polymorphs into: %s (HP:%d, ATK:%d)",
+					st, corp->name, ctier, corp->nutrition, corp->name, (corp->maxhp * 4) + 6, corp->attack);
 			}
 			else if (it != NULL && it->active == YES)
 			{
@@ -1470,12 +1472,14 @@ int QuickDrop(Level *leveli, Level level, Entity *player)
 			dummy.name = it.corpse_data.name;
 			dummy.maxhp = it.corpse_data.maxhp;
 			dummy.attack = it.corpse_data.attack;
+			dummy.is_elite = it.corpse_data.is_elite;
 			DropCorpse(leveli, &dummy, py, px);
 			int c_idx = leveli[leveli->lvl].num_corpses - 1;
 			if(c_idx >= 0)
 			{
 				leveli[leveli->lvl].corpses[c_idx].age = it.corpse_data.age;
 				leveli[leveli->lvl].corpses[c_idx].nutrition = it.corpse_data.nutrition;
+				leveli[leveli->lvl].corpses[c_idx].is_elite = it.corpse_data.is_elite;
 			}
 			player->Position.ch = leveli[leveli->lvl].map_backup[py][px];
 			ClearMsg();

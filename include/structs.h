@@ -23,6 +23,7 @@ typedef struct Corpse
 	int attack;
 	int nutrition;
 	int age;
+	int is_elite;
 	int active;
 } Corpse;
 
@@ -66,6 +67,7 @@ typedef struct Entity
 	int acid_corrosion;
 	int evasion_chance;
 	int life_drain;
+	int is_elite;
 	int ability_cd;
 	int ability_max_cd;
 	int ability_cost;

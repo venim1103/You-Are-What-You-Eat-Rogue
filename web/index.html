@@ -181,6 +181,7 @@
     .g-st-psn { background: rgba(34, 197, 94, 0.35); box-shadow: 0 0 6px #22c55e; border-radius: 2px; }
     .g-st-web { background: rgba(148, 163, 184, 0.40); box-shadow: 0 0 6px #e2e8f0; text-decoration: underline; border-radius: 2px; }
     .g-st-both { background: linear-gradient(135deg, rgba(34, 197, 94, 0.45), rgba(148, 163, 184, 0.45)); box-shadow: 0 0 7px #22c55e; text-decoration: underline; border-radius: 2px; }
+    .g-st-elite { background: rgba(245, 158, 11, 0.34); box-shadow: 0 0 8px #f59e0b, inset 0 0 4px #fde047; border-radius: 2px; text-shadow: 0 0 6px #fde047; }
 
     #status-strip {
       width: 100%;
@@ -216,6 +217,7 @@
     .hud-pill.pill-abil { color: #fde047; border-color: #ca8a04; background: rgba(202, 138, 4, 0.18); }
     .hud-pill.pill-floor { color: #fbbf24; border-color: #d97706; background: rgba(217, 119, 6, 0.18); }
     .hud-pill.pill-seed { color: #67e8f9; border-color: #0891b2; background: rgba(8, 145, 178, 0.18); cursor: pointer; }
+    .hud-pill.pill-elite { color: #fde047; border-color: #f59e0b; background: rgba(245, 158, 11, 0.24); box-shadow: 0 0 8px rgba(245, 158, 11, 0.28); }
 
     .look-btn.active-look {
       background: #fde047 !important;
@@ -742,6 +744,84 @@
       font-size: 0.7rem;
       cursor: pointer;
     }
+
+    /* Achievements & Lifetime Career Stats */
+    .hof-section-hdr {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #fde047;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 8px 0 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hof-section-hdr:first-child {
+      margin-top: 0;
+    }
+    .ach-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .ach-card {
+      background: #131c2e;
+      border: 1px solid #243452;
+      border-radius: 7px;
+      padding: 7px 9px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      transition: border-color 0.15s ease;
+    }
+    .ach-card.ach-unlocked {
+      border-color: #eab308;
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.16), #131c2e);
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.12);
+    }
+    .ach-card.ach-locked {
+      opacity: 0.52;
+      border-style: dashed;
+    }
+    .ach-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .ach-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .ach-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+    }
+    .ach-card.ach-unlocked .ach-title {
+      color: #fde047;
+    }
+    .ach-desc {
+      font-size: 0.66rem;
+      color: #94a3b8;
+      line-height: 1.25;
+      margin-top: 2px;
+    }
+    .ach-check {
+      font-size: 0.62rem;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(34, 197, 94, 0.22);
+      color: #4ade80;
+      border: 1px solid #16a34a;
+      font-weight: 800;
+    }
   </style>
 </head>
 <body>
@@ -754,7 +834,7 @@
       <button id="seed-btn" class="seed-btn" onclick="toggleSeedModal()">🎲 Seed</button>
       <button id="sfx-btn" class="sfx-btn" onclick="toggleSfx()">🔊 SFX</button>
       <button id="bestiary-btn" class="bestiary-btn" onclick="toggleBestiaryModal()">📖 Bestiary</button>
-      <button class="fame-btn" onclick="toggleHallOfFame()">🏆 Fame</button>
+      <button id="fame-btn" class="fame-btn" onclick="toggleHallOfFame()">🏆 Fame</button>
       <button class="look-btn" onpointerdown="handleKey('v', event)">👁️ Look</button>
       <button onclick="changeFontSize(-1)">A-</button>
       <button onclick="changeFontSize(1)">A+</button>
@@ -765,13 +845,14 @@
   </header>
 
   <div id="hof-modal" onclick="if(event.target===this)toggleHallOfFame(false)">
-    <div class="hof-dialog">
+    <div class="hof-dialog" style="max-width: 720px;">
       <div class="hof-header">
-        <div class="hof-title">🏆 Hall of Fame &amp; Run History</div>
+        <div class="hof-title">🏆 Hall of Fame, Career Stats &amp; Achievements</div>
         <button class="hof-close" onclick="toggleHallOfFame(false)">✕ Close</button>
       </div>
       <div class="hof-summary" id="hof-summary"></div>
       <div class="hof-body">
+        <div id="hof-achievements"></div>
         <div id="hof-content"></div>
       </div>
       <div class="hof-footer">
@@ -947,6 +1028,7 @@
     }
 
     const HOF_STORAGE_KEY = 'yawye_rogue_hall_of_fame_v1';
+    const CAREER_STORAGE_KEY = 'yawye_rogue_career_stats_v1';
     const SFX_STORAGE_KEY = 'yawye_rogue_sfx_enabled_v1';
     const SEED_MODE_KEY = 'yawye_rogue_seed_mode_v1';
     const SEED_CUSTOM_KEY = 'yawye_rogue_seed_custom_v1';
@@ -1322,6 +1404,167 @@
       }
     }
 
+    function loadCareerStats() {
+      let def = {
+        totalRuns: 0,
+        victories: 0,
+        dailyVictories: 0,
+        dragonWins: 0,
+        humanWins: 0,
+        bestScore: 0,
+        deepestFloor: 0,
+        highestRank: 1,
+        totalXp: 0,
+        totalTurns: 0
+      };
+      try {
+        const raw = localStorage.getItem(CAREER_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            def = Object.assign(def, parsed);
+          }
+        }
+      } catch (e) {}
+      return def;
+    }
+
+    function saveCareerStats(st) {
+      try {
+        localStorage.setItem(CAREER_STORAGE_KEY, JSON.stringify(st));
+      } catch (e) {}
+    }
+
+    const ACHIEVEMENTS_CATALOG = [
+      {
+        id: 'first_morph',
+        icon: '🍖',
+        title: 'First Taste',
+        desc: 'Devour a monster corpse and polymorph into a beast form.',
+        check: function(ctx) { return ctx.totalMorphs >= 1; }
+      },
+      {
+        id: 'deep_delver',
+        icon: '🕯️',
+        title: 'Deep Delver',
+        desc: 'Descend to Dungeon Floor 5 or deeper.',
+        check: function(ctx) { return ctx.deepestFloor >= 5; }
+      },
+      {
+        id: 'metabolic_master',
+        icon: '⭐',
+        title: 'Metabolic Master',
+        desc: 'Reach Mastery Rank 5 (80+ XP) in a single run.',
+        check: function(ctx) { return ctx.highestRank >= 5; }
+      },
+      {
+        id: 'monster_hunter',
+        icon: '⚔️',
+        title: 'Monster Hunter',
+        desc: 'Slay 25 or more monsters across your career.',
+        check: function(ctx) { return ctx.totalKills >= 25; }
+      },
+      {
+        id: 'dungeon_conqueror',
+        icon: '👑',
+        title: 'Dungeon Conqueror',
+        desc: 'Slay the Floor 10 Ancient Dragon and escape through the Golden Portal.',
+        check: function(ctx) { return ctx.victories >= 1; }
+      },
+      {
+        id: 'apex_predator',
+        icon: '🐉',
+        title: 'Apex Predator',
+        desc: 'Devour the Ancient Dragon corpse (or win as the Dragon).',
+        check: function(ctx) { return ctx.dragonDevoured >= 1 || ctx.dragonWins >= 1; }
+      },
+      {
+        id: 'daily_champion',
+        icon: '📅',
+        title: 'Daily Conqueror',
+        desc: 'Claim victory on an official Daily Challenge seed run.',
+        check: function(ctx) { return ctx.dailyVictories >= 1; }
+      },
+      {
+        id: 'master_polymorpher',
+        icon: '🧬',
+        title: 'Master Polymorpher',
+        desc: 'Devour all 9 beast species recorded in the Bestiary.',
+        check: function(ctx) { return ctx.devouredSpecies >= 9; }
+      }
+    ];
+
+    function buildAchievementContext(runs, bestiaryState, careerStats) {
+      const bst = bestiaryState || loadBestiaryState();
+      const career = careerStats || loadCareerStats();
+      const list = runs || loadHallOfFame();
+
+      let totalKills = 0;
+      let totalMorphs = 0;
+      let devouredSpecies = 0;
+      for (let i = 1; i < BESTIARY_CATALOG.length; i++) {
+        const sym = BESTIARY_CATALOG[i].sym;
+        const rec = bst[sym] || { kills: 0, devoured: 0 };
+        totalKills += Number(rec.kills) || 0;
+        totalMorphs += Number(rec.devoured) || 0;
+        if (Number(rec.devoured) > 0) devouredSpecies++;
+      }
+      const dragonDevoured = (bst['D'] && Number(bst['D'].devoured)) || 0;
+
+      let victories = career.victories || 0;
+      let dailyVictories = career.dailyVictories || 0;
+      let dragonWins = career.dragonWins || 0;
+      let bestScore = career.bestScore || 0;
+      let deepestFloor = career.deepestFloor || 0;
+      let highestRank = career.highestRank || 1;
+      let totalRuns = Math.max(career.totalRuns || 0, list.length);
+      let totalTurns = career.totalTurns || 0;
+
+      let runWins = 0;
+      let runDailyWins = 0;
+      let runDragonWins = 0;
+      for (let i = 0; i < list.length; i++) {
+        const r = list[i];
+        if (r.victory) {
+          runWins++;
+          if (r.seedMode === 1 || String(r.seed || '').indexOf('DAILY-') === 0) runDailyWins++;
+          if (r.symbol === 'D') runDragonWins++;
+        }
+        if ((r.score || 0) > bestScore) bestScore = r.score || 0;
+        if ((r.maxlvl || 0) > deepestFloor) deepestFloor = r.maxlvl || 0;
+        if ((r.rank || 1) > highestRank) highestRank = r.rank || 1;
+      }
+      if (runWins > victories) victories = runWins;
+      if (runDailyWins > dailyVictories) dailyVictories = runDailyWins;
+      if (runDragonWins > dragonWins) dragonWins = runDragonWins;
+
+      return {
+        totalRuns: totalRuns,
+        victories: victories,
+        dailyVictories: dailyVictories,
+        dragonWins: dragonWins,
+        dragonDevoured: dragonDevoured,
+        bestScore: bestScore,
+        deepestFloor: deepestFloor,
+        highestRank: highestRank,
+        totalKills: totalKills,
+        totalMorphs: totalMorphs,
+        devouredSpecies: devouredSpecies,
+        totalTurns: totalTurns
+      };
+    }
+
+    function updateFameButtonBadge() {
+      const btn = document.getElementById('fame-btn');
+      if (!btn) return;
+      const ctx = buildAchievementContext();
+      let unlocked = 0;
+      for (let i = 0; i < ACHIEVEMENTS_CATALOG.length; i++) {
+        if (ACHIEVEMENTS_CATALOG[i].check(ctx)) unlocked++;
+      }
+      btn.textContent = '🏆 Fame (' + unlocked + '/' + ACHIEVEMENTS_CATALOG.length + ')';
+    }
+
     function escapeHtml(str) {
       return String(str || '')
         .replace(/&/g, '&amp;')
@@ -1364,30 +1607,70 @@
       });
       if (runs.length > 25) runs = runs.slice(0, 25);
       saveHallOfFame(runs);
+
+      const career = loadCareerStats();
+      career.totalRuns = (career.totalRuns || 0) + 1;
+      career.totalXp = (career.totalXp || 0) + xp;
+      career.totalTurns = (career.totalTurns || 0) + (Number(run.turns) || 0);
+      if (victory) {
+        career.victories = (career.victories || 0) + 1;
+        if (activeSeedMode === 1) career.dailyVictories = (career.dailyVictories || 0) + 1;
+        if (entry.symbol === 'D') career.dragonWins = (career.dragonWins || 0) + 1;
+        if (entry.symbol === '@') career.humanWins = (career.humanWins || 0) + 1;
+      }
+      if (score > (career.bestScore || 0)) career.bestScore = score;
+      if (maxlvl > (career.deepestFloor || 0)) career.deepestFloor = maxlvl;
+      if (entry.rank > (career.highestRank || 1)) career.highestRank = entry.rank;
+      saveCareerStats(career);
+
+      updateFameButtonBadge();
       renderHallOfFame();
     };
 
     function renderHallOfFame() {
       const summaryEl = document.getElementById('hof-summary');
+      const achEl = document.getElementById('hof-achievements');
       const contentEl = document.getElementById('hof-content');
       if (!summaryEl || !contentEl) return;
 
       const runs = loadHallOfFame();
-      let totalRuns = runs.length;
-      let victories = 0;
-      let bestScore = 0;
-      let deepestFloor = 0;
-      for (let i = 0; i < runs.length; i++) {
-        if (runs[i].victory) victories++;
-        if ((runs[i].score || 0) > bestScore) bestScore = runs[i].score || 0;
-        if ((runs[i].maxlvl || 0) > deepestFloor) deepestFloor = runs[i].maxlvl || 0;
+      const ctx = buildAchievementContext(runs);
+
+      let unlockedCount = 0;
+      let achCards = [];
+      for (let i = 0; i < ACHIEVEMENTS_CATALOG.length; i++) {
+        const a = ACHIEVEMENTS_CATALOG[i];
+        const isUnlocked = !!a.check(ctx);
+        if (isUnlocked) unlockedCount++;
+        achCards.push(
+          '<div class="ach-card ' + (isUnlocked ? 'ach-unlocked' : 'ach-locked') + '">' +
+            '<div class="ach-icon">' + a.icon + '</div>' +
+            '<div class="ach-info">' +
+              '<div class="ach-title">' +
+                '<span>' + escapeHtml(a.title) + '</span>' +
+                (isUnlocked ? '<span class="ach-check">✓</span>' : '') +
+              '</div>' +
+              '<div class="ach-desc">' + escapeHtml(a.desc) + '</div>' +
+            '</div>' +
+          '</div>'
+        );
       }
 
       summaryEl.innerHTML =
-        '<div class="hof-stat-box"><div class="hof-stat-val">' + totalRuns + '</div><div class="hof-stat-lbl">Saved Runs</div></div>' +
-        '<div class="hof-stat-box"><div class="hof-stat-val">' + victories + '</div><div class="hof-stat-lbl">Victories</div></div>' +
-        '<div class="hof-stat-box"><div class="hof-stat-val">' + bestScore + '</div><div class="hof-stat-lbl">High Score</div></div>' +
-        '<div class="hof-stat-box"><div class="hof-stat-val">Floor ' + deepestFloor + '</div><div class="hof-stat-lbl">Deepest Floor</div></div>';
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + ctx.victories + ' / ' + ctx.totalRuns + '</div><div class="hof-stat-lbl">Wins / Runs</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + ctx.bestScore + '</div><div class="hof-stat-lbl">High Score</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">Floor ' + ctx.deepestFloor + '</div><div class="hof-stat-lbl">Deepest Floor</div></div>' +
+        '<div class="hof-stat-box"><div class="hof-stat-val">' + unlockedCount + ' / ' + ACHIEVEMENTS_CATALOG.length + '</div><div class="hof-stat-lbl">Achievements</div></div>';
+
+      if (achEl) {
+        achEl.innerHTML =
+          '<div class="hof-section-hdr">' +
+            '<span>🏅 Lifetime Achievement Badges (' + unlockedCount + '/' + ACHIEVEMENTS_CATALOG.length + ')</span>' +
+            '<span style="color:#94a3b8; font-size:0.68rem; text-transform:none;">💀 ' + ctx.totalKills + ' Slain • 🧬 ' + ctx.totalMorphs + ' Morphs</span>' +
+          '</div>' +
+          '<div class="ach-grid">' + achCards.join('') + '</div>' +
+          '<div class="hof-section-hdr"><span>📜 Top 25 Run History</span></div>';
+      }
 
       if (runs.length === 0) {
         contentEl.innerHTML = '<div class="hof-empty">No completed runs recorded yet.<br>Battle through the dungeon—your victories and deaths will be immortalized here!</div>';
@@ -1443,7 +1726,9 @@
     function clearHallOfFame() {
       try {
         localStorage.removeItem(HOF_STORAGE_KEY);
+        localStorage.removeItem(CAREER_STORAGE_KEY);
       } catch (e) {}
+      updateFameButtonBadge();
       renderHallOfFame();
     }
 
@@ -1657,6 +1942,7 @@
       }
       saveBestiaryState(state);
       updateBestiaryButtonBadge(state);
+      updateFameButtonBadge();
     };
 
     window.getRogueBestiaryStat = function(sym, statType) {
@@ -1812,10 +2098,12 @@
         localStorage.removeItem(BESTIARY_STORAGE_KEY);
       } catch (e) {}
       updateBestiaryButtonBadge();
+      updateFameButtonBadge();
       renderBestiaryModal();
     }
 
     updateBestiaryButtonBadge();
+    updateFameButtonBadge();
 
     function centerOnPlayer() {
       if (!wrapEl || !termEl) return;
@@ -1952,10 +2240,12 @@
           for (let c = 0; c < line.length; c++) {
             let ch = line[c];
             let fch = (c < fline.length) ? fline[c] : '0';
+            let fnum = parseInt(fch, 10) || 0;
             let stClass = '';
-            if (fch === '1') stClass = ' g-st-psn';
-            else if (fch === '2') stClass = ' g-st-web';
-            else if (fch === '3') stClass = ' g-st-both';
+            if ((fnum & 1) && (fnum & 2)) stClass = ' g-st-both';
+            else if (fnum & 1) stClass = ' g-st-psn';
+            else if (fnum & 2) stClass = ' g-st-web';
+            if (fnum & 4) stClass += ' g-st-elite';
 
             if (r === lastPlayerY && c === lastPlayerX) {
               let escCh = (ch === '<') ? '&lt;' : (ch === '>') ? '&gt;' : (ch === '&') ? '&amp;' : ch;
@@ -2052,15 +2342,22 @@
         }
       }
 
-      // Count visible poisoned / ensnared monsters on screen
+      // Count visible poisoned / ensnared / elite monsters on screen
       if (flagsText) {
         let psnCount = 0;
         let webCount = 0;
+        let eliteCount = 0;
         for (let i = 0; i < flagsText.length; i++) {
           let fc = flagsText[i];
-          if (fc === '1') psnCount++;
-          else if (fc === '2') webCount++;
-          else if (fc === '3') { psnCount++; webCount++; }
+          if (fc >= '1' && fc <= '7') {
+            let fnum = fc.charCodeAt(0) - 48;
+            if (fnum & 1) psnCount++;
+            if (fnum & 2) webCount++;
+            if (fnum & 4) eliteCount++;
+          }
+        }
+        if (eliteCount > 0) {
+          pills.push('<span class="hud-pill pill-elite">👑 Elite/Boss Sighted: ' + eliteCount + '</span>');
         }
         if (psnCount > 0) {
           pills.push('<span class="hud-pill pill-buff">🧪 Foes Poisoned: ' + psnCount + '</span>');

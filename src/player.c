@@ -217,6 +217,7 @@ void CopyPlayer(Entity *dest, Entity *src)
 	dest->acid_corrosion = src->acid_corrosion;
 	dest->evasion_chance = src->evasion_chance;
 	dest->life_drain = src->life_drain;
+	dest->is_elite = src->is_elite;
 	dest->ability_cd = src->ability_cd;
 	dest->ability_max_cd = src->ability_max_cd;
 	dest->ability_cost = src->ability_cost;
@@ -266,6 +267,7 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->alive = YES;
 	player->poison_turns = 0;
 	player->snare_turns = 0;
+	player->is_elite = 0;
 	player->ability_cd = 0;
 	player->num_items = 0;
 	player->equipped_weapon = -1;

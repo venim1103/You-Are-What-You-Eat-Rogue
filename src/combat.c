@@ -1,5 +1,157 @@
 #include "global.h"
 
+static const char *g_last_loot_drop = NULL;
+
+const char *PopLastLootDrop(void)
+{
+	const char *res = g_last_loot_drop;
+	g_last_loot_drop = NULL;
+	return res;
+}
+
+const char *SpawnEliteLootDrop(Level *leveli, Entity *monster, int y, int x)
+{
+	if(leveli == NULL || monster == NULL || monster->is_elite <= 0) return NULL;
+	int lvl = leveli->lvl;
+	Level *cur = &leveli[lvl];
+	if(cur->items == NULL || cur->num_items >= cur->max_items) return NULL;
+
+	// Mini-bosses (is_elite == 2) guarantee a drop (100%); Elite variants (is_elite == 1) have a 55% chance:
+	if(monster->is_elite == 1 && (rand() % 100) >= 55)
+	{
+		return NULL;
+	}
+
+	// Find a nearby walkable tile (prefer adjacent '.' so both corpse '%' and loot item are visible):
+	int dy[9] = {0, -1, 1, 0, 0, -1, -1, 1, 1};
+	int dx[9] = {0, 0, 0, -1, 1, -1, 1, -1, 1};
+	int drop_y = y;
+	int drop_x = x;
+	for(int d = 1; d < 9; d++)
+	{
+		int ny = y + dy[d];
+		int nx = x + dx[d];
+		if(ny > 0 && ny < MAX_Y - 1 && nx > 0 && nx < MAX_X - 1 &&
+		   cur->map_backup != NULL && cur->map_backup[ny][nx] == '.' &&
+		   GetMonsterAt(ny, nx, *cur) == NULL &&
+		   GetItemAt(*cur, ny, nx) == NULL &&
+		   GetCorpseAt(*cur, ny, nx) == NULL &&
+		   (cur->player == NULL || cur->player->Position.yPos != ny || cur->player->Position.xPos != nx))
+		{
+			drop_y = ny;
+			drop_x = nx;
+			break;
+		}
+	}
+
+	int idx = cur->num_items;
+	cur->items[idx].Position.yPos = drop_y;
+	cur->items[idx].Position.xPos = drop_x;
+	cur->items[idx].active = YES;
+	cur->items[idx].equipped = NO;
+
+	if(monster->is_elite == 2)
+	{
+		// Mini-Boss Guaranteed Relic Drop:
+		if(lvl <= 4)
+		{
+			if((rand() % 2) == 0)
+			{
+				cur->items[idx].symbol = ')';
+				cur->items[idx].name = "Venomfang Sabre";
+				cur->items[idx].bonus_att = 6;
+				cur->items[idx].bonus_def = 0;
+				cur->items[idx].item_type = ITEM_WEAPON;
+			}
+			else
+			{
+				cur->items[idx].symbol = '[';
+				cur->items[idx].name = "Arachnid Carapace";
+				cur->items[idx].bonus_att = 0;
+				cur->items[idx].bonus_def = 5;
+				cur->items[idx].item_type = ITEM_ARMOR;
+			}
+		}
+		else if(lvl <= 7)
+		{
+			if((rand() % 2) == 0)
+			{
+				cur->items[idx].symbol = ')';
+				cur->items[idx].name = "Warlord's Cleaver";
+				cur->items[idx].bonus_att = 9;
+				cur->items[idx].bonus_def = 0;
+				cur->items[idx].item_type = ITEM_WEAPON;
+			}
+			else
+			{
+				cur->items[idx].symbol = '[';
+				cur->items[idx].name = "Warlord's Plate";
+				cur->items[idx].bonus_att = 0;
+				cur->items[idx].bonus_def = 7;
+				cur->items[idx].item_type = ITEM_ARMOR;
+			}
+		}
+		else
+		{
+			if((rand() % 2) == 0)
+			{
+				cur->items[idx].symbol = ')';
+				cur->items[idx].name = "Soulreaver Scythe";
+				cur->items[idx].bonus_att = 11;
+				cur->items[idx].bonus_def = 0;
+				cur->items[idx].item_type = ITEM_WEAPON;
+			}
+			else
+			{
+				cur->items[idx].symbol = '[';
+				cur->items[idx].name = "Arch-Lich Robes";
+				cur->items[idx].bonus_att = 0;
+				cur->items[idx].bonus_def = 9;
+				cur->items[idx].item_type = ITEM_ARMOR;
+			}
+		}
+	}
+	else
+	{
+		// Elite Variant Enhanced Loot Drop:
+		int roll = rand() % 4;
+		if(lvl <= 3)
+		{
+			if(roll == 0) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Steel Shortsword"; cur->items[idx].bonus_att = 4; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
+			else if(roll == 1) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Heavy Broadsword"; cur->items[idx].bonus_att = 6; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
+			else if(roll == 2) { cur->items[idx].symbol = '['; cur->items[idx].name = "Iron Chainmail"; cur->items[idx].bonus_att = 0; cur->items[idx].bonus_def = 4; cur->items[idx].item_type = ITEM_ARMOR; }
+			else { cur->items[idx].symbol = '['; cur->items[idx].name = "Arachnid Carapace"; cur->items[idx].bonus_att = 0; cur->items[idx].bonus_def = 5; cur->items[idx].item_type = ITEM_ARMOR; }
+		}
+		else if(lvl <= 6)
+		{
+			if(roll == 0) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Heavy Broadsword"; cur->items[idx].bonus_att = 6; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
+			else if(roll == 1) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Trollish Warhammer"; cur->items[idx].bonus_att = 8; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
+			else if(roll == 2) { cur->items[idx].symbol = '['; cur->items[idx].name = "Steel Plate Armor"; cur->items[idx].bonus_att = 0; cur->items[idx].bonus_def = 6; cur->items[idx].item_type = ITEM_ARMOR; }
+			else { cur->items[idx].symbol = '['; cur->items[idx].name = "Warlord's Plate"; cur->items[idx].bonus_att = 0; cur->items[idx].bonus_def = 7; cur->items[idx].item_type = ITEM_ARMOR; }
+		}
+		else
+		{
+			if(roll == 0) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Trollish Warhammer"; cur->items[idx].bonus_att = 8; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
+			else if(roll == 1) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Runed Greatsword"; cur->items[idx].bonus_att = 10; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
+			else if(roll == 2) { cur->items[idx].symbol = '['; cur->items[idx].name = "Dragonscale Mail"; cur->items[idx].bonus_att = 0; cur->items[idx].bonus_def = 8; cur->items[idx].item_type = ITEM_ARMOR; }
+			else { cur->items[idx].symbol = ')'; cur->items[idx].name = "Soulreaver Scythe"; cur->items[idx].bonus_att = 11; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
+		}
+	}
+
+	if(cur->map_backup != NULL)
+	{
+		char tile = cur->map_backup[drop_y][drop_x];
+		if(tile == '.')
+		{
+			cur->map_backup[drop_y][drop_x] = cur->items[idx].symbol;
+		}
+	}
+	PrintChar(drop_y, drop_x, cur->items[idx].symbol);
+	cur->num_items++;
+	g_last_loot_drop = cur->items[idx].name;
+	return cur->items[idx].name;
+}
+
 int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 {
 	if(monster != NULL && monster->mode != 0)
@@ -16,6 +168,7 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 		leveli[lvl].corpses[idx].name = monster->name;
 		leveli[lvl].corpses[idx].maxhp = monster->maxhp;
 		leveli[lvl].corpses[idx].attack = monster->attack;
+		leveli[lvl].corpses[idx].is_elite = monster->is_elite;
 		leveli[lvl].corpses[idx].active = YES;
 
 		switch(monster->symbol)
@@ -31,6 +184,14 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 			case 'D': leveli[lvl].corpses[idx].nutrition = 1000; break;
 			default:  leveli[lvl].corpses[idx].nutrition = 300; break;
 		}
+		if(monster->is_elite == 1)
+		{
+			leveli[lvl].corpses[idx].nutrition = (leveli[lvl].corpses[idx].nutrition * 150) / 100;
+		}
+		else if(monster->is_elite == 2 && monster->symbol != 'D')
+		{
+			leveli[lvl].corpses[idx].nutrition = leveli[lvl].corpses[idx].nutrition * 2;
+		}
 		leveli[lvl].corpses[idx].age = 0;
 		leveli[lvl].num_corpses++;
 	}
@@ -41,6 +202,11 @@ int DropCorpse(Level *leveli, Entity *monster, int y, int x)
 		leveli[lvl].map_backup[y][x] = '%';
 	}
 	PrintChar(y, x, '%');
+
+	if(monster != NULL && monster->mode != 0 && monster->is_elite > 0 && monster->symbol != 'D')
+	{
+		SpawnEliteLootDrop(leveli, monster, y, x);
+	}
 
 	// If the slain monster is the Ancient Dragon boss, spawn the Golden Portal (*) nearby:
 	if(monster->symbol == 'D')
@@ -357,14 +523,27 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 			if(monster->health <= 0)
 			{
 				int was_dragon = (monster->symbol == 'D');
+				int was_miniboss = (monster->is_elite == 2 && !was_dragon);
 				int old_xp = player->xp;
 				monster->alive = DEAD;
 				player->xp += monster->attack;
 				int ranked_up = CheckXPUpgrade(player, old_xp);
+
+				DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
+				const char *dropped_loot = PopLastLootDrop();
+				monster->Position.yPos = -1;
+				monster->Position.xPos = -1;
+
 				if(was_dragon)
 				{
 					PlaySound("boss_kill");
 					snprintf(tmp, sizeof(tmp), "SLAIN %s (+%d XP)! A Golden Portal (*) appears!", monster->name, monster->attack);
+				}
+				else if(was_miniboss)
+				{
+					PlaySound("boss_kill");
+					snprintf(tmp, sizeof(tmp), "VANQUISHED MINI-BOSS %s (+%d XP)!%s",
+						monster->name, monster->attack, dropped_loot ? "" : "");
 				}
 				else if(ranked_up > 0)
 				{
@@ -376,10 +555,11 @@ int Combat(Level *leveli, Level level, Entity *player, Entity *monster, int atta
 					snprintf(tmp, sizeof(tmp), "Killed %s (+%d XP)!", monster->name, monster->attack);
 				}
 				strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
-
-				DropCorpse(leveli, monster, monster->Position.yPos, monster->Position.xPos);
-				monster->Position.yPos = -1;
-				monster->Position.xPos = -1;
+				if(dropped_loot != NULL)
+				{
+					snprintf(tmp, sizeof(tmp), " [LOOT DROP: %s!]", dropped_loot);
+					strncat(log_buf, tmp, sizeof(log_buf) - strlen(log_buf) - 1);
+				}
 
 				ClearMsg();
 				mvprintw(0, 0, "%s", log_buf);

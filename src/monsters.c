@@ -19,6 +19,7 @@ Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 	if(lvl == 10)
 	{
 		monsters[k] = CreateMon('D', 45, 8, DRAGON, FOLLOW, "Ancient Dragon");
+		monsters[k]->is_elite = 2;
 		yx = MonSetup(monsters[k], rooms, yx);
 		k++;
 
@@ -35,13 +36,60 @@ Entity **AddMonsters(Level *level, Entity rooms, int lvl)
 			k++;
 		}
 	}
+	else if(lvl == 3 && k < level->max_mons)
+	{
+		monsters[k] = CreateMon('x', 16, 4, SPIDER, FOLLOW, "Broodmother Arachne");
+		monsters[k]->is_elite = 2;
+		monsters[k]->poison_attack = 1;
+		monsters[k]->extra_attack_chance = 50;
+		monsters[k]->trait_desc = "Mini-Boss: Venomous Broodmother (50% Double-Bite, Poison, Drops Relic)";
+		yx = MonSetup(monsters[k], rooms, yx);
+		k++;
+	}
+	else if(lvl == 6 && k < level->max_mons)
+	{
+		monsters[k] = CreateMon('g', 24, 6, GOBLIN, FOLLOW, "Goblin Warlord");
+		monsters[k]->is_elite = 2;
+		monsters[k]->cleave_chance = 35;
+		monsters[k]->trait_desc = "Mini-Boss: Warlord Chieftain (35% Cleave +3 dmg, Drops Relic)";
+		yx = MonSetup(monsters[k], rooms, yx);
+		k++;
+	}
+	else if(lvl == 8 && k < level->max_mons)
+	{
+		monsters[k] = CreateMon('L', 28, 8, LICH, FOLLOW, "Arch-Lich Malakor");
+		monsters[k]->is_elite = 2;
+		monsters[k]->life_drain = 3;
+		monsters[k]->evasion_chance = 25;
+		monsters[k]->trait_desc = "Mini-Boss: Undead Arch-Mage (+3 HP Drain, 25% Evasion, Drops Relic)";
+		yx = MonSetup(monsters[k], rooms, yx);
+		k++;
+	}
+	else if(lvl >= 11 && (lvl % 2 == 1) && k < level->max_mons)
+	{
+		monsters[k] = CreateMon('T', 36 + (lvl - 11) * 2, 9 + (lvl - 11) / 2, TROLL, FOLLOW, "Elder Behemoth");
+		monsters[k]->is_elite = 2;
+		monsters[k]->cleave_chance = 50;
+		monsters[k]->trait_desc = "Mini-Boss: Abyssal Behemoth (50% Cleave, Regen, Drops Relic)";
+		yx = MonSetup(monsters[k], rooms, yx);
+		k++;
+	}
 
 	// Count up to all the rooms
 	for(int i=0; i<makeamount && k < level->max_mons; i++)
 	{
 		if((rand()%2) == YES) // If every 50% say YES!
 		{
-			monsters[k] = SelMonster(lvl); 
+			monsters[k] = SelMonster(lvl);
+			if(lvl >= 1)
+			{
+				int elite_chance = 10 + (lvl * 2);
+				if(elite_chance > 32) elite_chance = 32;
+				if((rand() % 100) < elite_chance)
+				{
+					PromoteToElite(monsters[k], lvl);
+				}
+			}
 			yx = MonSetup(monsters[k], rooms, yx);
 			k++;
 		}
@@ -109,6 +157,10 @@ int SpawnFogMonster(Level *level)
 
 		// Spawn monster according to level difficulty
 		Entity *mon = SelMonster(level->lvl);
+		if(level->lvl >= 2 && (rand() % 100) < 20)
+		{
+			PromoteToElite(mon, level->lvl);
+		}
 		mon->Position.yPos = sy;
 		mon->Position.xPos = sx;
 		mon->Position.ch = '.';
@@ -241,9 +293,66 @@ Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name)
 	monster->alive = YES;
 	monster->poison_turns = 0;
 	monster->snare_turns = 0;
+	monster->is_elite = 0;
 	ApplyFormTraits(monster, c);
 
 	return monster;
+}
+
+Entity *PromoteToElite(Entity *mon, int lvl)
+{
+	if(mon == NULL || mon->symbol == 'D') return mon;
+	mon->is_elite = 1;
+	mon->type = FOLLOW;
+	mon->maxhp = (mon->maxhp * 3) / 2 + 3 + (lvl / 3);
+	mon->health = mon->maxhp;
+	mon->attack += 2;
+
+	switch(mon->symbol)
+	{
+		case 'x':
+			mon->name = "Elite Venomweaver";
+			mon->poison_attack = 1;
+			mon->trait_desc = "Elite Arachnid (Skitter 40%, Venomous Bite, Aggressive)";
+			break;
+		case 's':
+			mon->name = "Elite Pit Viper";
+			mon->evasion_chance = 15;
+			mon->trait_desc = "Elite Serpent (Venomous Strike, 15% Evasion, Aggressive)";
+			break;
+		case 'V':
+			mon->name = "Elite Bloodwing Bat";
+			mon->life_drain = 2;
+			mon->trait_desc = "Elite Flyer (50% Evasion, +2 HP Blood Drain, Aggressive)";
+			break;
+		case 'g':
+			mon->name = "Elite Goblin Raider";
+			mon->cleave_chance = 20;
+			mon->trait_desc = "Elite Raider (20% Cleave, Scavenger +50%, Aggressive)";
+			break;
+		case 'B':
+			mon->name = "Elite Caustic Ooze";
+			mon->trait_desc = "Elite Ooze (Caustic Acid Shield, High HP, Aggressive)";
+			break;
+		case 'G':
+			mon->name = "Elite Phantom";
+			mon->evasion_chance = 35;
+			mon->trait_desc = "Elite Wraith (Phases Walls, 35% Evasion, Aggressive)";
+			break;
+		case 'T':
+			mon->name = "Elite War Troll";
+			mon->cleave_chance = 45;
+			mon->trait_desc = "Elite Juggernaut (45% Cleave +3 dmg, Regen, Aggressive)";
+			break;
+		case 'L':
+			mon->name = "Elite Lich Acolyte";
+			mon->life_drain = 3;
+			mon->trait_desc = "Elite Undead (+3 HP Soul Drain, 15% Evasion, Aggressive)";
+			break;
+		default:
+			break;
+	}
+	return mon;
 }
 
 int *MonSetup(Entity *monster, Entity room, int *yx)

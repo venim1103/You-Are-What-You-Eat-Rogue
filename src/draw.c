@@ -217,6 +217,7 @@ void RenderFOV(Level *level)
 						unsigned char mflag = 0;
 						if (mon->poison_turns > 0) mflag |= 1;
 						if (mon->snare_turns > 0) mflag |= 2;
+						if (mon->is_elite > 0) mflag |= 4;
 						if (mflag != 0) web_set_cell_flag(r, c, mflag);
 #endif
 					}

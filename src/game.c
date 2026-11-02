@@ -99,12 +99,25 @@ Level *Game(Level *level)
 		if(level[level->lvl].player->Position.type==DSTAIRS)
 		{
 			level = Downstairs(level,level->lvl); 
-			PlaySound(level->lvl == 10 ? "boss" : "stairs");
+			int nlvl = level->lvl;
+			int has_miniboss = (nlvl == 3 || nlvl == 6 || nlvl == 8 || (nlvl >= 11 && (nlvl % 2 == 1)));
+			PlaySound((nlvl == 10 || has_miniboss) ? "boss" : "stairs");
 			level[level->lvl].map = UpdateMap(level[level->lvl].map,Y_SCR,X_SCR);	
 			level[level->lvl].player->Position.type = UNKNOWN;
 			UpdateFOV(&level[level->lvl]);
 			RenderFOV(&level[level->lvl]);
+			if(nlvl == 10)
+			{
+				ClearMsg();
+				mvprintw(0, 0, "DANGER: Floor 10 - The Ancient Dragon's Lair! Slay the Dragon (D) to open the Golden Portal (*)!");
+			}
+			else if(has_miniboss)
+			{
+				ClearMsg();
+				mvprintw(0, 0, "OMINOUS PRESENCE: A powerful Floor Mini-Boss prowls Floor %d! Defeat it for a guaranteed Relic!", nlvl);
+			}
 			PlayerInfoBar(level);
+			refresh();
 			continue;
 		}
 		if(level[level->lvl].player->Position.type==USTAIRS)
