@@ -131,6 +131,51 @@ void web_play_sfx(const char *sfx)
     }
 }
 
+EM_JS(unsigned int, js_get_seed_value, (), {
+    if (typeof window.getRogueSeedValue === 'function') {
+        return (window.getRogueSeedValue() >>> 0);
+    }
+    return 0;
+});
+
+EM_JS(int, js_get_seed_mode, (), {
+    if (typeof window.getRogueSeedMode === 'function') {
+        return window.getRogueSeedMode() | 0;
+    }
+    return 0;
+});
+
+EM_JS(void, js_get_seed_label, (char* out_buf, int max_len), {
+    try {
+        var lbl = (typeof window.getRogueSeedLabel === 'function') ? String(window.getRogueSeedLabel() || "") : "";
+        if (!out_buf || max_len <= 0) return;
+        if (typeof stringToUTF8 === 'function') {
+            stringToUTF8(lbl, out_buf, max_len);
+        } else if (typeof Module !== 'undefined' && Module.stringToUTF8) {
+            Module.stringToUTF8(lbl, out_buf, max_len);
+        } else if (typeof HEAPU8 !== 'undefined') {
+            var bytes = new TextEncoder().encode(lbl);
+            var n = Math.min(bytes.length, max_len - 1);
+            for (var i = 0; i < n; i++) {
+                HEAPU8[out_buf + i] = bytes[i];
+            }
+            HEAPU8[out_buf + n] = 0;
+        }
+    } catch (e) {}
+});
+
+unsigned int web_get_initial_seed(int *out_mode, char *out_label, int label_max)
+{
+    if (out_mode) {
+        *out_mode = js_get_seed_mode();
+    }
+    if (out_label && label_max > 0) {
+        out_label[0] = '\0';
+        js_get_seed_label(out_label, label_max);
+    }
+    return js_get_seed_value();
+}
+
 int initscr(void)
 {
     clear();

@@ -32,6 +32,9 @@
 // MAX_X,MAX_Y are the GAME MAP outer coordinates 
 // while X_SCR,Y_SCR are max values (MAX_X/Y+10) for screen (to avoid bugs)
 extern int MAX_X; extern int MAX_Y; extern int X_SCR; extern int Y_SCR; extern int LVLS; extern int ROOMS;
+extern unsigned int GAME_SEED;
+extern int GAME_SEED_MODE;
+extern char GAME_SEED_LABEL[32];
 
 ///////////////////////////////////////////////////////
 

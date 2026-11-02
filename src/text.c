@@ -19,7 +19,10 @@ int IntroScreen()
 	mvprintw(16, 4, "Eat:     'e' or 'E' / [Eat]");
 	mvprintw(17, 4, "Wait:    '.' or Space / [Next]");
 	mvprintw(18, 4, "Close:   'c' / [Close] (doors)");
-	mvprintw(20, 2, ">> Tap [ Next ] or press any key to enter <<");
+	mvprintw(19, 2, "Active Seed: %s (%s)",
+		GAME_SEED_LABEL,
+		GAME_SEED_MODE == 1 ? "DAILY CHALLENGE" : (GAME_SEED_MODE == 2 ? "CUSTOM SEED" : "RANDOM RUN"));
+	mvprintw(21, 2, ">> Tap [ Next ] or press any key to enter <<");
 	refresh();
 	getch();
 	return 1;
@@ -162,6 +165,18 @@ int PlayerInfoBar(Level *level)
 	}
 	printw("    Inv: %d/10", level[level->lvl].player->num_items);
 	printw("    XP: %d (Rk:%d)", level[level->lvl].player->xp, (level[level->lvl].player->xp / 20) + 1);
+	if(GAME_SEED_MODE == 1)
+	{
+		printw(" [Seed:DAILY-%s]", GAME_SEED_LABEL);
+	}
+	else if(GAME_SEED_MODE == 2)
+	{
+		printw(" [Seed:%s]", GAME_SEED_LABEL);
+	}
+	else
+	{
+		printw(" [Seed:#%u]", GAME_SEED % 1000000u);
+	}
 
 	int py = level[level->lvl].player->Position.yPos;
 	int px = level[level->lvl].player->Position.xPos;
@@ -1378,8 +1393,11 @@ int ExitScreen(Level *level)
 		mvprintw(17, 10, "Turns Taken:    %d", level->turn);
 		mvprintw(18, 10, "Mastery Rank:   Rank %d (%d XP)", rank, pl->xp);
 		mvprintw(19, 10, "Final Score:    %d pts", score);
-		mvprintw(21, 10, "[Run recorded to Hall of Fame! Click 'Fame' in top bar to view]");
-		mvprintw(23, 10, ">> Press any key to conclude your legend <<");
+		mvprintw(20, 10, "Dungeon Seed:   %s (%s)",
+			GAME_SEED_LABEL,
+			GAME_SEED_MODE == 1 ? "Daily Challenge" : (GAME_SEED_MODE == 2 ? "Custom Seed" : "Random"));
+		mvprintw(22, 10, "[Run recorded to Hall of Fame! Click 'Fame' in top bar to view]");
+		mvprintw(24, 10, ">> Press any key to conclude your legend <<");
 		refresh();
 		getch();
 	}
@@ -1395,8 +1413,11 @@ int ExitScreen(Level *level)
 		mvprintw(16, 10, "Turns Taken:    %d", level->turn);
 		mvprintw(17, 10, "Mastery Rank:   Rank %d (%d XP)", rank, pl->xp);
 		mvprintw(18, 10, "Final Score:    %d pts", score);
-		mvprintw(20, 10, "[Run recorded to Hall of Fame! Click 'Fame' in top bar to view]");
-		mvprintw(22, 10, ">> Press any key to continue <<");
+		mvprintw(19, 10, "Dungeon Seed:   %s (%s)",
+			GAME_SEED_LABEL,
+			GAME_SEED_MODE == 1 ? "Daily Challenge" : (GAME_SEED_MODE == 2 ? "Custom Seed" : "Random"));
+		mvprintw(21, 10, "[Run recorded to Hall of Fame! Click 'Fame' in top bar to view]");
+		mvprintw(23, 10, ">> Press any key to continue <<");
 		refresh();
 		getch();
 	}
