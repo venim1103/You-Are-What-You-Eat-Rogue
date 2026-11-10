@@ -38,6 +38,8 @@ const char *GetCorpseStage(int age);
 int AskEatCorpse(Level *leveli, Level level, Entity *player, int y, int x);
 int EatCorpse(Level *leveli, Level level, Entity *player, Corpse *corpse);
 int ActivateFormAbility(Level *leveli, Level level, Entity *player);
+int AreMonstersRivals(Entity *m1, Entity *m2);
+int MonsterInfight(Level *leveli, Level level, Entity *attacker, Entity *defender);
 
 int GetPlayerAttack(Entity *player);
 int GetPlayerDefense(Entity *player);
@@ -46,6 +48,8 @@ void SpawnFloorShrines(Level *level, Entity rooms, int lvl);
 void SpawnFloorHazards(Level *level, Entity rooms, int lvl);
 void TriggerFloorHazard(Level *leveli, Level level, Entity *entity, int is_player, int y, int x);
 int UseShrine(Level *leveli, Level level, Entity *player, int y, int x);
+const char *GetConsumableDesc(int effect_id);
+int UseConsumableItem(Level *leveli, Level level, Entity *player, Item *it);
 Item *GetItemAt(Level level, int y, int x);
 int PickUpFloorItem(Level *leveli, Level level, Entity *player);
 int ShowInventory(Level *leveli, Level level, Entity *player);

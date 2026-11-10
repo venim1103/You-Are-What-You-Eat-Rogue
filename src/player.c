@@ -207,6 +207,7 @@ void CopyPlayer(Entity *dest, Entity *src)
 	dest->hunger_rate = src->hunger_rate;
 	dest->poison_turns = src->poison_turns;
 	dest->snare_turns = src->snare_turns;
+	dest->frenzy_turns = src->frenzy_turns;
 	dest->regen_rate = src->regen_rate;
 	dest->can_open_doors = src->can_open_doors;
 	dest->extra_attack_chance = src->extra_attack_chance;
@@ -267,6 +268,7 @@ Entity *PlayerSetup(Level *leveli, Entity *player, Entity room)
 	player->alive = YES;
 	player->poison_turns = 0;
 	player->snare_turns = 0;
+	player->frenzy_turns = 0;
 	player->is_elite = 0;
 	player->ability_cd = 0;
 	player->num_items = 0;

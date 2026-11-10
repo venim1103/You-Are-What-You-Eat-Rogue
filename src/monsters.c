@@ -293,6 +293,7 @@ Entity *CreateMon(char c, int hp, int att, int mode, int type, char *name)
 	monster->alive = YES;
 	monster->poison_turns = 0;
 	monster->snare_turns = 0;
+	monster->frenzy_turns = 0;
 	monster->is_elite = 0;
 	ApplyFormTraits(monster, c);
 

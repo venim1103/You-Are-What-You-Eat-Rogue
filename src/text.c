@@ -258,18 +258,18 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 		int roll;
 		if(lvl <= 2)
 		{
-			int pool[4] = {0, 1, 4, 5};
-			roll = pool[rand() % 4];
+			int pool[6] = {0, 1, 4, 5, 9, 10};
+			roll = pool[rand() % 6];
 		}
 		else if(lvl <= 5)
 		{
-			int pool[6] = {1, 2, 3, 4, 5, 6};
-			roll = pool[rand() % 6];
+			int pool[9] = {1, 2, 3, 4, 5, 6, 9, 10, 11};
+			roll = pool[rand() % 9];
 		}
 		else
 		{
-			int pool[6] = {2, 3, 5, 6, 7, 8};
-			roll = pool[rand() % 6];
+			int pool[9] = {2, 3, 5, 6, 7, 8, 10, 11, 12};
+			roll = pool[rand() % 9];
 		}
 
 		if(roll == 0)
@@ -336,13 +336,45 @@ void SpawnFloorItems(Level *level, Entity rooms, int lvl)
 			level->items[idx].bonus_def = 0;
 			level->items[idx].item_type = ITEM_WEAPON;
 		}
-		else
+		else if(roll == 8)
 		{
 			level->items[idx].symbol = '[';
 			level->items[idx].name = "Dragonscale Mail";
 			level->items[idx].bonus_att = 0;
 			level->items[idx].bonus_def = 8;
 			level->items[idx].item_type = ITEM_ARMOR;
+		}
+		else if(roll == 9)
+		{
+			level->items[idx].symbol = '!';
+			level->items[idx].name = "Crimson Vitality Vial";
+			level->items[idx].bonus_att = 1;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_CONSUMABLE;
+		}
+		else if(roll == 10)
+		{
+			level->items[idx].symbol = '!';
+			level->items[idx].name = "Mutagenic Serum";
+			level->items[idx].bonus_att = 2;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_CONSUMABLE;
+		}
+		else if(roll == 11)
+		{
+			level->items[idx].symbol = '?';
+			level->items[idx].name = "Scroll of Discord";
+			level->items[idx].bonus_att = 3;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_CONSUMABLE;
+		}
+		else
+		{
+			level->items[idx].symbol = '?';
+			level->items[idx].name = "Scroll of Torment";
+			level->items[idx].bonus_att = 4;
+			level->items[idx].bonus_def = 0;
+			level->items[idx].item_type = ITEM_CONSUMABLE;
 		}
 
 		level->map_backup[y][x] = level->items[idx].symbol;
@@ -681,6 +713,154 @@ int UseShrine(Level *leveli, Level level, Entity *player, int y, int x)
 	return 0;
 }
 
+const char *GetConsumableDesc(int effect_id)
+{
+	switch(effect_id)
+	{
+		case 1: return "+15 HP, +250 Hunger, Cures Poison";
+		case 2: return "+15 XP, Reset Ability CD, Purify Pack Corpses";
+		case 3: return "Frenzies foes (8t Infighting) & reveals floor";
+		case 4: return "8 Arcane Dmg + 3t Web Snare to foes in 4 tiles";
+		default: return "Mysterious Relic";
+	}
+}
+
+int UseConsumableItem(Level *leveli, Level level, Entity *player, Item *it)
+{
+	if(leveli == NULL || player == NULL || it == NULL) return 0;
+	Level *cur = &leveli[leveli->lvl];
+	int eff = it->bonus_att;
+	int py = player->Position.yPos;
+	int px = player->Position.xPos;
+
+	if(eff == 1)
+	{
+		// Crimson Vitality Vial (!)
+		PlaySound("shrine");
+		player->health += 15;
+		if(player->health > player->maxhp) player->health = player->maxhp;
+		player->hunger += 250;
+		if(player->hunger > player->max_hunger) player->hunger = player->max_hunger;
+		player->poison_turns = 0;
+		ClearMsg();
+		mvprintw(0, 0, "Quaffed %s! Restored +15 HP, +250 hunger, and purged all poison!", it->name);
+	}
+	else if(eff == 2)
+	{
+		// Mutagenic Serum (!)
+		int purified = 0;
+		for(int i = 0; i < player->num_items; i++)
+		{
+			if(player->inventory[i].item_type == ITEM_CORPSE)
+			{
+				player->inventory[i].corpse_data.age = 0;
+				purified++;
+			}
+		}
+		player->ability_cd = 0;
+		player->health += 6;
+		if(player->health > player->maxhp) player->health = player->maxhp;
+		int old_xp = player->xp;
+		player->xp += 15;
+		int ranked = CheckXPUpgrade(player, old_xp);
+		if(!ranked) PlaySound("polymorph");
+		ClearMsg();
+		if(ranked > 0)
+		{
+			mvprintw(0, 0, "Injected %s! +15 XP [RANK UP! Rk:%d], +6 HP, ability ready, %d corpses purified!",
+				it->name, (player->xp / 20) + 1, purified);
+		}
+		else
+		{
+			mvprintw(0, 0, "Injected %s! Gained +15 XP, +6 HP, reset ability CD, and purified %d pack corpses!",
+				it->name, purified);
+		}
+	}
+	else if(eff == 3)
+	{
+		// Scroll of Discord (?)
+		PlaySound("ability");
+		int frenzied = 0;
+		for(int m = 0; m < cur->mons; m++)
+		{
+			Entity *mon = cur->monsters[m];
+			if(mon != NULL && mon->alive == YES)
+			{
+				int my = mon->Position.yPos;
+				int mx = mon->Position.xPos;
+				if(abs(my - py) + abs(mx - px) <= 8 || (cur->visible != NULL && my >= 0 && my < MAX_Y && mx >= 0 && mx < MAX_X && cur->visible[my][mx]))
+				{
+					mon->frenzy_turns += 8;
+					frenzied++;
+				}
+				for(int ry = my - 1; ry <= my + 1; ry++)
+				{
+					for(int rx = mx - 1; rx <= mx + 1; rx++)
+					{
+						if(ry >= 0 && ry < MAX_Y && rx >= 0 && rx < MAX_X)
+						{
+							if(cur->discovered != NULL) cur->discovered[ry][rx] = 1;
+							if(cur->visible != NULL) cur->visible[ry][rx] = 1;
+						}
+					}
+				}
+			}
+		}
+		RenderFOV(cur);
+		ClearMsg();
+		mvprintw(0, 0, "Read %s! Maddening whispers drive %d monsters into an 8-turn infighting frenzy!", it->name, frenzied);
+	}
+	else if(eff == 4)
+	{
+		// Scroll of Torment (?)
+		PlaySound("fire");
+		int hit_count = 0;
+		int kills = 0;
+		int xp_gain = 0;
+		for(int m = 0; m < cur->mons; m++)
+		{
+			Entity *mon = cur->monsters[m];
+			if(mon != NULL && mon->alive == YES)
+			{
+				int dist = abs(mon->Position.yPos - py) + abs(mon->Position.xPos - px);
+				if(dist <= 4)
+				{
+					mon->health -= 8;
+					mon->snare_turns += 3;
+					hit_count++;
+					if(mon->health <= 0)
+					{
+						int old_xp = player->xp;
+						mon->alive = DEAD;
+						player->xp += mon->attack;
+						CheckXPUpgrade(player, old_xp);
+						xp_gain += mon->attack;
+						kills++;
+						DropCorpse(leveli, mon, mon->Position.yPos, mon->Position.xPos);
+						mon->Position.yPos = -1;
+						mon->Position.xPos = -1;
+					}
+				}
+			}
+		}
+		RenderFOV(cur);
+		ClearMsg();
+		if(kills > 0)
+		{
+			mvprintw(0, 0, "Read %s! Eldritch chains blast %d foes for 8 dmg + 3t snare (%d slain, +%d XP)!",
+				it->name, hit_count, kills, xp_gain);
+		}
+		else
+		{
+			mvprintw(0, 0, "Read %s! Eldritch chains blast %d foes within 4 tiles for 8 dmg & 3t snare!",
+				it->name, hit_count);
+		}
+	}
+	PlayerInfoBar(leveli);
+	refresh();
+	return 1;
+}
+
 Item *GetItemAt(Level level, int y, int x)
 {
 	for(int i = 0; i < level.num_items; i++)
@@ -719,7 +899,8 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 		player->num_items++;
 
 		it->active = NO;
-		if(leveli[leveli->lvl].map_backup[py][px] == ')' || leveli[leveli->lvl].map_backup[py][px] == '[')
+		if(leveli[leveli->lvl].map_backup[py][px] == ')' || leveli[leveli->lvl].map_backup[py][px] == '[' ||
+		   leveli[leveli->lvl].map_backup[py][px] == '!' || leveli[leveli->lvl].map_backup[py][px] == '?')
 		{
 			leveli[leveli->lvl].map_backup[py][px] = '.';
 		}
@@ -731,9 +912,13 @@ int PickUpFloorItem(Level *leveli, Level level, Entity *player)
 		{
 			mvprintw(0, 0, "Picked up %s (+%d ATK)! Press 'i' for pack.", it->name, it->bonus_att);
 		}
-		else
+		else if(it->item_type == ITEM_ARMOR)
 		{
 			mvprintw(0, 0, "Picked up %s (+%d DEF)! Press 'i' for pack.", it->name, it->bonus_def);
+		}
+		else
+		{
+			mvprintw(0, 0, "Picked up %s (%c) [%s]! Press 'E' or 'i' to use.", it->name, it->symbol, GetConsumableDesc(it->bonus_att));
 		}
 		PlayerInfoBar(leveli);
 		refresh();
@@ -824,6 +1009,10 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 				{
 					const char *st = GetCorpseStage(it->corpse_data.age);
 					mvprintw(5 + i, 2, "%c%c [Slot %2d] %s %s Corpse (%d nut) [EATABLE]", p1, p2, i + 1, st, it->name, it->corpse_data.nutrition);
+				}
+				else if (it->item_type == ITEM_CONSUMABLE)
+				{
+					mvprintw(5 + i, 2, "%c%c [Slot %2d] %s (%c) [%s] [USABLE]", p1, p2, i + 1, it->name, it->symbol, GetConsumableDesc(it->bonus_att));
 				}
 			}
 			else
@@ -1002,6 +1191,19 @@ int ShowInventory(Level *leveli, Level level, Entity *player)
 					player->num_items--;
 					EatCorpse(leveli, level, player, &saved_corpse);
 					break; // Exit inventory after eating / polymorphing
+				}
+				else if (it->item_type == ITEM_CONSUMABLE)
+				{
+					Item saved_it = *it;
+					if (player->equipped_weapon > selected) player->equipped_weapon--;
+					if (player->equipped_armor > selected) player->equipped_armor--;
+					for (int k = selected; k < player->num_items - 1; k++)
+					{
+						player->inventory[k] = player->inventory[k + 1];
+					}
+					player->num_items--;
+					UseConsumableItem(leveli, level, player, &saved_it);
+					return 1; // Exit inventory and keep message on Row 0
 				}
 			}
 			else
@@ -1247,8 +1449,10 @@ int LookMode(Level *leveli, Level level, Entity *player)
 			{
 				if (it->item_type == ITEM_WEAPON)
 					snprintf(desc, sizeof(desc), "You (%s) standing on %s (+%d ATK weapon, 'g' to pick up)", player->name, it->name, it->bonus_att);
-				else
+				else if (it->item_type == ITEM_ARMOR)
 					snprintf(desc, sizeof(desc), "You (%s) standing on %s (+%d DEF armor, 'g' to pick up)", player->name, it->name, it->bonus_def);
+				else
+					snprintf(desc, sizeof(desc), "You (%s) standing on %s (%c: %s, 'g' to pick up)", player->name, it->name, it->symbol, GetConsumableDesc(it->bonus_att));
 			}
 			else if (corp != NULL && corp->active == YES)
 			{
@@ -1273,10 +1477,12 @@ int LookMode(Level *leveli, Level level, Entity *player)
 
 			if (mon != NULL && mon->alive == YES)
 			{
-				const char *beh = (mon->type == FOLLOW) ? "Aggressive" : "Wandering";
+				const char *beh = (mon->frenzy_turns > 0) ? "FRENZIED" : ((mon->type == FOLLOW) ? "Aggressive" : "Wandering");
 				const char *tier_tag = (mon->symbol == 'D') ? " [FLOOR BOSS]" : (mon->is_elite == 2 ? " [MINI-BOSS]" : (mon->is_elite == 1 ? " [ELITE]" : ""));
-				char st_buf[64] = "";
-				if (mon->poison_turns > 0 && mon->snare_turns > 0)
+				char st_buf[96] = "";
+				if (mon->frenzy_turns > 0)
+					snprintf(st_buf, sizeof(st_buf), " [FRENZY:%dt]", mon->frenzy_turns);
+				else if (mon->poison_turns > 0 && mon->snare_turns > 0)
 					snprintf(st_buf, sizeof(st_buf), " [POISONED:%dt, ENSNARED:%dt]", mon->poison_turns, mon->snare_turns);
 				else if (mon->poison_turns > 0)
 					snprintf(st_buf, sizeof(st_buf), " [POISONED:%dt]", mon->poison_turns);
@@ -1299,10 +1505,15 @@ int LookMode(Level *leveli, Level level, Entity *player)
 					snprintf(desc, sizeof(desc), "Weapon: %s ()) | +%d Attack Bonus (Stand here & press 'g' to pick up)",
 						it->name, it->bonus_att);
 				}
-				else
+				else if (it->item_type == ITEM_ARMOR)
 				{
 					snprintf(desc, sizeof(desc), "Armor: %s ([) | +%d Defense Bonus (Stand here & press 'g' to pick up)",
 						it->name, it->bonus_def);
+				}
+				else
+				{
+					snprintf(desc, sizeof(desc), "Relic Consumable: %s (%c) | %s (Stand here & press 'g' to pick up)",
+						it->name, it->symbol, GetConsumableDesc(it->bonus_att));
 				}
 			}
 			else
@@ -1517,29 +1728,29 @@ int QuickDrop(Level *leveli, Level level, Entity *player)
 
 int EatFromInventory(Level *leveli, Level level, Entity *player)
 {
-	int corpses[10];
+	int usable[10];
 	int count = 0;
 	for(int i = 0; i < player->num_items; i++)
 	{
-		if(player->inventory[i].item_type == ITEM_CORPSE)
+		if(player->inventory[i].item_type == ITEM_CORPSE || player->inventory[i].item_type == ITEM_CONSUMABLE)
 		{
-			corpses[count++] = i;
+			usable[count++] = i;
 		}
 	}
 
 	if(count == 0)
 	{
 		ClearMsg();
-		mvprintw(0, 0, "No corpses stored in your backpack.");
+		mvprintw(0, 0, "No corpses or consumable relics stored in your backpack.");
 		refresh();
 		return 0;
 	}
 
 	ClearMsg();
-	mvprintw(0, 0, "Eat stored corpse: ");
+	mvprintw(0, 0, "Consume from pack: ");
 	for(int i = 0; i < count; i++)
 	{
-		int idx = corpses[i];
+		int idx = usable[i];
 		printw("[%c] %s  ", 'a' + idx, player->inventory[idx].name);
 	}
 	printw("(or Space to cancel)");
@@ -1560,6 +1771,19 @@ int EatFromInventory(Level *leveli, Level level, Entity *player)
 			}
 			player->num_items--;
 			EatCorpse(leveli, level, player, &saved);
+			return 1;
+		}
+		else if(player->inventory[idx].item_type == ITEM_CONSUMABLE)
+		{
+			Item saved_it = player->inventory[idx];
+			if(player->equipped_weapon > idx) player->equipped_weapon--;
+			if(player->equipped_armor > idx) player->equipped_armor--;
+			for(int k = idx; k < player->num_items - 1; k++)
+			{
+				player->inventory[k] = player->inventory[k + 1];
+			}
+			player->num_items--;
+			UseConsumableItem(leveli, level, player, &saved_it);
 			return 1;
 		}
 	}
