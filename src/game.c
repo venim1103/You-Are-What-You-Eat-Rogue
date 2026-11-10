@@ -314,6 +314,10 @@ Level *Game(Level *level)
 					{
 						mvprintw(0, 0, "Standing on: %s (+%d DEF armor). Press 'g' to pick up.", floor_it->name, floor_it->bonus_def);
 					}
+					else if(floor_it->item_type == ITEM_CONSUMABLE)
+					{
+						mvprintw(0, 0, "Standing on: %s (%c) [%s]. Press 'g' to pick up.", floor_it->name, floor_it->symbol, GetConsumableDesc(floor_it->bonus_att));
+					}
 				}
 				else if(floor_corp != NULL && floor_corp->active == YES)
 				{

@@ -114,8 +114,16 @@ const char *SpawnEliteLootDrop(Level *leveli, Entity *monster, int y, int x)
 	else
 	{
 		// Elite Variant Enhanced Loot Drop:
-		int roll = rand() % 4;
-		if(lvl <= 3)
+		int roll = rand() % 5;
+		if(roll == 4)
+		{
+			int c_roll = rand() % 4;
+			if(c_roll == 0) { cur->items[idx].symbol = '!'; cur->items[idx].name = "Mutagenic Serum"; cur->items[idx].bonus_att = 2; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_CONSUMABLE; }
+			else if(c_roll == 1) { cur->items[idx].symbol = '?'; cur->items[idx].name = "Scroll of Discord"; cur->items[idx].bonus_att = 3; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_CONSUMABLE; }
+			else if(c_roll == 2) { cur->items[idx].symbol = '?'; cur->items[idx].name = "Scroll of Torment"; cur->items[idx].bonus_att = 4; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_CONSUMABLE; }
+			else { cur->items[idx].symbol = '!'; cur->items[idx].name = "Crimson Vitality Vial"; cur->items[idx].bonus_att = 1; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_CONSUMABLE; }
+		}
+		else if(lvl <= 3)
 		{
 			if(roll == 0) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Steel Shortsword"; cur->items[idx].bonus_att = 4; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
 			else if(roll == 1) { cur->items[idx].symbol = ')'; cur->items[idx].name = "Heavy Broadsword"; cur->items[idx].bonus_att = 6; cur->items[idx].bonus_def = 0; cur->items[idx].item_type = ITEM_WEAPON; }
@@ -1218,5 +1226,109 @@ int ActivateFormAbility(Level *leveli, Level level, Entity *player)
 	}
 
 	return 0;
+}
+
+int AreMonstersRivals(Entity *m1, Entity *m2)
+{
+	if(m1 == NULL || m2 == NULL || m1 == m2) return 0;
+	if(m1->alive != YES || m2->alive != YES) return 0;
+	if(m1->symbol == 'D' || m2->symbol == 'D')
+	{
+		return (m1->frenzy_turns > 0 || m2->frenzy_turns > 0) ? 1 : 0;
+	}
+	if(m1->frenzy_turns > 0 || m2->frenzy_turns > 0) return 1;
+	if(m1->symbol == m2->symbol) return 0;
+
+	char s1 = m1->symbol;
+	char s2 = m2->symbol;
+	// Natural Dungeon Rivalries:
+	// 1. Spiders ('x') vs Snakes ('s') & Vampire Bats ('V')
+	if((s1 == 'x' && (s2 == 's' || s2 == 'V')) || (s2 == 'x' && (s1 == 's' || s1 == 'V'))) return 1;
+	// 2. Goblins ('g') vs Acid Slimes ('B'), Spiders ('x'), and Ghosts ('G')
+	if((s1 == 'g' && (s2 == 'B' || s2 == 'x' || s2 == 'G')) || (s2 == 'g' && (s1 == 'B' || s1 == 'x' || s1 == 'G'))) return 1;
+	// 3. Trolls ('T') vs Goblins ('g') and Necromancer Liches ('L')
+	if((s1 == 'T' && (s2 == 'g' || s2 == 'L')) || (s2 == 'T' && (s1 == 'g' || s1 == 'L'))) return 1;
+	// 4. Acid Slimes ('B') dissolve Snakes ('s') and Trolls ('T')
+	if((s1 == 'B' && (s2 == 's' || s2 == 'T')) || (s2 == 'B' && (s1 == 's' || s1 == 'T'))) return 1;
+	return 0;
+}
+
+int MonsterInfight(Level *leveli, Level level, Entity *attacker, Entity *defender)
+{
+	if(leveli == NULL || attacker == NULL || defender == NULL) return 0;
+	if(attacker->alive != YES || defender->alive != YES) return 0;
+
+	Level *cur = &leveli[leveli->lvl];
+	int ay = attacker->Position.yPos;
+	int ax = attacker->Position.xPos;
+	int dy = defender->Position.yPos;
+	int dx = defender->Position.xPos;
+	int is_vis = 0;
+	if(cur->visible != NULL)
+	{
+		if((ay >= 0 && ay < MAX_Y && ax >= 0 && ax < MAX_X && cur->visible[ay][ax]) ||
+		   (dy >= 0 && dy < MAX_Y && dx >= 0 && dx < MAX_X && cur->visible[dy][dx]))
+		{
+			is_vis = 1;
+		}
+	}
+
+	int dmg = attacker->attack;
+	if(attacker->cleave_chance > 0 && (rand() % 100) < attacker->cleave_chance)
+	{
+		dmg += 3;
+	}
+	defender->health -= dmg;
+
+	if(attacker->life_drain > 0 && attacker->health < attacker->maxhp)
+	{
+		attacker->health += attacker->life_drain;
+		if(attacker->health > attacker->maxhp) attacker->health = attacker->maxhp;
+	}
+	if(attacker->poison_attack && defender->symbol != 's' && defender->symbol != 'B' && defender->symbol != 'L' && defender->health > 0)
+	{
+		defender->poison_turns += 2;
+	}
+
+	if(defender->health <= 0)
+	{
+		defender->alive = DEAD;
+		int xp_bonus = (defender->attack + 1) / 2;
+		int old_xp = cur->player->xp;
+		cur->player->xp += xp_bonus;
+		CheckXPUpgrade(cur->player, old_xp);
+
+		DropCorpse(leveli, defender, dy, dx);
+		const char *dropped_loot = PopLastLootDrop();
+		defender->Position.yPos = -1;
+		defender->Position.xPos = -1;
+
+		if(is_vis)
+		{
+			PlaySound("kill");
+			ClearMsg();
+			if(dropped_loot != NULL)
+			{
+				mvprintw(0, 0, "RIVALRY! %s slays %s in combat! (+%d XP, dropped %s!)",
+					attacker->name, defender->name, xp_bonus, dropped_loot);
+			}
+			else
+			{
+				mvprintw(0, 0, "RIVALRY! %s slays %s in a dungeon brawl! (+%d XP, corpse dropped!)",
+					attacker->name, defender->name, xp_bonus);
+			}
+			PlayerInfoBar(leveli);
+			refresh();
+		}
+	}
+	else if(is_vis)
+	{
+		PlaySound("hit");
+		ClearMsg();
+		mvprintw(0, 0, "CLASH! %s attacks rival %s for %d dmg! [%s: %d/%d HP]",
+			attacker->name, defender->name, dmg, defender->name, defender->health, defender->maxhp);
+		refresh();
+	}
+	return 1;
 }
  

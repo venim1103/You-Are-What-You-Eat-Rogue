@@ -208,6 +208,8 @@ int HandleInput(Level *leveli, Level level, int *yx)
 				case '%':
 				case ')':
 				case '[':
+				case '!':
+				case '?':
 				{
 					if(ch == '+')
 					{
@@ -270,6 +272,10 @@ int HandleInput(Level *leveli, Level level, int *yx)
 						{
 							mvprintw(0, 0, "You see %s (+%d DEF) here. Press 'g' to pick up.", it->name, it->bonus_def);
 						}
+						else if(it->item_type == ITEM_CONSUMABLE)
+						{
+							mvprintw(0, 0, "You see %s (%c) [%s]. Press 'g' to pick up.", it->name, it->symbol, GetConsumableDesc(it->bonus_att));
+						}
 						refresh();
 					}
 					break;
@@ -317,6 +323,10 @@ int HandleInput(Level *leveli, Level level, int *yx)
 			int py = level.player->Position.yPos;
 			int px = level.player->Position.xPos;
 			int dist = abs(my - py) + abs(mx - px);
+			if(level.monsters[i]->frenzy_turns > 0)
+			{
+				level.monsters[i]->frenzy_turns--;
+			}
 
 			// Ensnared/stunned monsters cannot move, though they can still melee if adjacent:
 			if(level.monsters[i]->snare_turns > 0)
@@ -329,9 +339,41 @@ int HandleInput(Level *leveli, Level level, int *yx)
 				continue;
 			}
 
+			// Monster Infighting & Faction Rivalries: check for an adjacent rival monster
+			Entity *rival = NULL;
+			int best_rdist = 999;
+			for(int j = 0; j < level.mons; j++)
+			{
+				if(i == j || level.monsters[j] == NULL || level.monsters[j]->alive != YES) continue;
+				if(!AreMonstersRivals(level.monsters[i], level.monsters[j])) continue;
+				int ry = level.monsters[j]->Position.yPos;
+				int rx = level.monsters[j]->Position.xPos;
+				int rdist = abs(my - ry) + abs(mx - rx);
+				if(abs(my - ry) <= 1 && abs(mx - rx) <= 1)
+				{
+					rival = level.monsters[j];
+					best_rdist = 1;
+					break;
+				}
+				if((level.monsters[i]->frenzy_turns > 0 || dist > 3) && rdist <= 4 && rdist < best_rdist)
+				{
+					best_rdist = rdist;
+					rival = level.monsters[j];
+				}
+			}
+			if(rival != NULL && best_rdist == 1 && (level.monsters[i]->frenzy_turns > 0 || dist > 1))
+			{
+				MonsterInfight(leveli, level, level.monsters[i], rival);
+				continue;
+			}
+
 			int is_vis = (level.visible != NULL && my >= 0 && my < MAX_Y && mx >= 0 && mx < MAX_X) ? level.visible[my][mx] : 0;
 
-			if(level.monsters[i]->type==FOLLOW && (dist <= 14 || is_vis))
+			if(rival != NULL && (level.monsters[i]->frenzy_turns > 0 || dist > 3))
+			{
+				yx = PathFindFollow(yx, my, mx, rival->Position.yPos, rival->Position.xPos, level.map_backup, level.monsters[i]->can_phase_walls);
+			}
+			else if(level.monsters[i]->type==FOLLOW && (dist <= 14 || is_vis))
 			{
 				yx = PathFindFollow(yx, my, mx, py, px, level.map_backup, level.monsters[i]->can_phase_walls);
 			} else if(level.monsters[i]->mode==RANDOM_S)

@@ -2,7 +2,7 @@
 
 **Repository:** `venim1103/You-Are-What-You-Eat-Rogue`  
 **Current Branch:** `master`  
-**Latest Production Commit:** `dd766e9` + Sprints 11 & 12 Upgrades  
+**Latest Production Commit:** `1b95fc7` + Sprints 13 & 14 Upgrades  
 **GitHub Pages Target:** `venim1103.github.io/You-Are-What-You-Eat-Rogue`  
 **Document Date:** November 2026  
 
@@ -173,7 +173,7 @@
     * Added `SpawnEliteLootDrop()` in `src/combat.c`: Mini-Bosses (`is_elite == 2`) guarantee a signature Relic weapon or armor drop (`Venomfang Sabre +6 ATK`, `Arachnid Carapace +5 DEF`, `Warlord's Cleaver +9 ATK`, `Warlord's Plate +7 DEF`, `Soulreaver Scythe +11 ATK`, `Arch-Lich Robes +9 DEF`), while Elite Variants (`is_elite == 1`) have a 55% chance to drop depth-scaled equipment, alongside `+50%` (Elite) and `+100%` (Mini-Boss) corpse nutrition bonuses.
     * Encoded bit `4` in `cell_flag_buf` (`src/draw.c`) to render a golden pulsing aura (`.g-st-elite`) around visible Elite and Boss monsters in `web/index.html`, added a `👑 Elite/Boss Sighted: X` pill to `#status-strip`, and surfaced `[ELITE]`, `[MINI-BOSS]`, and `[FLOOR BOSS]` tags in Look Mode (`'v'`).
 
-### Sprint 12: Run Statistics & Lifetime Achievement Badges (Latest Release)
+### Sprint 12: Run Statistics & Lifetime Achievement Badges
 * **Priority 1 — Lifetime Career Statistics & Achievement Badges in Hall of Fame (`web/index.html`):**
   * **Status:** Completed.
   * **Scope:**
@@ -181,13 +181,34 @@
     * Added 8 unlockable **Lifetime Achievement Badges** in the Hall of Fame modal (`#hof-achievements`): **First Taste (`🍖`)**, **Deep Delver (`🕯️`)**, **Metabolic Master (`⭐`)**, **Monster Hunter (`⚔️`)**, **Dungeon Conqueror (`👑`)**, **Apex Predator (`🐉`)**, **Daily Conqueror (`📅`)**, and **Master Polymorpher (`🧬`)**.
     * Upgraded the toolbar button to display live badge progress (`🏆 Fame (X/8)`) and added lifetime kill/metamorphosis counters to the Hall of Fame header.
 
+### Sprint 13: Consumable Dungeon Scroll & Potion Relics (Latest Release)
+* **Priority 1 — Consumable Potion (`!`) & Scroll (`?`) Relics (`include/global.h`, `include/functions.h`, `src/text.c`, `src/combat.c`, `src/input.c`, `src/check.c`, `src/game.c`, `src/route.c`, `web/index.html`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `ITEM_CONSUMABLE` item category alongside `GetConsumableDesc()` and `UseConsumableItem()`, usable in any polymorphed form (including beast forms without hands) via the Backpack (`'i'`) or Quick-Consume (`'E'`) menu.
+    * Added 4 tactical consumable relics to floor item tables and Elite loot drops:
+      * **Crimson Vitality Vial (`!`):** Restores `+15 HP`, `+250` hunger, and cures poison.
+      * **Mutagenic Serum (`!`):** Grants `+15 XP` (triggering Mastery Rank upgrades), heals `+6 HP`, resets active ability cooldown, and purifies all backpack corpses to `Fresh` (`age = 0`).
+      * **Scroll of Discord (`?`):** Drives visible and nearby monsters (within 8 tiles) into an 8-turn madness (`frenzy_turns += 8`) where they aggressively hunt and fight each other, while revealing their positions on the map.
+      * **Scroll of Torment (`?`):** Unleashes eldritch chains that deal `8` arcane damage and apply a `3-turn` web snare to all foes within 4 tiles, awarding XP and dropping corpses on lethal hits.
+    * Integrated `!` and `?` glyphs into Look Mode (`'v'`), HUD underfoot prompts, monster pathfinding, and glowing Web UI syntax styling (`.g-potion`, `.g-scroll`).
+
+### Sprint 14: Monster Infighting & Faction Rivalries (Latest Release)
+* **Priority 1 — Rival Monster Factions & Frenzy Infighting (`include/structs.h`, `include/functions.h`, `src/player.c`, `src/monsters.c`, `src/check.c`, `src/input.c`, `src/combat.c`, `src/draw.c`, `src/text.c`):**
+  * **Status:** Completed.
+  * **Scope:**
+    * Added `frenzy_turns` to `Entity` and implemented `AreMonstersRivals()` and `MonsterInfight()`.
+    * Established natural dungeon rivalries: **Spiders (`x`)** vs. **Snakes (`s`) / Vampire Bats (`V`)**, **Goblins (`g`)** vs. **Acid Slimes (`B`) / Spiders (`x`) / Ghosts (`G`)**, **Trolls (`T`)** vs. **Goblins (`g`) / Liches (`L`)**, and **Acid Slimes (`B`)** vs. **Snakes (`s`) / Trolls (`T`)**, plus universal infighting for any monster afflicted by `frenzy_turns > 0`.
+    * Rival or frenzied monsters clash in melee when colliding or adjacent, applying their Cleave, Life Drain, and Venom traits, dropping fresh corpses (and Elite/Mini-Boss relics), and awarding `+50%` scavenger XP to the player.
+    * Surfaced `[FRENZY:Xt]` and `FRENZIED` behavior tags in Look Mode (`'v'`) and golden aura highlighting in `RenderFOV()`.
+
 ---
 
 ## 5. Next Sprint Roadmap (Future Enhancements)
 
-* **Priority 1 — Consumable Dungeon Scroll / Potion Relics:** Add rare single-use tactical consumables or metabolic catalysts for deeper build variety.
-* **Priority 2 — Monster Infighting & Faction Rivalries:** Allow rival dungeon species or frenzied monsters to clash when provoked or lured.
-* **Priority 3 — Extended Endgame Depth Modifiers (Floors 11+ Endless Abyss):** Add scaling environmental modifiers and abyssal hazards beyond Floor 10 for endless high-score chasers.
+* **Priority 1 — Extended Endgame Depth Modifiers (Floors 11+ Endless Abyss):** Add scaling environmental modifiers and abyssal hazards beyond Floor 10 for endless high-score chasers.
+* **Priority 2 — Equipment Enchantment & Altar Reforging:** Allow players to sacrifice spare equipment or corpses at shrines to temper wielded weapons and armor.
+* **Priority 3 — Boss Mutation & Apex Ability Evolutions:** Grant enhanced secondary active abilities when devouring Floor Mini-Boss corpses (`is_elite == 2`).
 
 ---
 

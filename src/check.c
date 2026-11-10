@@ -114,7 +114,14 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 		Entity *other = GetMonsterAt(y, x, level);
 		if(other != NULL && other != monster && other->alive == YES)
 		{
-			monster->Position.type = UNKNOWN;
+			if(AreMonstersRivals(monster, other))
+			{
+				MonsterInfight(leveli, level, monster, other);
+			}
+			else
+			{
+				monster->Position.type = UNKNOWN;
+			}
 			return monster;
 		}
 
@@ -133,6 +140,8 @@ Entity *CheckNextChar(Level *leveli, char c, int type, int y, int x, Level level
 			case '%':
 			case ')':
 			case '[':
+			case '!':
+			case '?':
 			case '<':
 			case '>':
 			case '*':
